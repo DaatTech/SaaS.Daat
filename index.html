@@ -616,6 +616,8 @@ function buildUpload(){
 <script>
 
 
+
+
 // ════════════════════════════════════════════════════════════════
 // DAAT SaaS — Extensões JS
 // Bloco separado — não modifica o script original
@@ -800,22 +802,54 @@ function lerPlanilha(file, cb) {
 }
 
 function resumirDados(headers, rows, fileName) {
-  var r = 'Arquivo: '+fileName+'. Registros: '+rows.length+'. Colunas: '+headers.join(', ')+'. ';
-  var vi = -1;
-  ['valor','total','faturamento','receita','venda','preco'].forEach(function(k){ headers.forEach(function(h,i){ if(vi<0 && h.toLowerCase().includes(k)) vi=i; }); });
-  if (vi>=0) {
-    var soma=0,cnt=0,min=Infinity,max=0;
-    rows.forEach(function(row){ var v=parseFloat(String(row[vi]).replace(/[R$.\s]/g,'').replace(',','.')); if(!isNaN(v)&&v>0){soma+=v;cnt++;if(v<min)min=v;if(v>max)max=v;} });
-    if(cnt>0) r+='Faturamento total: R$'+soma.toFixed(2)+', media: R$'+(soma/cnt).toFixed(2)+'. ';
-  }
-  var si = -1;
-  ['servico','produto','item','descricao','tipo'].forEach(function(k){ headers.forEach(function(h,i){ if(si<0 && h.toLowerCase().includes(k)) si=i; }); });
-  if (si>=0) {
-    var freq={};
-    rows.forEach(function(row){ var v=String(row[si]).trim(); if(v) freq[v]=(freq[v]||0)+1; });
-    var top = Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];}).slice(0,5);
-    r += 'Top itens: '+top.map(function(k){return k+'('+freq[k]+'x)';}).join(', ')+'. ';
-  }
+  var r = '';
+
+  // Metadados basicos
+  r += 'Arquivo: ' + fileName + '.\n';
+  r += 'Total de registros: ' + rows.length + '.\n';
+  r += 'Colunas: ' + headers.join(', ') + '.\n\n';
+
+  // Analise numerica de todas as colunas com valores
+  var numericas = [];
+  headers.forEach(function(h, ci) {
+    var vals = [];
+    rows.forEach(function(row) {
+      var raw = String(row[ci] || '').replace(/[R$\s.]/g,'').replace(',','.');
+      var v = parseFloat(raw);
+      if (!isNaN(v) && v > 0) vals.push(v);
+    });
+    if (vals.length > rows.length * 0.3) { // coluna com 30%+ de valores numericos
+      var soma = vals.reduce(function(a,b){return a+b;},0);
+      var media = soma / vals.length;
+      var min = Math.min.apply(null, vals);
+      var max = Math.max.apply(null, vals);
+      numericas.push(h);
+      r += 'Coluna "' + h + '": soma=' + soma.toFixed(2) + ', media=' + media.toFixed(2) + ', min=' + min.toFixed(2) + ', max=' + max.toFixed(2) + ', registros=' + vals.length + '.\n';
+    }
+  });
+
+  // Analise de frequencia para colunas de texto
+  headers.forEach(function(h, ci) {
+    var freq = {};
+    rows.forEach(function(row) {
+      var v = String(row[ci] || '').trim();
+      if (v && v.length > 0 && v.length < 60) freq[v] = (freq[v]||0) + 1;
+    });
+    var uniq = Object.keys(freq).length;
+    // Se tem entre 2 e 50 valores distintos, e interessante para analise
+    if (uniq >= 2 && uniq <= 50) {
+      var top = Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];}).slice(0,8);
+      r += 'Coluna "' + h + '" (' + uniq + ' categorias): ' + top.map(function(k){return k+'='+freq[k];}).join(', ') + '.\n';
+    }
+  });
+
+  // Amostra das primeiras 5 linhas completas
+  r += '\nAmostra das primeiras linhas:\n';
+  rows.slice(0, 5).forEach(function(row, i) {
+    var linha = headers.map(function(h, ci) { return h+': '+(row[ci]||''); }).join(' | ');
+    r += 'Linha '+(i+1)+': '+linha+'\n';
+  });
+
   return r;
 }
 
@@ -854,13 +888,91 @@ function configurarUploadReal(zoneEl) {
 
 // ── IA ANTHROPIC ──────────────────────────────────────────────────
 async function gerarInsightsIA(dados, seg, nome) {
-  var segLabels = { barbearia:'Barbearia', restaurante:'Restaurante', varejo:'Varejo', saude:'Saúde', servicos:'Serviços', educacao:'Educação', outro:'Negócio' };
-  var prompt = 'Voce e um analista de dados senior para pequenas e medias empresas brasileiras. Analise os dados de "'+nome+'" ('+( segLabels[seg]||seg)+') e gere 3 insights acionaveis. DADOS: '+dados+' INSTRUCOES: portugues claro para o dono do negocio, sem jargao. Responda APENAS em JSON valido sem markdown: {"insights":[{"icon":"emoji","titulo":"titulo curto","impacto":"ALTO","badge":"badge-alto","desc":"descricao 2 frases","sug":"sugestao acionavel"}]} badge: badge-alto=ALTO, badge-medio=MEDIO, badge-gray=BAIXO.';
-  var resp = await fetch(IA_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] }) });
-  if (!resp.ok) throw new Error('API '+resp.status);
+  var segLabels = { barbearia:'Barbearia', restaurante:'Restaurante', varejo:'Varejo', saude:'Saude', servicos:'Servicos', educacao:'Educacao', outro:'Negocio' };
+  var segLabel = segLabels[seg] || seg;
+
+  // Sistema: define o papel e o nivel de qualidade esperado
+  var sistema = 'Voce e um analista de dados senior com 10 anos de experiencia em consultoria para pequenas e medias empresas brasileiras. ' +
+    'Seu trabalho e analisar dados reais de empresas e transformar esses dados em insights profundos, especificos e acionaveis. ' +
+    'Voce nunca gera insights genericos. Cada insight que voce entrega menciona numeros reais, categorias reais e sugere acoes concretas e implementaveis. ' +
+    'Voce escreve como um consultor de confianca que conhece o negocio do cliente — nao como um sistema automatizado.';
+
+  // Usuario: dados reais + instrucoes de raciocinio em cadeia
+  var usuario =
+    'Empresa: ' + nome + '
+' +
+    'Segmento: ' + segLabel + '
+
+' +
+    'DADOS REAIS DA PLANILHA:
+' +
+    dados + '
+
+' +
+    'PROCESSO DE ANALISE — siga estas etapas antes de responder:
+' +
+    '1. Leia todos os dados acima com atencao
+' +
+    '2. Identifique os 3 padroes mais relevantes: concentracoes, quedas, oportunidades de receita ou riscos operacionais
+' +
+    '3. Para cada padrao, calcule ou estime o impacto financeiro usando os numeros reais
+' +
+    '4. Formule uma sugestao acionavel e especifica para cada padrao
+
+' +
+    'REGRAS OBRIGATORIAS:
+' +
+    '- Cite numeros reais da planilha (ex: "R$ 3.240", "42 clientes", "produto X")
+' +
+    '- Nunca escreva frases vagas como "seus dados mostram oportunidades" ou "considere melhorar"
+' +
+    '- Cada descricao deve ter 2-3 frases densas com fatos concretos
+' +
+    '- Cada sugestao deve ser especifica: O QUE fazer, COMO fazer, em QUANTO TEMPO
+' +
+    '- Use linguagem de consultor de confianca, nao de sistema automatico
+' +
+    '- Se os dados forem insuficientes para um insight, diga o que falta e por que importa
+
+' +
+    'Responda APENAS com JSON valido, sem texto adicional, sem markdown:
+' +
+    '{"insights":[
+' +
+    '  {"icon":"emoji relevante","titulo":"titulo direto com dado real","impacto":"ALTO","badge":"badge-alto","desc":"2-3 frases com numeros e fatos concretos do negocio.","sug":"Acao especifica: o que fazer, como fazer e em quanto tempo."}
+' +
+    ']}
+' +
+    'badge: badge-alto para ALTO, badge-medio para MEDIO, badge-gray para BAIXO.';
+
+  // Usa system + user separados para melhor qualidade
+  var resp = await fetch(IA_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system: sistema,
+      messages: [{ role: 'user', content: usuario }]
+    })
+  });
+
+  if (!resp.ok) throw new Error('API ' + resp.status);
   var data = await resp.json();
-  var text = data.content[0].text.trim().replace(/```json|```/g,'').trim();
-  return JSON.parse(text).insights;
+  var text = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+
+  // Parse robusto
+  var parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch(e) {
+    // Tenta extrair o JSON do meio do texto
+    var match = text.match(/\{[\s\S]*\}/);
+    if (match) parsed = JSON.parse(match[0]);
+    else throw new Error('JSON invalido: ' + text.slice(0,100));
+  }
+
+  return parsed.insights;
 }
 
 // ── ADMIN SHEETS ──────────────────────────────────────────────────
@@ -1090,6 +1202,8 @@ window.addEventListener('DOMContentLoaded', function() {
     }, 200);
   }
 });
+
+
 
 
 
