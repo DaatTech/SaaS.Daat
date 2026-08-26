@@ -1,1212 +1,1338 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DAAT. — Seu Analista de Dados</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: #f4f4f6; overflow: hidden; }
-    .syne { font-family: 'Syne', sans-serif; }
-    .mono { font-family: 'DM Mono', monospace; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAAT. Sell — Sistema de Vendas & CRM</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root {
+    --bg: #f3ecdd;
+    --bg2: #fffdf6;
+    --bg3: #ffffff;
+    --border: rgba(20,18,12,0.14);
+    --border2: rgba(20,18,12,0.28);
+    --text: #14120c;
+    --text2: #5c5748;
+    --text3: #8d8672;
+    --accent: #f5c400;
+    --accent2: #ffd633;
+    --green: #1f9d63;
+    --red: #d1393b;
+    --amber: #b5790a;
+    --purple: #6b4fd6;
+    --teal: #0f9488;
+    --blue: #2563eb;
+    --radius: 8px;
+    --radius-sm: 4px;
+    --font-title: 'Archivo Black', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-body: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px;
+    background-image:
+      linear-gradient(rgba(20,18,12,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,18,12,0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
 
-    #onboarding {
-      position: fixed; inset: 0; z-index: 100;
-      display: flex; align-items: stretch;
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    #onboarding.hidden { opacity: 0; pointer-events: none; transform: scale(1.02); }
+  /* HEADER */
+  header { background: var(--bg2); border-bottom: 1.5px solid var(--text); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-word { font-family: var(--font-title); font-size: 19px; letter-spacing: 0.01em; color: var(--text); }
+  .logo-word .dot { color: var(--accent); }
+  .header-sup { font-size: 10px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .by-daat { font-family: var(--font-mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; }
+  .by-daat b { color: var(--text); font-weight: 700; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  #header-date { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
 
-    .ob-left {
-      width: 400px; flex-shrink: 0;
-      background: linear-gradient(155deg, #0d3d5e 0%, #1e84c3 55%, #1a70a8 100%);
-      display: flex; flex-direction: column;
-      padding: 48px 40px; position: relative; overflow: hidden;
-    }
-    .ob-left::before {
-      content: ''; position: absolute; inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='500' height='500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='400' cy='80' r='220' fill='white' fill-opacity='0.03'/%3E%3Ccircle cx='60' cy='400' r='160' fill='white' fill-opacity='0.04'/%3E%3C/svg%3E") no-repeat center;
-    }
-    .ob-right {
-      flex: 1; background: #fff;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 48px; overflow-y: auto;
-    }
+  /* TABS */
+  .tabs { display: flex; gap: 2px; padding: 0 2rem; background: var(--bg2); border-bottom: 1.5px solid var(--text); overflow-x: auto; }
+  .tab { padding: 12px 18px; font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: color .2s, border-color .2s; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); background: var(--accent); border-bottom-color: var(--text); font-weight: 600; }
+  .tab i { font-size: 16px; }
 
-    .ob-step { width: 100%; max-width: 420px; animation: fadeUp 0.35s ease; }
-    .ob-step.hidden { display: none; }
+  /* LAYOUT */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .section { display: none; }
+  .section.active { display: block; }
 
-    .ob-input {
-      width: 100%; padding: 14px 16px; border-radius: 12px;
-      border: 1.5px solid #e5e7eb; font-size: 15px;
-      font-family: 'DM Sans', sans-serif; color: #1d1d1d;
-      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-      background: #fafafa; margin-bottom: 14px;
-    }
-    .ob-input:focus { border-color: #1e84c3; box-shadow: 0 0 0 3px rgba(30,132,195,0.1); background: #fff; }
-    .ob-select {
-      width: 100%; padding: 14px 16px; border-radius: 12px;
-      border: 1.5px solid #e5e7eb; font-size: 15px;
-      font-family: 'DM Sans', sans-serif; color: #1d1d1d;
-      outline: none; transition: border-color 0.2s; cursor: pointer;
-      background: #fafafa; margin-bottom: 14px; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 14px center;
-    }
-    .ob-select:focus { border-color: #1e84c3; box-shadow: 0 0 0 3px rgba(30,132,195,0.1); }
-    .ob-label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block; }
-    .ob-error { font-size: 12px; color: #dc2626; margin-top: -10px; margin-bottom: 10px; display: none; }
+  /* CARDS */
+  .card { background: var(--bg2); border: 1.5px solid var(--text); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; font-family: var(--font-body); }
+  .card-title i { color: var(--text); background: var(--accent); border-radius: 4px; padding: 3px; font-size: 15px; }
 
-    .btn-ob {
-      width: 100%; padding: 16px; border-radius: 12px;
-      background: #1e84c3; color: #fff;
-      font-size: 15px; font-weight: 700; font-family: 'Syne', sans-serif;
-      border: none; cursor: pointer; transition: all 0.2s; margin-top: 8px;
-    }
-    .btn-ob:hover { background: #1972a8; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(30,132,195,0.35); }
+  /* GRID */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-family: var(--font-mono); }
 
-    .progress-dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 32px; }
-    .dot { width: 8px; height: 8px; border-radius: 999px; background: #e5e7eb; transition: all 0.3s; }
-    .dot.active { background: #1e84c3; width: 24px; }
-    .dot.done { background: #1e84c3; }
+  /* INPUTS */
+  input, select, textarea {
+    background: var(--bg3); border: 1.5px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 8px 11px;
+    outline: none; transition: border-color .15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,196,0,.25); }
+  select option { background: var(--bg2); }
+  textarea { resize: vertical; min-height: 68px; }
 
-    .ob-upload-zone {
-      border: 2px dashed #d1d5db; border-radius: 16px; padding: 36px 24px;
-      text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px;
-    }
-    .ob-upload-zone:hover { border-color: #1e84c3; background: #f0f7fd; }
-    .ob-upload-zone.done { border-color: #16a34a; background: #f0fdf4; border-style: solid; }
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font-body); border: 1.5px solid var(--text); transition: opacity .15s, transform .1s; }
+  .btn:active { transform: scale(.98); }
+  .btn-gold { background: var(--accent); color: var(--text); }
+  .btn-gold:hover { background: var(--accent2); }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border2); color: var(--text2); }
+  .btn-outline:hover { border-color: var(--text); color: var(--text); }
+  .btn-danger { background: transparent; border: 1.5px solid rgba(209,57,59,.4); color: var(--red); font-size: 12px; padding: 5px 9px; }
+  .btn-danger:hover { background: rgba(209,57,59,.1); }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+  .actions { display: flex; gap: 10px; margin-top: 1.25rem; align-items: center; }
 
-    .proc-step { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
-    .proc-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-    .proc-done { background: #dcfce7; color: #15803d; }
-    .proc-active { background: #e8f4fc; color: #1e84c3; }
-    .proc-wait { background: #f3f4f6; color: #d1d5db; }
+  /* METRICS */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .metric { background: var(--bg2); border: 1.5px solid var(--text); border-radius: var(--radius); padding: 1.1rem 1.25rem; }
+  .metric-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; font-family: var(--font-mono); }
+  .metric-value { font-size: 24px; font-weight: 400; color: var(--text); line-height: 1; font-family: var(--font-title); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+  .metric-accent { border-top: 4px solid var(--accent); }
 
-    .reveal-card {
-      background: #fff; border-radius: 14px;
-      border: 1.5px solid #f3f4f6; padding: 18px; margin-bottom: 10px;
-      animation: fadeUp 0.4s ease both;
-    }
-    .reveal-card:nth-child(2) { animation-delay: 0.15s; }
-    .reveal-card:nth-child(3) { animation-delay: 0.3s; }
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 11px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
 
-    #app {
-      display: flex; height: 100vh;
-      opacity: 0; transition: opacity 0.6s ease;
-      pointer-events: none;
-    }
-    #app.visible { opacity: 1; pointer-events: all; }
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-green { background: rgba(62,207,142,.15); color: var(--green); }
+  .badge-amber { background: rgba(240,165,0,.15); color: var(--amber); }
+  .badge-red { background: rgba(246,102,102,.15); color: var(--red); }
+  .badge-gray { background: rgba(255,255,255,.07); color: var(--text3); }
+  .badge-purple { background: rgba(167,139,250,.15); color: var(--purple); }
+  .badge-teal { background: rgba(45,212,191,.15); color: var(--teal); }
+  .badge-blue { background: rgba(96,165,250,.15); color: var(--blue); }
+  .badge-gold { background: rgba(201,168,76,.15); color: var(--accent); }
 
-    .sidebar { width: 220px; background: #fff; border-right: 1px solid #f3f4f6; display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; box-shadow: 2px 0 8px rgba(0,0,0,0.04); }
-    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .header { background: #fff; border-bottom: 1px solid #f3f4f6; padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .content { flex: 1; overflow-y: auto; }
-    .page { padding: 32px 40px; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+  /* SERIE colors */
+  .serie-premium { color: var(--accent); font-size: 11px; font-weight: 600; }
+  .serie-menstyle { color: var(--teal); font-size: 11px; font-weight: 600; }
+  .serie-intense { color: var(--purple); font-size: 11px; font-weight: 600; }
 
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 10px; color: #6b7280; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; user-select: none; }
-    .nav-item:hover { background: #f0f7fd; color: #1e84c3; }
-    .nav-item.active { background: #e8f4fc; color: #1e84c3; font-weight: 600; }
-    .nav-badge { margin-left: auto; background: #1e84c3; color: #fff; border-radius: 999px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  /* FILTER ROW */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+  .filter-row input, .filter-row select { font-size: 12px; padding: 6px 10px; }
 
-    .card { background: #fff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); padding: 24px; }
-    .metric-card { background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); transition: transform 0.2s, box-shadow 0.2s; }
-    .metric-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .insight-card { border: 1.5px solid #f3f4f6; border-radius: 14px; padding: 20px; transition: all 0.2s; cursor: pointer; }
-    .insight-card:hover { border-color: #1e84c3; box-shadow: 0 4px 20px rgba(30,132,195,0.1); transform: translateY(-2px); }
+  /* VENDA ITEM */
+  .item-line { display: grid; grid-template-columns: 2fr 90px 90px 32px; gap: 8px; align-items: end; margin-bottom: 8px; }
 
-    .btn-primary { background: #1e84c3; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
-    .btn-primary:hover { background: #1972a8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,132,195,0.3); }
-    .btn-secondary { background: #fff; color: #374151; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1.5px solid #e5e7eb; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
-    .btn-secondary:hover { border-color: #1e84c3; color: #1e84c3; background: #f0f7fd; }
+  /* CHART BAR */
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .bar-label span:first-child { color: var(--text2); }
+  .bar-label span:last-child { font-weight: 600; color: var(--text); }
+  .bar-track { background: var(--bg3); border-radius: 3px; height: 6px; }
+  .bar-fill { height: 6px; border-radius: 3px; background: var(--accent); }
 
-    .badge { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; letter-spacing: 0.3px; }
-    .badge-alto  { background: #fee2e2; color: #b91c1c; }
-    .badge-medio { background: #fef3c7; color: #b45309; }
-    .badge-facil { background: #dcfce7; color: #15803d; }
-    .badge-info  { background: #e8f4fc; color: #1e84c3; }
-    .badge-gray  { background: #f3f4f6; color: #6b7280; }
-    .badge-green { background: #dcfce7; color: #15803d; }
-    .badge-demo  { background: #fef9c3; color: #854d0e; }
+  /* TOAST */
+  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--accent); color: #000; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; }
+  #toast.show { opacity: 1; }
 
-    .grid-4    { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    .grid-2    { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .grid-main { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+  /* EMPTY */
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+  .empty i { font-size: 32px; display: block; margin-bottom: 10px; }
 
-    .upload-zone { border: 2px dashed #d1d5db; border-radius: 16px; padding: 48px; text-align: center; transition: all 0.2s; cursor: pointer; }
-    .upload-zone:hover { border-color: #1e84c3; background: #f0f7fd; }
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
 
-    .hm-cell { display: flex; align-items: center; justify-content: center; height: 36px; border-radius: 6px; font-size: 11px; font-family: 'DM Mono', monospace; cursor: default; transition: transform 0.1s; }
-    .hm-cell:hover { transform: scale(1.1); }
+  @media (max-width: 700px) {
+    .form-grid, .form-grid.cols3, .two-col { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .container { padding: 1rem; }
+    .tabs { padding: 0 1rem; overflow-x: auto; }
+    header { padding: 0 1rem; }
+    .item-line { grid-template-columns: 1fr 70px 70px 32px; }
+  }
 
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  /* LOGIN */
+  #login-screen { position: fixed; inset: 0; background: var(--bg); background-image: linear-gradient(rgba(20,18,12,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.05) 1px, transparent 1px); background-size: 22px 22px; display: flex; align-items: center; justify-content: center; z-index: 999; }
+  #login-box { background: var(--bg2); border: 1.5px solid var(--text); border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 380px; }
+  #login-box .logo-word { font-size: 24px; text-align: center; margin-bottom: 4px; }
+  #login-box .header-sup { text-align: center; margin-bottom: 1.75rem; }
+  #login-box .form-group { margin-bottom: 14px; }
+  #login-box .btn { width: 100%; justify-content: center; margin-top: 8px; }
+  #login-error { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; display: none; font-family: var(--font-mono); }
+  #app-wrap { display: none; }
+</style>
 </head>
 <body>
 
-<!-- ONBOARDING -->
-<div id="onboarding">
-  <div class="ob-left">
-    <div style="position:relative;z-index:1;height:100%;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;gap:3px;margin-bottom:52px">
-        <span class="syne" style="font-weight:800;font-size:26px;color:#fff;letter-spacing:-0.5px">DAAT</span>
-        <div style="width:11px;height:11px;border-radius:50%;background:#fff;margin-top:-6px"></div>
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div id="login-box">
+    <div class="logo-word">DAAT<span class="dot">.</span> SELL</div>
+    <div class="header-sup">Sistema de Vendas & CRM</div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input id="login-email" type="email" placeholder="seu@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <div style="position:relative;">
+        <input id="login-senha" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') fazerLogin()" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivel()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
       </div>
-      <p class="mono" style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:1px;margin-bottom:14px">O ANALISTA QUE VOCÊ AINDA NÃO TEM</p>
-      <h2 class="syne" style="font-size:30px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:20px">Seus dados<br>falam.<br>A DAAT traduz.</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.75;margin-bottom:auto">Ferramentas como Power BI mostram gráficos.<br>A DAAT explica <strong style="color:#fff">o que fazer com eles</strong> — em português claro, sem precisar entender de dados.</p>
-      <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:16px 18px;border:1px solid rgba(255,255,255,0.12);margin-top:24px">
-        <p style="font-size:12px;color:rgba(255,255,255,0.5);font-family:monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Diagnóstico gratuito</p>
-        <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6">30 minutos para entender seu negócio e mostrar o que seus dados já podem revelar — sem compromisso.</p>
-      </div>
+    </div>
+    <button class="btn btn-gold" onclick="fazerLogin()"><i class="ti ti-login"></i> Entrar</button>
+    <div id="login-error"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="#" onclick="mostrarCadastro();return false;" style="font-size:12px;color:var(--text3);font-family:var(--font-mono);">+ Cadastrar novo cliente</a>
     </div>
   </div>
 
-  <div class="ob-right" id="ob-right">
-    <!-- Step 0 -->
-    <div class="ob-step" id="step-0">
-      <p class="mono" style="font-size:11px;color:#1e84c3;letter-spacing:1px;margin-bottom:12px">ACESSO GRATUITO POR 14 DIAS · SEM CARTÃO</p>
-      <h1 class="syne" style="font-size:32px;font-weight:800;color:#1d1d1d;line-height:1.2;margin-bottom:12px">Bem-vindo à<br>DAAT.</h1>
-      <p style="font-size:15px;color:#6b7280;line-height:1.65;margin-bottom:28px">Em menos de 5 minutos você vai ter os primeiros insights do seu negócio — sem precisar entender nada de dados.</p>
-      <div style="background:#f8fafc;border-radius:14px;padding:20px;margin-bottom:28px;border:1.5px solid #e8f4fc">
-        <p class="mono" style="font-size:11px;color:#1e84c3;font-weight:600;margin-bottom:14px">O QUE VAI ACONTECER</p>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px">📋</span><p style="font-size:14px;color:#374151">Conta um pouco sobre o seu negócio</p></div>
-          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px">📂</span><p style="font-size:14px;color:#374151">Envia sua planilha de vendas (Excel ou CSV)</p></div>
-          <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px">🔍</span><p style="font-size:14px;color:#374151">A DAAT analisa e gera seus primeiros insights</p></div>
-        </div>
-      </div>
-      <button class="btn-ob" onclick="goStep(1)">Começar agora →</button>
-      <p style="text-align:center;margin-top:14px;font-size:13px;color:#9ca3af">Já tem conta? <a href="#" onclick="tentarEntrar();return false;" style="color:#1e84c3;text-decoration:none;font-weight:600">Entrar</a></p>
+  <div id="cadastro-box" style="display:none;">
+    <div class="logo-word">DAAT<span class="dot">.</span> SELL</div>
+    <div class="header-sup">Novo cliente</div>
+    <div class="form-group">
+      <label>Nome da empresa</label>
+      <input id="cad-empresa" placeholder="Ex: Estúdio Fulano" />
     </div>
-
-    <!-- Step 1 -->
-    <div class="ob-step hidden" id="step-1">
-      <div class="progress-dots"><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
-      <h2 class="syne" style="font-size:26px;font-weight:800;color:#1d1d1d;margin-bottom:6px">Sobre o seu negócio</h2>
-      <p style="font-size:14px;color:#6b7280;margin-bottom:24px">Essas informações ajudam a DAAT a personalizar a análise para você.</p>
-      <label class="ob-label" for="ob-nome">Nome do negócio</label>
-      <input class="ob-input" id="ob-nome" type="text" placeholder="Ex: Padaria Central, Studio Bella, Clínica Viver..." autocomplete="off" />
-      <span class="ob-error" id="err-nome">Preencha o nome do negócio</span>
-      <label class="ob-label" for="ob-segmento">Segmento</label>
-      <select class="ob-select" id="ob-segmento">
-        <option value="">Selecione seu segmento</option>
-        <option value="barbearia">Barbearia / Salão de beleza</option>
-        <option value="restaurante">Restaurante / Alimentação</option>
-        <option value="varejo">Varejo / Loja</option>
-        <option value="saude">Saúde / Clínica / Estética</option>
-        <option value="servicos">Serviços profissionais</option>
-        <option value="educacao">Educação / Cursos</option>
-        <option value="outro">Outro</option>
-      </select>
-      <span class="ob-error" id="err-seg">Selecione um segmento</span>
-      <label class="ob-label" for="ob-porte">Quantos colaboradores?</label>
-      <select class="ob-select" id="ob-porte">
-        <option value="">Selecione</option>
-        <option>Só eu (MEI)</option>
-        <option>2 a 5</option>
-        <option>6 a 15</option>
-        <option>16 a 50</option>
-        <option>Mais de 50</option>
-      </select>
-      <label class="ob-label" for="ob-resp">Seu nome</label>
-      <input class="ob-input" id="ob-resp" type="text" placeholder="Como posso te chamar?" autocomplete="off" />
-      <span class="ob-error" id="err-resp">Qual é o seu nome?</span>
-      <button class="btn-ob" onclick="validarStep1()">Continuar →</button>
+    <div class="form-group">
+      <label>Nome do responsável</label>
+      <input id="cad-nome" placeholder="Ex: Fulano de Tal" />
     </div>
-
-    <!-- Step 2 -->
-    <div class="ob-step hidden" id="step-2">
-      <div class="progress-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div></div>
-      <h2 class="syne" style="font-size:26px;font-weight:800;color:#1d1d1d;margin-bottom:6px">Envie seus dados</h2>
-      <p style="font-size:14px;color:#6b7280;margin-bottom:24px">Pode ser planilha de vendas, atendimentos ou qualquer controle que você já tenha.</p>
-      <div class="ob-upload-zone" id="ob-zone" onclick="simUpload()">
-        <div id="ob-zone-inner">
-          <div style="font-size:44px;margin-bottom:12px">📂</div>
-          <p class="syne" style="font-weight:700;font-size:17px;color:#1d1d1d;margin-bottom:6px">Arraste ou clique para enviar</p>
-          <p style="font-size:13px;color:#6b7280;margin-bottom:16px">Excel (.xlsx), CSV, Google Sheets</p>
-          <span class="btn-primary" style="display:inline-block;font-size:13px;padding:10px 20px">Selecionar arquivo</span>
-        </div>
-      </div>
-      <div style="background:#f0f7fd;border-radius:12px;padding:14px 16px;margin-bottom:14px">
-        <p style="font-size:13px;color:#1d1d1d;line-height:1.55"><strong>Dica:</strong> Quanto mais histórico (3+ meses), mais precisos ficam os insights. Mas 1 mês já é suficiente para começar.</p>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:14px;background:#f8fafc;border-radius:12px;border:1.5px solid #e5e7eb;cursor:pointer" onclick="simUpload()">
-        <span style="font-size:20px">🔗</span>
-        <div><p style="font-size:13px;font-weight:600;color:#1d1d1d">Conectar Google Sheets</p><p style="font-size:12px;color:#6b7280">Sincronização automática</p></div>
-        <span style="margin-left:auto;font-size:12px;color:#1e84c3;font-weight:600">Conectar →</span>
+    <div class="form-group">
+      <label>E-mail de acesso</label>
+      <input id="cad-email" type="email" placeholder="cliente@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <div style="position:relative;">
+        <input id="cad-senha" type="password" placeholder="mínimo 6 caracteres" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelCadastro()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
       </div>
     </div>
-
-    <!-- Step 3 -->
-    <div class="ob-step hidden" id="step-3">
-      <div class="progress-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div></div>
-      <div style="text-align:center;margin-bottom:28px">
-        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1e84c3,#3b9fd6);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(30,132,195,0.3)"><span style="font-size:30px">🔍</span></div>
-        <h2 class="syne" style="font-size:24px;font-weight:800;color:#1d1d1d;margin-bottom:8px">Analisando seus dados</h2>
-        <p id="proc-subtitle" style="font-size:14px;color:#6b7280">A DAAT está lendo sua planilha...</p>
-      </div>
-      <div style="margin-bottom:24px">
-        <div class="proc-step"><div class="proc-icon proc-wait" id="pi-0">○</div><div><p style="font-size:14px;color:#9ca3af" id="pt-0">Recebendo o arquivo</p><p class="mono" style="font-size:11px;color:#d1d5db" id="pd-0">Aguardando...</p></div></div>
-        <div class="proc-step"><div class="proc-icon proc-wait" id="pi-1">○</div><div><p style="font-size:14px;color:#9ca3af" id="pt-1">Limpeza e organização</p><p class="mono" style="font-size:11px;color:#d1d5db" id="pd-1">Aguardando...</p></div></div>
-        <div class="proc-step"><div class="proc-icon proc-wait" id="pi-2">○</div><div><p style="font-size:14px;color:#9ca3af" id="pt-2">Análise estatística</p><p class="mono" style="font-size:11px;color:#d1d5db" id="pd-2">Aguardando...</p></div></div>
-        <div class="proc-step"><div class="proc-icon proc-wait" id="pi-3">○</div><div><p style="font-size:14px;color:#9ca3af" id="pt-3">Identificação de padrões</p><p class="mono" style="font-size:11px;color:#d1d5db" id="pd-3">Aguardando...</p></div></div>
-        <div class="proc-step" style="border:none"><div class="proc-icon proc-wait" id="pi-4">○</div><div><p style="font-size:14px;color:#9ca3af" id="pt-4">Gerando insights</p><p class="mono" style="font-size:11px;color:#d1d5db" id="pd-4">Aguardando...</p></div></div>
-      </div>
-      <div style="background:#f3f4f6;border-radius:999px;height:8px;overflow:hidden">
-        <div id="proc-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#1e84c3,#3b9fd6);border-radius:999px;transition:width 0.6s ease"></div>
-      </div>
-      <p class="mono" id="proc-pct" style="font-size:12px;color:#9ca3af;text-align:right;margin-top:6px">0%</p>
-    </div>
-
-    <!-- Step 4 -->
-    <div class="ob-step hidden" id="step-4">
-      <div style="text-align:center;margin-bottom:24px">
-        <div style="font-size:52px;margin-bottom:12px">🎉</div>
-        <h2 class="syne" style="font-size:26px;font-weight:800;color:#1d1d1d;margin-bottom:8px">Seus primeiros insights estão prontos!</h2>
-        <p style="font-size:14px;color:#6b7280">Encontramos <strong>3 oportunidades</strong> no seu negócio</p>
-      </div>
-      <div id="reveal-insights" style="margin-bottom:20px"></div>
-      <button class="btn-ob" onclick="enterApp()">Ver análise completa no painel →</button>
-      <p style="text-align:center;font-size:12px;color:#9ca3af;margin-top:10px">14 dias grátis · Sem cartão de crédito</p>
+    <button class="btn btn-gold" onclick="cadastrarNovoCliente()"><i class="ti ti-user-plus"></i> Criar acesso do cliente</button>
+    <div id="cadastro-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="#" onclick="mostrarLogin();return false;" style="font-size:12px;color:var(--text3);font-family:var(--font-mono);">&larr; Voltar pro login</a>
     </div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app">
-  <aside class="sidebar">
-    <div style="margin-bottom:28px;padding:0 4px">
-      <div style="display:flex;align-items:center;gap:2px">
-        <span class="syne" style="font-weight:800;font-size:22px;color:#1d1d1d;letter-spacing:-0.5px">DAAT</span>
-        <div style="width:10px;height:10px;border-radius:50%;background:#1e84c3;margin-top:-5px"></div>
-      </div>
-      <p class="mono" style="font-size:10px;color:#9ca3af;margin-top:4px;letter-spacing:0.5px">ANALISTA DE DADOS</p>
-    </div>
-    <div style="background:#f8fafc;border-radius:12px;padding:12px 14px;margin-bottom:24px;border:1.5px solid #e8f4fc">
-      <p class="mono" style="font-size:10px;color:#1e84c3;font-weight:600;letter-spacing:0.5px;margin-bottom:4px">CLIENTE ATIVO</p>
-      <p class="syne" id="sidebar-nome" style="font-weight:700;font-size:13px;color:#1d1d1d;margin-bottom:2px">—</p>
-      <p style="font-size:11px;color:#6b7280">Plano Analista Recorrente</p>
-    </div>
-    <p class="mono" style="font-size:10px;color:#9ca3af;font-weight:600;padding:4px 16px;letter-spacing:0.5px;margin-bottom:4px">NAVEGAÇÃO</p>
-    <nav>
-      <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')"><span>⊞</span><span>Dashboard</span><span class="nav-badge">3</span></div>
-      <div class="nav-item" data-page="relatorio" onclick="navigate('relatorio')"><span>📊</span><span>Relatório</span></div>
-      <div class="nav-item" data-page="upload" onclick="navigate('upload')"><span>⬆</span><span>Enviar Dados</span></div>
-      <div class="nav-item" data-page="historico" onclick="navigate('historico')"><span>🗂</span><span>Histórico</span></div>
-      <div class="nav-item" data-page="planos" onclick="navigate('planos')"><span>⭐</span><span>Planos</span></div>
-    </nav>
-    <div style="margin-top:auto;border-top:1px solid #f3f4f6;padding-top:16px">
-      <div style="display:flex;align-items:center;gap:10px;padding:8px">
-        <div id="sidebar-avatar" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1e84c3,#3b9fd6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0">?</div>
-        <div><p id="sidebar-user" style="font-size:13px;font-weight:600;color:#1d1d1d">—</p><p class="mono" style="font-size:11px;color:#9ca3af">Proprietário</p></div>
-      </div>
-    </div>
-  </aside>
-  <div class="main">
-    <header class="header">
-      <h2 class="syne" id="page-title" style="font-weight:700;font-size:17px;color:#1d1d1d">Dashboard</h2>
-      <div style="display:flex;align-items:center;gap:14px">
-        <div style="display:flex;align-items:center;gap:6px;background:#f0fdf4;padding:6px 12px;border-radius:8px">
-          <div style="width:6px;height:6px;border-radius:50%;background:#16a34a"></div>
-          <span class="mono" style="font-size:12px;color:#15803d;font-weight:600">Dados atualizados</span>
-        </div>
-        <div style="position:relative;cursor:pointer">
-          <span style="font-size:20px">🔔</span>
-          <span style="position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:999px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">3</span>
-        </div>
-        <div id="header-avatar" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1e84c3,#3b9fd6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;cursor:pointer">?</div>
-      </div>
-    </header>
-    <div class="content">
-      <div id="page-dashboard" class="page"></div>
-      <div id="page-relatorio" class="page" style="display:none"></div>
-      <div id="page-historico" style="display:none;height:100%;overflow-y:auto;padding:0"></div>
-  <div id="page-planos" style="display:none;height:100%;overflow-y:auto;padding:0"></div>
-  <div id="page-upload"    class="page" style="display:none"></div>
+
+<div id="app-wrap">
+<header>
+  <div class="logo">
+    <div>
+      <div class="logo-word">DAAT<span class="dot">.</span> SELL</div>
+      <div class="header-sup">Sistema de Vendas & CRM</div>
     </div>
   </div>
+  <div class="header-right">
+    <div id="header-date"></div>
+    <button class="btn btn-outline btn-sm" onclick="fazerLogout()" style="margin-top:4px;"><i class="ti ti-logout"></i> Sair</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('produtos')"><i class="ti ti-package"></i> Produtos</button>
+  <button class="tab" onclick="switchTab('vendas')"><i class="ti ti-receipt"></i> Registrar venda</button>
+  <button class="tab" onclick="switchTab('crm')"><i class="ti ti-calendar-event"></i> CRM</button>
+  <button class="tab" onclick="switchTab('historico')"><i class="ti ti-history"></i> Histórico</button>
+  <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-chart-bar"></i> Dashboard</button>
+  <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings"></i> Config</button>
 </div>
+
+<!-- ===== PRODUTOS ===== -->
+<div id="tab-produtos" class="section active">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-plus"></i> Adicionar produto</div>
+    <div class="form-grid cols3">
+      <div class="form-group"><label>Fornecedor</label><input id="f-forn" placeholder="Nome do fornecedor" /></div>
+      <div class="form-group"><label>Nome do produto</label><input id="f-nome" placeholder="Ex: Camiseta básica" /></div>
+      <div class="form-group">
+        <label>Linha / Coleção</label>
+        <input id="f-serie" placeholder="Ex: Verão 2026 (opcional)" />
+      </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <input id="f-cat" placeholder="Ex: Roupas, Acessórios..." />
+      </div>
+      <div class="form-group"><label>Volume / Variação</label><input id="f-vol" placeholder="Ex: 500ml, Tamanho M" /></div>
+      <div class="form-group">
+        <label>Unidade</label>
+        <select id="f-un">
+          <option value="un">Unidade (un)</option>
+          <option value="cx">Caixa (cx)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Custo (R$)</label><input id="f-custo" type="number" step="0.01" min="0" placeholder="0,00" /></div>
+      <div class="form-group"><label>Preço de venda (R$)</label><input id="f-preco" type="number" step="0.01" min="0" placeholder="0,00" /></div>
+      <div class="form-group"><label>Estoque atual</label><input id="f-est" type="number" min="0" placeholder="0" /></div>
+      <div class="form-group"><label>Alerta estoque mínimo</label><input id="f-estmin" type="number" min="0" placeholder="3" /></div>
+      <div class="form-group full"><label>Observações</label><textarea id="f-obs" placeholder="Detalhes, características, uso, etc."></textarea></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar produto</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-list"></i> Catálogo <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="prod-count"></span></div>
+    <div class="filter-row">
+      <input id="busca" placeholder="Buscar..." oninput="renderProdutos()" style="flex:1;min-width:100px;" />
+      <select id="f-serie-filtro" onchange="renderProdutos()">
+        <option value="">Todas as linhas</option>
+      </select>
+      <select id="f-cat-filtro" onchange="renderProdutos()">
+        <option value="">Todas categorias</option>
+      </select>
+      <select id="f-status-filtro" onchange="renderProdutos()">
+        <option value="">Todos</option>
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+        <option value="baixo">Estoque baixo</option>
+      </select>
+    </div>
+    <div class="table-wrap" id="prod-table"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== VENDAS ===== -->
+<div id="tab-vendas" class="section">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-receipt"></i> Nova venda</div>
+    <div class="form-grid cols3">
+      <div class="form-group"><label>Data</label><input id="v-data" type="date" /></div>
+      <div class="form-group"><label>Vendedor</label><input id="v-vendedor" placeholder="Nome do vendedor" oninput="calcTotal()" /></div>
+      <div class="form-group">
+        <label>Canal</label>
+        <select id="v-canal">
+          <option value="">Selecionar...</option>
+          <option>Balcão</option><option>Serviço (uso interno)</option><option>Encomenda</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Cliente / referência</label><input id="v-cliente" placeholder="Nome, mesa, pedido..." /></div>
+      <div class="form-group"><label>Comissão do vendedor (%)</label><input id="v-comissao-pct" type="number" step="0.1" min="0" placeholder="Ex: 10 (opcional)" oninput="calcTotal()" /></div>
+    </div>
+
+    <div style="margin-top:1.25rem;">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Itens</div>
+      <div id="itens-wrap"></div>
+      <button class="btn btn-outline btn-sm" onclick="addItem()" style="margin-top:4px;"><i class="ti ti-plus"></i> Item</button>
+    </div>
+
+    <div id="v-total-wrap" style="display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+        <span style="color:var(--text2);">Total:</span>
+        <span id="v-total" style="font-size:22px;font-weight:700;color:var(--accent);"></span>
+      </div>
+      <div id="v-comissao" style="margin-top:6px;display:none;"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-gold" onclick="salvarVenda()"><i class="ti ti-check"></i> Salvar venda</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== CRM ===== -->
+<div id="tab-crm" class="section">
+<div class="container">
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-user-plus"></i> Novo cliente</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="Nome do cliente" /></div>
+        <div class="form-group"><label>Telefone / WhatsApp</label><input id="c-tel" placeholder="(00) 00000-0000" /></div>
+        <div class="form-group full"><label>Observações</label><input id="c-obs" placeholder="Preferências, série que mais compra, etc." /></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-gold" onclick="addCliente()"><i class="ti ti-plus"></i> Adicionar cliente</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar-plus"></i> Novo agendamento</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Cliente</label>
+          <select id="a-cliente"><option value="">Selecionar...</option></select>
+        </div>
+        <div class="form-group"><label>Data</label><input id="a-data" type="date" /></div>
+        <div class="form-group"><label>Horário</label><input id="a-hora" type="time" /></div>
+        <div class="form-group">
+          <label>Motivo</label>
+          <select id="a-motivo">
+            <option value="">Selecionar...</option>
+            <option>Retorno de compra</option>
+            <option>Encomenda</option>
+            <option>Reposição de estoque do cliente</option>
+            <option>Follow-up / pós-venda</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Observações</label><input id="a-obs" placeholder="Detalhes do agendamento" /></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-gold" onclick="addAgendamento()"><i class="ti ti-check"></i> Agendar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-calendar-event"></i> Agenda <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="agenda-count"></span></div>
+    <div class="filter-row">
+      <select id="ag-status-filtro" onchange="renderAgenda()">
+        <option value="">Todos os status</option>
+        <option>Agendado</option>
+        <option>Confirmado</option>
+        <option>Concluído</option>
+        <option>Cancelado</option>
+      </select>
+    </div>
+    <div class="table-wrap" id="agenda-table"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-address-book"></i> Clientes <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="cliente-count"></span></div>
+    <div class="table-wrap" id="cliente-table"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== HISTÓRICO ===== -->
+<div id="tab-historico" class="section">
+<div class="container">
+  <div class="card">
+    <div class="card-title"><i class="ti ti-history"></i> Vendas registradas</div>
+    <div class="filter-row">
+      <input id="h-busca" placeholder="Buscar cliente, vendedor, canal..." oninput="renderHistorico()" style="flex:1;" />
+      <input id="h-de" type="date" onchange="renderHistorico()" />
+      <input id="h-ate" type="date" onchange="renderHistorico()" />
+    </div>
+    <div class="table-wrap" id="hist-table"></div>
+  </div>
+</div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="tab-dashboard" class="section">
+<div class="container">
+  <div class="metrics" id="metricas"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-trending-up"></i> Top produtos por receita</div>
+      <div id="rank-prod"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-tag"></i> Receita por categoria</div>
+      <div id="rank-cat"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-users"></i> Desempenho por vendedor</div>
+    <div id="rank-vendedor"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-alert-triangle"></i> Alertas de estoque</div>
+    <div id="alerta-estoque"></div>
+  </div>
+</div>
+</div>
+
+<!-- ===== CONFIG ===== -->
+<div id="tab-config" class="section">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-building"></i> Conta</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Empresa</label><input id="cfg-empresa" disabled /></div>
+      <div class="form-group"><label>E-mail de login</label><input id="cfg-email" disabled /></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-lock"></i> Trocar senha</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nova senha</label>
+        <div style="position:relative;">
+          <input id="cfg-nova-senha" type="password" placeholder="mínimo 6 caracteres" style="width:100%;padding-right:70px;" />
+          <button type="button" onclick="toggleSenhaVisivelCfg('cfg-nova-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirmar nova senha</label>
+        <div style="position:relative;">
+          <input id="cfg-confirma-senha" type="password" placeholder="repita a senha" style="width:100%;padding-right:70px;" />
+          <button type="button" onclick="toggleSenhaVisivelCfg('cfg-confirma-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="trocarSenha()"><i class="ti ti-check"></i> Salvar nova senha</button>
+    </div>
+    <div id="cfg-senha-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+</div>
+</div>
+
+<div id="toast"></div>
+</div>
+
+
 
 <script>
-var USER = { nome:'', user:'', segmento:'', porte:'' };
-var currentStep = 0;
-var pageBuilt = { dashboard:false, relatorio:false, upload:false };
+// =========================================================
+// CONFIGURAÇÃO DO SUPABASE — troque pelos dados do seu projeto
+// (Project Settings > API no painel do Supabase)
+// =========================================================
+const SUPABASE_URL = 'https://mdekuwxqqdbokbzsibrh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZWt1d3hxcWRib2tienNpYnJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NjM0NzQsImV4cCI6MjEwMzIzOTQ3NH0.zMkm02EAvDsOw3pCBg9h1QxTZbW_gcYUZXfJl-8WCfo';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-var INSIGHTS = {
-  barbearia:[
-    {icon:'📅',titulo:'Dias com baixo movimento identificados',impacto:'ALTO',badge:'badge-alto',desc:'A análise detectou dias da semana com faturamento 30–40% abaixo da média. Horários ociosos representam receita desperdiçada.',sug:'Crie promoções ou pacotes especiais para esses dias. Desconto de 15% em combos pode preencher a agenda e aumentar o ticket médio.'},
-    {icon:'👑',titulo:'Clientes frequentes sem programa de fidelidade',impacto:'MÉDIO',badge:'badge-medio',desc:'Vários clientes visitam regularmente sem receber benefício algum. Risco de perda para concorrentes que oferecem fidelização.',sug:'Um cartão de fidelidade simples (10ª visita com desconto) pode reduzir a evasão em até 30% e aumentar a frequência.'},
-    {icon:'💰',titulo:'Oportunidade de upsell em serviços simples',impacto:'MÉDIO',badge:'badge-medio',desc:'Grande parte dos atendimentos são de serviço único. Converter uma fração para combos aumenta o faturamento sem novos clientes.',sug:'Treinar a equipe para oferecer o combo no momento do atendimento é a ação de maior retorno com menor esforço.'}
-  ],
-  restaurante:[
-    {icon:'🕐',titulo:'Horários de pico mal aproveitados',impacto:'ALTO',badge:'badge-alto',desc:'Os dados mostram concentração de pedidos em janelas específicas com possível perda de clientes por espera ou falta de capacidade.',sug:'Reorganizar o fluxo de atendimento nesses horários pode aumentar a capacidade sem ampliar o espaço físico.'},
-    {icon:'🍽️',titulo:'Itens do cardápio com baixo giro',impacto:'MÉDIO',badge:'badge-medio',desc:'Alguns pratos têm custo de produção alto e baixa saída, comprometendo a margem geral do restaurante.',sug:'Revisar o cardápio e destacar pratos de maior margem nos pontos de atenção do cliente pode aumentar o lucro sem mexer no preço.'},
-    {icon:'🔁',titulo:'Taxa de retorno de clientes abaixo do ideal',impacto:'MÉDIO',badge:'badge-medio',desc:'A proporção de clientes que voltam indica oportunidade de trabalhar fidelização e comunicação pós-visita.',sug:'Um programa simples de recompensas ou comunicação via WhatsApp pode dobrar a taxa de retorno em 60 dias.'}
-  ],
-  varejo:[
-    {icon:'📦',titulo:'Ruptura de estoque em itens de alta rotação',impacto:'ALTO',badge:'badge-alto',desc:'Produtos com alta demanda apresentam janelas sem estoque, gerando vendas perdidas e insatisfação de clientes.',sug:'Definir ponto de reposição automático para os 10 produtos mais vendidos pode eliminar essa perda imediatamente.'},
-    {icon:'💳',titulo:'Ticket médio com espaço para crescimento',impacto:'MÉDIO',badge:'badge-medio',desc:'O valor médio por compra está abaixo do potencial do mix de produtos. Há oportunidade de vendas complementares.',sug:'Apresentar produto complementar no momento do caixa tem baixo custo e pode elevar o ticket em 20%.'},
-    {icon:'📈',titulo:'Concentração de vendas em poucos produtos',impacto:'MÉDIO',badge:'badge-medio',desc:'80% da receita vem de menos de 20% dos produtos. Diversificar pode reduzir o risco e abrir novas fontes de receita.',sug:'Promover categorias com margem maior e menor visibilidade pode equilibrar a composição da receita.'}
-  ],
-  saude:[
-    {icon:'📋',titulo:'Agenda com horários ociosos recorrentes',impacto:'ALTO',badge:'badge-alto',desc:'Slots de atendimento não preenchidos representam capacidade instalada desperdiçada, com custo fixo sem geração de receita.',sug:'Implementar lista de espera e confirmação automática pode reduzir ausências e preencher os horários vagos.'},
-    {icon:'🔄',titulo:'Pacientes sem retorno agendado',impacto:'MÉDIO',badge:'badge-medio',desc:'Parte dos pacientes atendidos não possui próxima consulta agendada, aumentando o risco de perda do vínculo.',sug:'Agendar a próxima consulta ainda durante o atendimento aumenta a taxa de retorno em até 40%.'},
-    {icon:'💰',titulo:'Procedimentos complementares subaproveitados',impacto:'MÉDIO',badge:'badge-medio',desc:'Há capacidade para oferecer serviços adicionais a pacientes já ativos, sem custo de aquisição.',sug:'Apresentar serviços complementares durante o atendimento é a forma mais eficiente de aumentar o faturamento por paciente.'}
-  ],
-  servicos:[
-    {icon:'⏰',titulo:'Projetos com prazo estendido frequentemente',impacto:'ALTO',badge:'badge-alto',desc:'Atrasos recorrentes impactam a capacidade de iniciar novos projetos e a percepção de qualidade pelo cliente.',sug:'Mapear os gargalos mais comuns e criar buffer de tempo nos cronogramas pode resolver 80% dos atrasos.'},
-    {icon:'💸',titulo:'Clientes com alto potencial de expansão',impacto:'MÉDIO',badge:'badge-medio',desc:'Alguns clientes ativos consomem apenas parte do portfólio disponível. Há espaço para ampliar o escopo.',sug:'Uma reunião de revisão trimestral com foco em novas necessidades pode revelar oportunidades de expansão natural.'},
-    {icon:'📊',titulo:'Precificação com margem inconsistente',impacto:'MÉDIO',badge:'badge-medio',desc:'Projetos similares apresentam margens diferentes, sugerindo falta de padronização na precificação.',sug:'Criar uma tabela de referência por tipo de serviço garante margens mais previsíveis e facilita propostas.'}
-  ],
-  educacao:[
-    {icon:'🎓',titulo:'Alta taxa de abandono antes da conclusão',impacto:'ALTO',badge:'badge-alto',desc:'Alunos desistentes representam receita perdida e custo de reposição. Identificar o momento de abandono permite intervenção.',sug:'Criar check-ins automáticos nas semanas críticas pode reduzir o abandono em até 35%.'},
-    {icon:'📣',titulo:'Baixa taxa de recomendação ativa',impacto:'MÉDIO',badge:'badge-medio',desc:'Alunos satisfeitos raramente indicam ativamente sem um incentivo. O boca-a-boca é o canal mais barato de aquisição.',sug:'Um programa de indicação com desconto para ambos pode gerar fluxo constante de novos alunos.'},
-    {icon:'💡',titulo:'Turmas com baixo preenchimento',impacto:'MÉDIO',badge:'badge-medio',desc:'Turmas pela metade têm o mesmo custo fixo de turmas cheias, diluindo a margem desnecessariamente.',sug:'Combinar turmas menores ou criar lista de espera ativa pode equilibrar a ocupação e reduzir custos.'}
-  ],
-  outro:[
-    {icon:'📉',titulo:'Período de baixa recorrente identificado',impacto:'ALTO',badge:'badge-alto',desc:'Os dados revelam uma janela regular de queda no faturamento. Entender a causa permite ação preventiva.',sug:'Criar ações proativas nos períodos de baixa identificados pode suavizar a curva de receita ao longo do mês.'},
-    {icon:'👥',titulo:'Clientes inativos com potencial de reativação',impacto:'MÉDIO',badge:'badge-medio',desc:'Clientes que compraram anteriormente e não retornaram são mais fáceis de reativar do que conquistar novos.',sug:'Uma campanha de reativação via WhatsApp com oferta especial pode trazer de volta 20–30% dessa base.'},
-    {icon:'💰',titulo:'Oportunidade de aumento de ticket médio',impacto:'MÉDIO',badge:'badge-medio',desc:'O valor médio por transação tem espaço para crescer com pequenas mudanças na oferta e comunicação.',sug:'Apresentar opções complementares ou upgrade no momento da compra é a ação de maior retorno imediato.'}
-  ]
-};
+// =========================================================
+// CONFIGURAÇÃO DO EMAILJS — troque pelos dados da sua conta
+// (emailjs.com > Email Services / API Keys)
+// =========================================================
+const EMAILJS_SERVICE_ID = 'service_votjuei';
+const EMAILJS_TEMPLATE_ID = 'template_zektyll';
+const EMAILJS_PUBLIC_KEY = '0dja_oBx-MN5tkBfv';
+const DAAT_SELL_APP_URL = 'https://SEU-LINK-AQUI'; // link publicado do daat-sell.html, pro botao do e-mail
+if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
-var DEMO = {
-  fat6m:[{mes:'Nov',v:12400},{mes:'Dez',v:15200},{mes:'Jan',v:13800},{mes:'Fev',v:16100},{mes:'Mar',v:15400},{mes:'Abr',v:18200}],
-  semanas:[{s:'Sem 1',v:4600},{s:'Sem 2',v:5100},{s:'Sem 3',v:4200},{s:'Sem 4',v:4300}],
-  heatmap:[{d:'Seg',h:[3,6,8,5,7,5,4,8]},{d:'Ter',h:[2,5,7,6,8,7,6,5]},{d:'Qua',h:[4,8,9,7,8,8,7,6]},{d:'Qui',h:[2,3,4,3,4,3,3,2]},{d:'Sex',h:[5,9,10,8,9,8,8,7]},{d:'Sab',h:[7,9,8,6,6,4,3,1]}],
-  horas:['09h','10h','11h','14h','15h','16h','17h','18h']
-};
-
-function navigate(page) {
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.toggle('active',n.dataset.page===page);});
-  ['dashboard','relatorio','upload'].forEach(function(pg){document.getElementById('page-'+pg).style.display=pg===page?'':'none';});
-  var titles={dashboard:'Dashboard',relatorio:'Relatório',upload:'Enviar Dados'};
-  document.getElementById('page-title').textContent=titles[page];
-  if(page==='relatorio'&&!pageBuilt.relatorio){pageBuilt.relatorio=true;buildRelatorio();}
-  if(page==='upload'&&!pageBuilt.upload){pageBuilt.upload=true;buildUpload();}
-}
-
-function goStep(n) {
-  document.getElementById('step-'+currentStep).classList.add('hidden');
-  currentStep=n;
-  document.getElementById('step-'+n).classList.remove('hidden');
-  document.getElementById('ob-right').scrollTop=0;
-  if(n===3)startProcessing();
-}
-
-function validarStep1() {
-  var nome=document.getElementById('ob-nome').value.trim();
-  var seg=document.getElementById('ob-segmento').value;
-  var resp=document.getElementById('ob-resp').value.trim();
-  var ok=true;
-  document.getElementById('err-nome').style.display=nome?'none':'block'; if(!nome)ok=false;
-  document.getElementById('err-seg').style.display=seg?'none':'block'; if(!seg)ok=false;
-  document.getElementById('err-resp').style.display=resp?'none':'block'; if(!resp)ok=false;
-  if(ok){USER.nome=nome;USER.segmento=seg;USER.porte=document.getElementById('ob-porte').value;USER.user=resp;goStep(2);}
-}
-
-function simUpload() {
-  var zone=document.getElementById('ob-zone');
-  zone.classList.add('done');
-  zone.innerHTML='<div style="text-align:center"><div style="font-size:40px;margin-bottom:10px">✅</div><p class="syne" style="font-weight:700;font-size:16px;color:#15803d;margin-bottom:4px">Arquivo recebido!</p><p style="font-size:13px;color:#6b7280">planilha-vendas.xlsx · 84 KB · 431 linhas</p></div>';
-  setTimeout(function(){goStep(3);},900);
-}
-
-function startProcessing() {
-  var steps=[
-    {label:'Recebendo o arquivo',desc:'planilha-vendas.xlsx',delay:700},
-    {label:'Limpeza e organização',desc:'431 registros processados',delay:1400},
-    {label:'Análise estatística',desc:'Calculando médias e tendências',delay:1400},
-    {label:'Identificação de padrões',desc:'Cruzando datas, valores e serviços',delay:1600},
-    {label:'Gerando insights',desc:'3 oportunidades encontradas!',delay:1400}
-  ];
-  var subtitles=['A DAAT está lendo sua planilha...','Organizando seus dados...','Calculando faturamento e tendências...','Procurando padrões de comportamento...','Quase lá! Preparando seus insights...'];
-  var icons=['📥','🧹','📊','🔍','💡'];
-  var i=0;
-  function tick(){
-    if(i>=steps.length){setTimeout(buildReveal,600);return;}
-    var s=steps[i];
-    if(i>0){document.getElementById('pi-'+(i-1)).className='proc-icon proc-done';document.getElementById('pi-'+(i-1)).textContent='✓';document.getElementById('pd-'+(i-1)).style.color='#9ca3af';}
-    document.getElementById('pi-'+i).className='proc-icon proc-active';document.getElementById('pi-'+i).textContent=icons[i];
-    document.getElementById('pt-'+i).style.cssText='font-size:14px;color:#1d1d1d;font-weight:600';
-    document.getElementById('pd-'+i).textContent=s.desc;document.getElementById('pd-'+i).style.color='#1e84c3';
-    document.getElementById('proc-subtitle').textContent=subtitles[i];
-    var pct=Math.round((i+1)/steps.length*100);
-    document.getElementById('proc-bar').style.width=pct+'%';document.getElementById('proc-pct').textContent=pct+'%';
-    i++;setTimeout(tick,s.delay);
+async function enviarEmailBoasVindas(empresa, nome, email) {
+  if (!window.emailjs || EMAILJS_SERVICE_ID.includes('SEU_')) {
+    console.warn('EmailJS não configurado ainda — pulando envio de e-mail de boas-vindas.');
+    return;
   }
-  setTimeout(tick,400);
-}
-
-function buildReveal() {
-  var seg=USER.segmento||'outro';
-  var ins=INSIGHTS[seg]||INSIGHTS.outro;
-  var c=document.getElementById('reveal-insights');c.innerHTML='';
-  ins.forEach(function(item){c.innerHTML+='<div class="reveal-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">'+item.icon+'</span><p class="syne" style="font-weight:700;font-size:14px;color:#1d1d1d">'+item.titulo+'</p></div><span class="badge '+item.badge+'">'+item.impacto+'</span></div><p style="font-size:13px;color:#6b7280;line-height:1.5">'+item.desc+'</p></div>';});
-  goStep(4);
-}
-
-function enterApp() {
-  var nome=USER.nome||'Meu Negócio';var user=USER.user||'Você';var ini=user[0].toUpperCase();
-  document.getElementById('sidebar-nome').textContent=nome;document.getElementById('sidebar-user').textContent=user;
-  document.getElementById('sidebar-avatar').textContent=ini;document.getElementById('header-avatar').textContent=ini;
-  document.getElementById('onboarding').classList.add('hidden');
-  setTimeout(function(){document.getElementById('app').classList.add('visible');if(!pageBuilt.dashboard){pageBuilt.dashboard=true;buildDashboard();}},300);
-}
-
-function lineChart(data,w,h){
-  w=w||500;h=h||200;var pad={t:10,r:10,b:30,l:55};var W=w-pad.l-pad.r,H=h-pad.t-pad.b;
-  var vals=data.map(function(d){return d.v;}),mn=Math.min.apply(null,vals)*0.97,mx=Math.max.apply(null,vals)*1.03;
-  var px=function(i){return pad.l+i/(data.length-1)*W;};var py=function(v){return pad.t+H-(v-mn)/(mx-mn)*H;};
-  var ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
-  svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.setAttribute('width','100%');svg.setAttribute('height',h);
-  var defs=document.createElementNS(ns,'defs'),g=document.createElementNS(ns,'linearGradient');
-  g.id='lg1';g.setAttribute('x1','0');g.setAttribute('y1','0');g.setAttribute('x2','0');g.setAttribute('y2','1');
-  var s1=document.createElementNS(ns,'stop');s1.setAttribute('offset','0%');s1.setAttribute('stop-color','#1e84c3');
-  var s2=document.createElementNS(ns,'stop');s2.setAttribute('offset','100%');s2.setAttribute('stop-color','#1e84c3');s2.setAttribute('stop-opacity','0');
-  g.appendChild(s1);g.appendChild(s2);defs.appendChild(g);svg.appendChild(defs);
-  [0.25,0.5,0.75,1].forEach(function(t){var y=pad.t+H*(1-t);var ln=document.createElementNS(ns,'line');ln.setAttribute('x1',pad.l);ln.setAttribute('x2',pad.l+W);ln.setAttribute('y1',y);ln.setAttribute('y2',y);ln.setAttribute('stroke','#f3f4f6');svg.appendChild(ln);var lb=document.createElementNS(ns,'text');lb.setAttribute('x',pad.l-6);lb.setAttribute('y',y+4);lb.setAttribute('text-anchor','end');lb.setAttribute('font-size','10');lb.setAttribute('fill','#9ca3af');lb.setAttribute('font-family','DM Mono,monospace');lb.textContent='R$'+((mn+(mx-mn)*t)/1000).toFixed(0)+'K';svg.appendChild(lb);});
-  data.forEach(function(d,i){var lb=document.createElementNS(ns,'text');lb.setAttribute('x',px(i));lb.setAttribute('y',h-8);lb.setAttribute('text-anchor','middle');lb.setAttribute('font-size','10');lb.setAttribute('fill','#9ca3af');lb.setAttribute('font-family','DM Mono,monospace');lb.textContent=d.mes;svg.appendChild(lb);});
-  var ap='M '+px(0)+' '+(pad.t+H);data.forEach(function(d,i){ap+=' L '+px(i)+' '+py(d.v);});ap+=' L '+px(data.length-1)+' '+(pad.t+H)+' Z';
-  var area=document.createElementNS(ns,'path');area.setAttribute('d',ap);area.setAttribute('fill','url(#lg1)');area.setAttribute('opacity','0.15');svg.appendChild(area);
-  var lp='M '+px(0)+' '+py(data[0].v);data.forEach(function(d,i){if(i>0)lp+=' L '+px(i)+' '+py(d.v);});
-  var line=document.createElementNS(ns,'path');line.setAttribute('d',lp);line.setAttribute('fill','none');line.setAttribute('stroke','#1e84c3');line.setAttribute('stroke-width','2.5');line.setAttribute('stroke-linecap','round');svg.appendChild(line);
-  data.forEach(function(d,i){var last=i===data.length-1;var c=document.createElementNS(ns,'circle');c.setAttribute('cx',px(i));c.setAttribute('cy',py(d.v));c.setAttribute('r',last?6:3);c.setAttribute('fill','#1e84c3');c.setAttribute('stroke',last?'#fff':'#1e84c3');c.setAttribute('stroke-width',last?2:1);svg.appendChild(c);});
-  return svg;
-}
-
-function barChart(data,w,h){
-  w=w||400;h=h||180;var pad={t:10,r:10,b:30,l:55},W=w-pad.l-pad.r,H=h-pad.t-pad.b;
-  var mx=Math.max.apply(null,data.map(function(d){return d.v;}))*1.1;
-  var bw=Math.floor(W/data.length*0.6),gap=(W-bw*data.length)/(data.length+1);
-  var ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
-  svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.setAttribute('width','100%');svg.setAttribute('height',h);
-  [0.5,1].forEach(function(t){var y=pad.t+H*(1-t);var ln=document.createElementNS(ns,'line');ln.setAttribute('x1',pad.l);ln.setAttribute('x2',pad.l+W);ln.setAttribute('y1',y);ln.setAttribute('y2',y);ln.setAttribute('stroke','#f3f4f6');svg.appendChild(ln);var lb=document.createElementNS(ns,'text');lb.setAttribute('x',pad.l-6);lb.setAttribute('y',y+4);lb.setAttribute('text-anchor','end');lb.setAttribute('font-size','10');lb.setAttribute('fill','#9ca3af');lb.setAttribute('font-family','DM Mono,monospace');lb.textContent='R$'+(mx*t/1000).toFixed(1)+'K';svg.appendChild(lb);});
-  data.forEach(function(d,i){var bh=Math.max(2,(d.v/mx)*H),x=pad.l+gap+i*(bw+gap),y=pad.t+H-bh;var r=document.createElementNS(ns,'rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',bw);r.setAttribute('height',bh);r.setAttribute('rx','5');r.setAttribute('fill','#1e84c3');svg.appendChild(r);var lb=document.createElementNS(ns,'text');lb.setAttribute('x',x+bw/2);lb.setAttribute('y',h-8);lb.setAttribute('text-anchor','middle');lb.setAttribute('font-size','10');lb.setAttribute('fill','#9ca3af');lb.setAttribute('font-family','DM Mono,monospace');lb.textContent=d.s;svg.appendChild(lb);});
-  return svg;
-}
-
-function donutChart(data,size){
-  size=size||160;var ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
-  svg.setAttribute('viewBox','0 0 '+size+' '+size);svg.setAttribute('width',size);svg.setAttribute('height',size);
-  var cx=size/2,cy=size/2,R=size*0.35,r=size*0.22,total=data.reduce(function(s,d){return s+d.value;},0),angle=-Math.PI/2;
-  data.forEach(function(d){var a=2*Math.PI*d.value/total,x1=cx+R*Math.cos(angle),y1=cy+R*Math.sin(angle),x2=cx+R*Math.cos(angle+a),y2=cy+R*Math.sin(angle+a),x3=cx+r*Math.cos(angle+a),y3=cy+r*Math.sin(angle+a),x4=cx+r*Math.cos(angle),y4=cy+r*Math.sin(angle),large=a>Math.PI?1:0;var path=document.createElementNS(ns,'path');path.setAttribute('d','M '+x1+' '+y1+' A '+R+' '+R+' 0 '+large+' 1 '+x2+' '+y2+' L '+x3+' '+y3+' A '+r+' '+r+' 0 '+large+' 0 '+x4+' '+y4+' Z');path.setAttribute('fill',d.fill);svg.appendChild(path);angle+=a;});
-  return svg;
-}
-
-function renderHeatmap(){
-  var colors=['#f3f4f6','#dbeafe','#93c5fd','#3b82f6','#1d4ed8','#1e3a8a'];
-  var gc=function(v){return v===0?colors[0]:v<=2?colors[1]:v<=4?colors[2]:v<=6?colors[3]:v<=8?colors[4]:colors[5];};
-  var gt=function(v){return v>=7?'#fff':'#374151';};
-  var wrap=document.createElement('div');wrap.style.overflowX='auto';
-  var table=document.createElement('table');table.style.cssText='border-collapse:separate;border-spacing:4px;width:100%';
-  var thead=document.createElement('thead'),hr=document.createElement('tr');
-  var th0=document.createElement('th');th0.style.width='40px';hr.appendChild(th0);
-  DEMO.horas.forEach(function(h){var th=document.createElement('th');th.className='mono';th.style.cssText='font-size:11px;color:#9ca3af;font-weight:500;text-align:center;min-width:44px;padding-bottom:8px';th.textContent=h;hr.appendChild(th);});
-  thead.appendChild(hr);table.appendChild(thead);
-  var tbody=document.createElement('tbody');
-  DEMO.heatmap.forEach(function(row){var tr=document.createElement('tr');var td0=document.createElement('td');td0.className='mono';td0.style.cssText='font-size:11px;color:#6b7280;padding-right:8px;font-weight:500';td0.textContent=row.d;tr.appendChild(td0);row.h.forEach(function(val,i){var td=document.createElement('td');td.style.padding='2px';var cell=document.createElement('div');cell.className='hm-cell';cell.style.cssText='background:'+gc(val)+';color:'+gt(val);cell.textContent=val;cell.title=row.d+' '+DEMO.horas[i]+': '+val+' atend.';td.appendChild(cell);tr.appendChild(td);});tbody.appendChild(tr);});
-  table.appendChild(tbody);wrap.appendChild(table);
-  var leg=document.createElement('div');leg.style.cssText='display:flex;align-items:center;gap:8px;margin-top:12px;justify-content:flex-end';
-  var l1=document.createElement('span');l1.className='mono';l1.style.cssText='font-size:11px;color:#9ca3af';l1.textContent='Menos';leg.appendChild(l1);
-  colors.slice(1).forEach(function(c){var d=document.createElement('div');d.style.cssText='width:16px;height:16px;border-radius:4px;background:'+c;leg.appendChild(d);});
-  var l2=document.createElement('span');l2.className='mono';l2.style.cssText='font-size:11px;color:#9ca3af';l2.textContent='Mais';leg.appendChild(l2);
-  wrap.appendChild(leg);return wrap;
-}
-
-function buildDashboard(){
-  var c=document.getElementById('page-dashboard');
-  var nome=USER.nome||'Meu Negócio',user=USER.user||'você',primeiro=user.split(' ')[0];
-  var hora=new Date().getHours(),saudacao=hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
-  var ins=INSIGHTS[USER.segmento||'outro']||INSIGHTS.outro;
-
-  var demo=document.createElement('div');demo.style.cssText='background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px';
-  demo.innerHTML='<span style="font-size:16px">💡</span><p style="font-size:13px;color:#92400e;line-height:1.5"><strong>Você está vendo dados de demonstração.</strong> Envie sua planilha real em <a href="#" onclick="navigate(\'upload\');return false;" style="color:#1e84c3;font-weight:600">Enviar Dados</a> para ver os insights do seu negócio.</p>';
-  c.appendChild(demo);
-
-  var banner=document.createElement('div');banner.className='card';banner.style.cssText='background:linear-gradient(135deg,#1e84c3 0%,#1561a0 100%);margin-bottom:24px';
-  banner.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><p style="color:rgba(255,255,255,0.75);font-size:13px;font-family:\'DM Mono\',monospace;margin-bottom:8px">'+saudacao+', '+primeiro+' 👋</p><h1 class="syne" style="font-weight:700;font-size:22px;color:#fff;margin-bottom:6px">Bem-vindo ao seu painel, '+nome+'.</h1><p style="color:rgba(255,255,255,0.8);font-size:15px">Temos <strong style="color:#fff">3 insights importantes</strong> para você explorar.</p></div><div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 18px;text-align:center;flex-shrink:0"><p style="color:rgba(255,255,255,0.7);font-size:11px;font-family:\'DM Mono\',monospace">DEMONSTRAÇÃO</p><p class="syne" style="color:#fff;font-size:14px;font-weight:600">Abr 2026</p></div></div>';
-  c.appendChild(banner);
-
-  var grid=document.createElement('div');grid.className='grid-4';grid.style.marginBottom='24px';
-  [{label:'Faturamento do Mês',v:'R$ 18.200',delta:'+8,4%',pos:true},{label:'Total de Transações',v:'387',delta:'+6,2%',pos:true},{label:'Ticket Médio',v:'R$ 47,03',delta:'+2,1%',pos:true},{label:'Novos Clientes',v:'94',delta:'-3,0%',pos:false}].forEach(function(m){
-    var mc=document.createElement('div');mc.className='metric-card';
-    mc.innerHTML='<p class="mono" style="font-size:11px;color:#6b7280;margin-bottom:10px;letter-spacing:0.3px">'+m.label.toUpperCase()+'</p><p class="syne" style="font-weight:700;font-size:26px;color:#1d1d1d;margin-bottom:6px">'+m.v+'</p><div style="display:flex;align-items:center;gap:6px"><span class="mono" style="font-size:13px;font-weight:700;color:'+(m.pos?'#16a34a':'#dc2626')+'">'+(m.pos?'↑':'↓')+' '+m.delta+'</span><span style="font-size:12px;color:#9ca3af">vs. mês anterior</span></div>';
-    grid.appendChild(mc);
-  });
-  c.appendChild(grid);
-
-  var row=document.createElement('div');row.className='grid-main';row.style.marginBottom='24px';
-  var chartCard=document.createElement('div');chartCard.className='card';
-  chartCard.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div><h3 class="syne" style="font-weight:700;font-size:16px;color:#1d1d1d">Faturamento — Últimos 6 Meses</h3><p style="font-size:13px;color:#6b7280;margin-top:2px">Tendência de crescimento consistente</p></div><span class="badge badge-green">+46,8% no período</span></div>';
-  chartCard.appendChild(lineChart(DEMO.fat6m,560,200));row.appendChild(chartCard);
-
-  var actCard=document.createElement('div');actCard.className='card';
-  actCard.innerHTML='<h3 class="syne" style="font-weight:700;font-size:16px;color:#1d1d1d;margin-bottom:16px">Atividade Recente</h3>';
-  [{ic:'📊',t:'Relatório de demonstração gerado',tm:'agora'},{ic:'🔔',t:'3 insights identificados nos dados',tm:'há 1 min'},{ic:'✅',t:'Onboarding concluído com sucesso',tm:'há 2 min'},{ic:'📁',t:'Dados de exemplo carregados',tm:'há 3 min'}].forEach(function(a,i,arr){
-    var item=document.createElement('div');item.style.cssText='display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:'+(i<arr.length-1?'1px solid #f3f4f6':'none');
-    item.innerHTML='<span style="font-size:18px">'+a.ic+'</span><div><p style="font-size:13px;color:#374151;line-height:1.4">'+a.t+'</p><p class="mono" style="font-size:11px;color:#9ca3af;margin-top:3px">'+a.tm+'</p></div>';
-    actCard.appendChild(item);
-  });
-  row.appendChild(actCard);c.appendChild(row);
-
-  var insCard=document.createElement('div');insCard.className='card';
-  insCard.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div><h3 class="syne" style="font-weight:700;font-size:18px;color:#1d1d1d">Insights da DAAT.</h3><p style="font-size:13px;color:#6b7280;margin-top:2px">Oportunidades identificadas para o seu tipo de negócio</p></div><span class="mono badge badge-gray">3 insights</span></div><div id="ins-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"></div>';
-  c.appendChild(insCard);
-  var ig=document.getElementById('ins-grid');
-  ins.forEach(function(item){var card=document.createElement('div');card.className='insight-card';card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><span style="font-size:26px">'+item.icon+'</span><span class="badge '+item.badge+'">'+item.impacto+'</span></div><h4 class="syne" style="font-weight:700;font-size:15px;color:#1d1d1d;margin-bottom:8px;line-height:1.3">'+item.titulo+'</h4><p style="font-size:13px;color:#4b5563;line-height:1.6;margin-bottom:12px">'+item.desc+'</p><div style="background:#f0f7fd;border-radius:10px;padding:10px 12px"><p class="mono" style="font-size:11px;color:#1e84c3;font-weight:600;margin-bottom:4px">SUGESTÃO DA DAAT.</p><p style="font-size:13px;color:#1d1d1d;line-height:1.5">'+item.sug+'</p></div>';ig.appendChild(card);});
-}
-
-function buildRelatorio(){
-  var c=document.getElementById('page-relatorio');
-  var nome=USER.nome||'Meu Negócio';
-  var ins=INSIGHTS[USER.segmento||'outro']||INSIGHTS.outro;
-  c.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px"><div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="badge badge-info">RELATÓRIO</span><span class="badge badge-demo">DEMONSTRAÇÃO</span></div><h1 class="syne" style="font-weight:800;font-size:26px;color:#1d1d1d;margin-bottom:4px">Relatório — Abril 2026</h1><p style="font-size:15px;color:#6b7280">'+nome+' · Gerado pela DAAT.</p></div><div style="display:flex;gap:10px;flex-shrink:0"><button class="btn-secondary" onclick="navigate(\'upload\')">⬆ Enviar dados reais</button><button class="btn-primary" onclick="gerarPDF()">⬇ Exportar PDF</button></div></div>';
-
-  var exec=document.createElement('div');exec.className='card';exec.style.marginBottom='24px';
-  exec.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><div style="width:4px;height:24px;background:#1e84c3;border-radius:2px"></div><h2 class="syne" style="font-weight:700;font-size:18px;color:#1d1d1d">Resumo Executivo</h2></div>';
-  ['Este é um relatório de demonstração gerado pela DAAT. para <strong>'+nome+'</strong>. Os dados apresentados são fictícios e servem para ilustrar como a análise real funcionará após o envio da sua planilha.','A DAAT analisa suas vendas, identifica padrões de comportamento dos clientes, aponta os horários e dias de maior e menor faturamento, e traduz tudo isso em ações concretas — em português claro, sem precisar de conhecimento técnico.','Para ver os insights reais do seu negócio, envie sua planilha de vendas na aba <strong>Enviar Dados</strong>. Aceitamos Excel (.xlsx), CSV e Google Sheets.'].forEach(function(txt){var par=document.createElement('p');par.style.cssText='font-size:14px;color:#374151;line-height:1.8;margin-bottom:14px';par.innerHTML=txt;exec.appendChild(par);});
-  c.appendChild(exec);
-
-  var op=document.createElement('div');op.className='card';op.style.marginBottom='24px';
-  op.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px"><div style="width:4px;height:24px;background:#f59e0b;border-radius:2px"></div><h2 class="syne" style="font-weight:700;font-size:18px;color:#1d1d1d">Oportunidades para '+nome+'</h2></div>';
-  ins.forEach(function(item){var d=document.createElement('div');d.style.cssText='display:flex;align-items:flex-start;gap:16px;padding:16px;background:#fafafa;border-radius:12px;border:1.5px solid #f3f4f6;margin-bottom:10px';d.innerHTML='<span style="font-size:24px;min-width:36px">'+item.icon+'</span><div style="flex:1"><p class="syne" style="font-weight:700;font-size:14px;color:#1d1d1d;margin-bottom:4px">'+item.titulo+'</p><p style="font-size:13px;color:#4b5563;line-height:1.5;margin-bottom:8px">'+item.desc+'</p><div style="background:#f0f7fd;border-radius:8px;padding:8px 12px"><p style="font-size:12px;color:#1e84c3;font-weight:600;margin-bottom:2px">PRÓXIMO PASSO</p><p style="font-size:13px;color:#1d1d1d">'+item.sug+'</p></div></div><span class="badge '+item.badge+'" style="flex-shrink:0">'+item.impacto+'</span>';op.appendChild(d);});
-  c.appendChild(op);
-
-  var ch=document.createElement('div');ch.className='card';ch.style.marginBottom='24px';
-  ch.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px"><div style="width:4px;height:24px;background:#1e84c3;border-radius:2px"></div><h2 class="syne" style="font-weight:700;font-size:18px;color:#1d1d1d">Visão dos Dados (Demonstração)</h2></div>';
-  var cr=document.createElement('div');cr.className='grid-2';cr.style.marginBottom='24px';
-  var fat=document.createElement('div');fat.innerHTML='<h4 class="syne" style="font-weight:700;font-size:15px;color:#1d1d1d;margin-bottom:6px">Faturamento por Semana</h4><p style="font-size:13px;color:#6b7280;margin-bottom:16px">Dados de exemplo — envie sua planilha para ver os seus.</p>';fat.appendChild(barChart(DEMO.semanas,400,180));cr.appendChild(fat);
-  var cli=document.createElement('div');cli.innerHTML='<h4 class="syne" style="font-weight:700;font-size:15px;color:#1d1d1d;margin-bottom:6px">Novos vs. Recorrentes</h4><p style="font-size:13px;color:#6b7280;margin-bottom:16px">Estimativa para o seu segmento.</p>';
-  var dr=document.createElement('div');dr.style.cssText='display:flex;align-items:center;gap:20px';dr.appendChild(donutChart([{value:68,fill:'#1e84c3'},{value:32,fill:'#c8c8d0'}],160));
-  var ld=document.createElement('div');ld.style.cssText='display:flex;flex-direction:column;gap:12px';
-  [{n:'Recorrentes',v:'68%',co:'#1e84c3'},{n:'Novos',v:'32%',co:'#c8c8d0'}].forEach(function(d){var it=document.createElement('div');it.style.cssText='display:flex;align-items:center;gap:8px';it.innerHTML='<div style="width:10px;height:10px;border-radius:50%;background:'+d.co+'"></div><span style="font-size:13px;color:#374151">'+d.n+'</span><span class="mono" style="font-weight:700;font-size:16px;color:#1d1d1d;margin-left:4px">'+d.v+'</span>';ld.appendChild(it);});
-  dr.appendChild(ld);cli.appendChild(dr);cr.appendChild(cli);ch.appendChild(cr);
-  var hm=document.createElement('div');hm.innerHTML='<h4 class="syne" style="font-weight:700;font-size:15px;color:#1d1d1d;margin-bottom:6px">Mapa de Calor — Horários</h4><p style="font-size:13px;color:#6b7280;margin-bottom:16px">Distribuição de atendimentos ao longo da semana.</p>';hm.appendChild(renderHeatmap());ch.appendChild(hm);c.appendChild(ch);
-}
-
-function buildUpload(){
-  var c=document.getElementById('page-upload');
-  var nome=USER.nome||'Meu Negócio';
-  var segLabels={barbearia:'Barbearia / Beleza',restaurante:'Restaurante',varejo:'Varejo',saude:'Saúde / Estética',servicos:'Serviços',educacao:'Educação',outro:'Outro'};
-  c.innerHTML='<div style="margin-bottom:28px"><h1 class="syne" style="font-weight:800;font-size:26px;color:#1d1d1d;margin-bottom:6px">Enviar Dados Reais</h1><p style="font-size:15px;color:#6b7280">Envie sua planilha para a DAAT analisar e gerar insights do seu negócio de verdade.</p></div>';
-  var grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:1fr 320px;gap:24px';
-  var up=document.createElement('div');up.className='card';
-  up.innerHTML='<h3 class="syne" style="font-weight:700;font-size:17px;color:#1d1d1d;margin-bottom:6px">Nova Análise</h3><p style="font-size:13px;color:#6b7280;margin-bottom:24px">Pode ser planilha de vendas, atendimentos, pedidos ou qualquer controle que você já faça.</p><div class="upload-zone" onclick="this.style.borderColor=\'#1e84c3\';this.style.background=\'#f0f7fd\'"><div style="font-size:52px;margin-bottom:16px">📂</div><p class="syne" style="font-weight:700;font-size:18px;color:#1d1d1d;margin-bottom:8px">Arraste o arquivo aqui</p><p style="font-size:14px;color:#6b7280;margin-bottom:20px">ou clique para selecionar</p><button class="btn-primary" style="font-size:14px;padding:12px 24px">Selecionar arquivo</button></div><div style="display:flex;gap:12px;margin-top:16px"><div style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e5e7eb"><span style="font-size:20px">📊</span><div><p style="font-size:13px;font-weight:600;color:#1d1d1d">.xlsx / .xls</p><p style="font-size:11px;color:#6b7280">Excel</p></div></div><div style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e5e7eb"><span style="font-size:20px">📄</span><div><p style="font-size:13px;font-weight:600;color:#1d1d1d">.csv</p><p style="font-size:11px;color:#6b7280">CSV</p></div></div><div style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e5e7eb"><span style="font-size:20px">🔗</span><div><p style="font-size:13px;font-weight:600;color:#1d1d1d">Sheets</p><p style="font-size:11px;color:#6b7280">Google</p></div></div></div>';
-  grid.appendChild(up);
-  var side=document.createElement('div');side.style.cssText='display:flex;flex-direction:column;gap:16px';
-  var tips=document.createElement('div');tips.className='card';
-  tips.innerHTML='<h4 class="syne" style="font-weight:700;font-size:15px;color:#1d1d1d;margin-bottom:16px">💡 Como preparar seus dados</h4><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:10px"><span style="font-size:16px;flex-shrink:0">✅</span><p style="font-size:13px;color:#374151;line-height:1.5">Inclua <strong>data</strong>, <strong>valor</strong> e <strong>tipo</strong> de venda em colunas separadas</p></div><div style="display:flex;gap:10px"><span style="font-size:16px;flex-shrink:0">✅</span><p style="font-size:13px;color:#374151;line-height:1.5">Quanto mais meses de histórico, mais precisos os insights</p></div><div style="display:flex;gap:10px"><span style="font-size:16px;flex-shrink:0">✅</span><p style="font-size:13px;color:#374151;line-height:1.5">Não precisa formatar — a DAAT faz a limpeza automaticamente</p></div><div style="display:flex;gap:10px"><span style="font-size:16px;flex-shrink:0">✅</span><p style="font-size:13px;color:#374151;line-height:1.5">Dados de cliente são opcionais</p></div></div>';
-  side.appendChild(tips);
-  var acc=document.createElement('div');acc.className='card';
-  acc.innerHTML='<h4 class="syne" style="font-weight:700;font-size:15px;color:#1d1d1d;margin-bottom:14px">Sua conta</h4><div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#6b7280">Empresa</span><span style="font-size:13px;font-weight:600;color:#1d1d1d">'+nome+'</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#6b7280">Segmento</span><span style="font-size:13px;font-weight:600;color:#1d1d1d">'+(segLabels[USER.segmento]||'—')+'</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#6b7280">Responsável</span><span style="font-size:13px;font-weight:600;color:#1d1d1d">'+(USER.user||'—')+'</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#6b7280">Plano</span><span class="badge badge-info">Analista Recorrente</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#6b7280">Trial</span><span style="font-size:13px;font-weight:600;color:#15803d">14 dias restantes</span></div></div>';
-  side.appendChild(acc);grid.appendChild(side);c.appendChild(grid);
-}
-</script>
-<script>
-
-
-
-
-// ════════════════════════════════════════════════════════════════
-// DAAT SaaS — Extensões JS
-// Bloco separado — não modifica o script original
-// ════════════════════════════════════════════════════════════════
-
-var STORAGE_KEY   = 'daat_sessao_v1';
-var HISTORICO_KEY = 'daat_historico_v1';
-var DADOS_REAIS   = null;
-var ADMIN_URL     = 'https://script.google.com/macros/s/AKfycbxTJ6wEOVMuba17F_3IwphDMYTpcnNN4AjoMeYWvnkUk6LI6CVQqPtGFK8z2QY-RnIv/exec';
-var IA_URL        = 'https://api.anthropic.com/v1/messages';
-
-// ── UTILS ────────────────────────────────────────────────────────
-function mostrarToast(msg) {
-  var t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#1d1d1d;color:white;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;transition:transform 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,.3);border-left:3px solid #1e84c3;white-space:nowrap;';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(function(){ t.style.transform = 'translateX(-50%) translateY(0)'; }, 50);
-  setTimeout(function(){ t.style.transform = 'translateX(-50%) translateY(60px)'; setTimeout(function(){ t.remove(); }, 300); }, 3000);
-}
-
-// ── SESSAO ────────────────────────────────────────────────────────
-function salvarSessao() {
   try {
-    var seg = USER.segmento || 'outro';
-    var sessao = { user: USER, insights: {}, dadosReais: DADOS_REAIS, paginaAtiva: currentPage || 'dashboard', ts: Date.now() };
-    if (INSIGHTS[seg]) sessao.insights[seg] = INSIGHTS[seg];
-    if (INSIGHTS['__ia__']) sessao.insights['__ia__'] = true;
-    if (INSIGHTS['__real__']) sessao.insights['__real__'] = true;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessao));
-  } catch(e) {}
-}
-
-function carregarSessao() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    var s = JSON.parse(raw);
-    if (!s.ts || (Date.now() - s.ts) > 7*24*60*60*1000) { localStorage.removeItem(STORAGE_KEY); return null; }
-    s.ts = Date.now();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-    return s;
-  } catch(e) { return null; }
-}
-
-function limparSessao() { localStorage.removeItem(STORAGE_KEY); location.reload(); }
-
-// ── HISTORICO ─────────────────────────────────────────────────────
-function carregarHistorico() {
-  try { return JSON.parse(localStorage.getItem(HISTORICO_KEY) || '[]'); } catch(e) { return []; }
-}
-
-function salvarRelatorioNoHistorico() {
-  try {
-    var seg = USER.segmento || 'outro';
-    var segLabels = { barbearia:'Barbearia', restaurante:'Restaurante', varejo:'Varejo', saude:'Saúde', servicos:'Serviços', educacao:'Educação', outro:'Negócio' };
-    var ins = INSIGHTS[seg] || [];
-    if (!ins.length) return;
-    var hist = carregarHistorico();
-    hist.unshift({ id: Date.now(), data: new Date().toLocaleDateString('pt-BR'), hora: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), empresa: USER.nome||'Meu Negócio', segmento: segLabels[seg]||seg, insights: ins.length, geradoPorIA: !!INSIGHTS['__ia__'], dadosReais: !!INSIGHTS['__real__'], resumoInsights: ins.map(function(i){ return {titulo:i.titulo,impacto:i.impacto,badge:i.badge}; }) });
-    if (hist.length > 20) hist = hist.slice(0,20);
-    localStorage.setItem(HISTORICO_KEY, JSON.stringify(hist));
-  } catch(e) {}
-}
-
-// ── NAVIGATE EXTENDIDO ────────────────────────────────────────────
-var currentPage = 'dashboard';
-var _nav0 = navigate;
-navigate = function(page) {
-  currentPage = page;
-  // Garante que page-historico e page-planos sao controladas
-  var extras = ['historico','planos'];
-  extras.forEach(function(pg){ var el = document.getElementById('page-'+pg); if(el) el.style.display = pg===page ? '' : 'none'; });
-  _nav0(page);
-  // Constroi paginas extras na primeira vez
-  if (page === 'historico') buildHistorico();
-  if (page === 'planos')    buildPlanos();
-  salvarSessao();
-};
-
-// ── ENTERAPP EXTENDIDO ────────────────────────────────────────────
-var _ea0 = enterApp;
-enterApp = function() {
-  _ea0();
-  salvarSessao();
-  setTimeout(salvarRelatorioNoHistorico, 800);
-  setTimeout(function(){ enviarParaAdmin('onboarding_concluido'); }, 1200);
-  // Botao nova sessao no sidebar
-  setTimeout(function(){
-    var sb = document.querySelector('.sidebar');
-    if (!sb || document.getElementById('btn-nova-sessao')) return;
-    var btn = document.createElement('button');
-    btn.id = 'btn-nova-sessao';
-    btn.style.cssText = 'margin:0 16px 16px;padding:10px 14px;background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;width:calc(100% - 32px);text-align:left;transition:all .2s;font-family:inherit;';
-    btn.textContent = '↺ Nova sessão';
-    btn.onmouseover = function(){ btn.style.borderColor='rgba(255,255,255,.25)'; btn.style.color='rgba(255,255,255,.7)'; };
-    btn.onmouseout  = function(){ btn.style.borderColor='rgba(255,255,255,.1)';  btn.style.color='rgba(255,255,255,.4)'; };
-    btn.onclick = function(){ if(confirm('Iniciar nova sessão? Os dados serão apagados.')) limparSessao(); };
-    sb.appendChild(btn);
-  }, 300);
-};
-
-// ── SIMUPLOAD — USA SHEETJS REAL NA OB-ZONE ──────────────────────
-simUpload = function() {
-  var zone = document.getElementById('ob-zone');
-
-  // Cria input file oculto
-  var input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.xlsx,.xls,.csv';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-
-  // Quando arquivo selecionado — processa com SheetJS
-  input.addEventListener('change', function() {
-    var file = input.files && input.files[0];
-    if (!file) return;
-
-    // Feedback visual — lendo
-    zone.classList.add('done');
-    zone.innerHTML = '<div style="text-align:center"><div style="font-size:40px;margin-bottom:10px">⏳</div><p class="syne" style="font-weight:700;font-size:16px;color:#1e84c3;margin-bottom:4px">Lendo '+file.name+'...</p><p style="font-size:13px;color:#6b7280">Processando sua planilha</p></div>';
-
-    lerPlanilha(file, function(res) {
-      if (res.erro) {
-        zone.innerHTML = '<div style="text-align:center"><div style="font-size:40px;margin-bottom:10px">⚠️</div><p class="syne" style="font-weight:700;font-size:15px;color:#dc2626;margin-bottom:4px">Erro ao ler arquivo</p><p style="font-size:13px;color:#6b7280">'+res.erro+'</p></div>';
-        return;
-      }
-
-      // Sucesso — mostra confirmacao
-      zone.innerHTML = '<div style="text-align:center"><div style="font-size:40px;margin-bottom:10px">✅</div><p class="syne" style="font-weight:700;font-size:16px;color:#15803d;margin-bottom:4px">'+file.name+'</p><p style="font-size:13px;color:#6b7280">'+res.totalLinhas+' registros · '+res.headers.length+' colunas encontradas</p></div>';
-
-      DADOS_REAIS = res.resumo;
-
-      // Avanca para processamento e gera insights com dados reais
-      setTimeout(function() {
-        goStep(3);
-        gerarInsightsIA(res.resumo, USER.segmento||'outro', USER.nome||'Meu Negocio')
-          .then(function(ins) {
-            INSIGHTS[USER.segmento||'outro'] = ins;
-            INSIGHTS['__ia__'] = true;
-            INSIGHTS['__real__'] = true;
-            salvarRelatorioNoHistorico();
-            enviarParaAdmin('insights_gerados');
-          })
-          .catch(function(err) {
-            console.warn('IA indisponivel, usando insights por segmento:', err);
-          });
-      }, 800);
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: email,
+      empresa: empresa,
+      nome: nome,
+      app_url: DAAT_SELL_APP_URL,
     });
+  } catch (e) {
+    console.error('Falha ao enviar e-mail de boas-vindas:', e);
+    // não bloqueia o cadastro — o cliente já foi criado com sucesso de qualquer forma
+  }
+}
+
+// ===== STATE (cache local, alimentado pelo Supabase) =====
+let produtos = [];
+let vendas = [];
+let clientes = [];
+let agendamentos = [];
+let itens = [{ prodId:'', qty:1, preco:0 }];
+let organizacaoId = null;
+
+// ===== AUTH =====
+function toggleSenhaVisivel() {
+  const input = document.getElementById('login-senha');
+  const btn = event.target;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+function toggleSenhaVisivelCadastro() {
+  const input = document.getElementById('cad-senha');
+  const btn = event.target;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+function mostrarCadastro() {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('cadastro-box').style.display = 'block';
+}
+
+function mostrarLogin() {
+  document.getElementById('cadastro-box').style.display = 'none';
+  document.getElementById('login-box').style.display = 'block';
+}
+
+async function cadastrarNovoCliente() {
+  const empresa = document.getElementById('cad-empresa').value.trim();
+  const nome    = document.getElementById('cad-nome').value.trim();
+  const email   = document.getElementById('cad-email').value.trim();
+  const senha   = document.getElementById('cad-senha').value;
+  const errEl   = document.getElementById('cadastro-error');
+  errEl.style.display = 'none';
+
+  if (!empresa || !nome || !email || !senha) {
+    errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return;
+  }
+  if (senha.length < 6) {
+    errEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; errEl.style.display = 'block'; return;
+  }
+
+  // 1) cria o usuário de login
+  const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({ email, password: senha });
+  if (signUpErr) {
+    errEl.textContent = 'Erro ao criar acesso: ' + signUpErr.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  const userId = signUpData.user?.id;
+  if (!userId || !signUpData.session) {
+    errEl.textContent = 'Usuário criado, mas precisa confirmar por e-mail antes de continuar. Pra evitar isso, desative a confirmação de e-mail em Authentication > Providers > Email (desmarque "Confirm email") no painel do Supabase.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // força a sessão recém-criada a ficar ativa no client antes de prosseguir
+  // (evita problema de timing onde o insert seguinte sai sem o token do usuário novo)
+  await supabaseClient.auth.setSession({
+    access_token: signUpData.session.access_token,
+    refresh_token: signUpData.session.refresh_token,
   });
 
-  // Abre seletor imediatamente
-  input.click();
-};
+  // 2) cria a organização + o perfil numa única operação no banco
+  // (contorna o paradoxo de RLS: ver a organização recém-criada exige
+  // um perfil que só existe depois dela — por isso usamos uma função
+  // no banco que faz as duas coisas de uma vez)
+  const { data: sessaoCheck } = await supabaseClient.auth.getSession();
+  if (!sessaoCheck.session) {
+    errEl.textContent = 'Usuário criado, mas a sessão não ficou ativa. Provavelmente a confirmação de e-mail ainda está exigida no projeto — veja Authentication > Providers > Email > "Confirm email".';
+    errEl.style.display = 'block';
+    return;
+  }
+  const { error: cadastroErr } = await supabaseClient.rpc('cadastrar_novo_cliente', {
+    p_nome_empresa: empresa,
+    p_nome_responsavel: nome,
+  });
+  if (cadastroErr) {
+    errEl.textContent = 'Usuário criado, mas houve erro ao vincular a organização: ' + cadastroErr.message;
+    errEl.style.display = 'block';
+    return;
+  }
 
-// ── BUILDUPLOAD EXTENDIDO ─────────────────────────────────────────
-var _bu0 = buildUpload;
-buildUpload = function() {
-  _bu0();
-  setTimeout(function(){
-    var zone = document.querySelector('#page-upload .upload-zone');
-    if (zone) configurarUploadReal(zone);
-  }, 100);
-};
+  toast('Cliente cadastrado! Pode fazer login agora.');
+  enviarEmailBoasVindas(empresa, nome, email);
+  ['cad-empresa','cad-nome','cad-email','cad-senha'].forEach(id => document.getElementById(id).value = '');
+  await supabaseClient.auth.signOut(); // sai da sessão do cliente recém-criado, volta pro login
+  mostrarLogin();
+}
 
-// ── SHEETJS — UPLOAD REAL ─────────────────────────────────────────
-function lerPlanilha(file, cb) {
-  var r = new FileReader();
-  r.onload = function(e) {
-    try {
-      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      if (!rows || rows.length < 2) { cb({erro:'Planilha vazia.'}); return; }
-      var headers = rows[0].map(function(h){ return String(h).trim(); });
-      var data = rows.slice(1).filter(function(r){ return r.some(function(c){ return c!==''&&c!==null; }); });
-      var resumo = resumirDados(headers, data, file.name);
-      cb({ok:true, resumo:resumo, headers:headers, totalLinhas:data.length});
-    } catch(err) { cb({erro:'Erro: '+err.message}); }
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; errEl.style.display = 'block'; return; }
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+  if (error) {
+    errEl.textContent = 'Erro: ' + error.message + (error.status ? ' (status ' + error.status + ')' : '');
+    errEl.style.display = 'block';
+    console.error('Erro de login completo:', error);
+    return;
+  }
+  await iniciarApp();
+}
+
+async function fazerLogout() {
+  await supabaseClient.auth.signOut();
+  document.getElementById('app-wrap').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-senha').value = '';
+}
+
+async function iniciarApp() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return;
+
+  const { data: perfil, error: perfilErr } = await supabaseClient
+    .from('perfis').select('organizacao_id').eq('id', user.id).single();
+
+  if (perfilErr || !perfil) {
+    document.getElementById('login-error').textContent = 'Usuário sem organização vinculada. Fale com a DAAT.';
+    document.getElementById('login-error').style.display = 'block';
+    await supabaseClient.auth.signOut();
+    return;
+  }
+
+  organizacaoId = perfil.organizacao_id;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-wrap').style.display = 'block';
+
+  await carregarTudo();
+  setDefaultDate();
+  renderItens();
+  renderProdutos();
+}
+
+async function carregarTudo() {
+  const [p, v, c, a] = await Promise.all([
+    supabaseClient.from('produtos').select('*').order('nome'),
+    supabaseClient.from('vendas').select('*').order('data', { ascending: false }),
+    supabaseClient.from('clientes').select('*').order('nome'),
+    supabaseClient.from('agendamentos').select('*').order('data'),
+  ]);
+  produtos = (p.data || []).map(mapProdutoDb);
+  vendas = (v.data || []).map(mapVendaDb);
+  clientes = (c.data || []).map(mapClienteDb);
+  agendamentos = (a.data || []).map(mapAgendamentoDb);
+}
+
+// mapeia nomes de coluna do banco (snake_case) pros nomes usados no front (camelCase)
+function mapProdutoDb(p) {
+  return { id: p.id, nome: p.nome, fornecedor: p.fornecedor, serie: p.serie, categoria: p.categoria,
+    volume: p.volume, unidade: p.unidade, custo: Number(p.custo), preco: Number(p.preco),
+    estoque: p.estoque, estoqueMin: p.estoque_min, obs: p.obs, ativo: p.ativo };
+}
+function mapVendaDb(v) {
+  return { id: v.id, data: v.data, vendedor: v.vendedor, canal: v.canal, cliente: v.cliente,
+    itens: v.itens || [], total: Number(v.total), comissao: Number(v.comissao || 0) };
+}
+function mapAgendamentoDb(a) {
+  return { id: a.id, clienteId: a.cliente_id, clienteNome: a.cliente_nome, data: a.data,
+    hora: a.hora, motivo: a.motivo, obs: a.obs, status: a.status };
+}
+
+// ===== TOAST =====
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// checa se já existe sessão ativa ao carregar a página
+(async function checkSession() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) await iniciarApp();
+})();
+
+// ===== TABS =====
+function switchTab(tab) {
+  const names = ['produtos','vendas','crm','historico','dashboard','config'];
+  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', names[i] === tab));
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'produtos')   renderProdutos();
+  if (tab === 'vendas')     { setDefaultDate(); renderItens(); }
+  if (tab === 'crm')        { renderClienteSelect(); renderAgenda(); renderClientes(); }
+  if (tab === 'historico')  renderHistorico();
+  if (tab === 'dashboard')  renderDashboard();
+  if (tab === 'config')     renderConfig();
+}
+
+// ===== HEADER DATE =====
+function updateDate() {
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+}
+updateDate();
+
+// ===== LINHA BADGE =====
+function serieBadge(s) {
+  if (!s) return '';
+  return `<span class="badge badge-gold">${s}</span>`;
+}
+
+// ===== ADD PRODUTO =====
+async function addProduto() {
+  const nome = document.getElementById('f-nome').value.trim();
+  if (!nome) { toast('Preencha o nome do produto.'); return; }
+  const novo = {
+    organizacao_id: organizacaoId,
+    nome,
+    fornecedor: document.getElementById('f-forn').value.trim(),
+    serie: document.getElementById('f-serie').value.trim(),
+    categoria: document.getElementById('f-cat').value.trim(),
+    volume: document.getElementById('f-vol').value.trim(),
+    unidade: document.getElementById('f-un').value,
+    custo: parseFloat(document.getElementById('f-custo').value) || 0,
+    preco: parseFloat(document.getElementById('f-preco').value) || 0,
+    estoque: parseInt(document.getElementById('f-est').value) || 0,
+    estoque_min: parseInt(document.getElementById('f-estmin').value) || 3,
+    obs: document.getElementById('f-obs').value.trim(),
+    ativo: true,
   };
-  r.readAsArrayBuffer(file);
+  const { data, error } = await supabaseClient.from('produtos').insert(novo).select().single();
+  if (error) { toast('Erro ao salvar produto.'); console.error(error); return; }
+  produtos.push(mapProdutoDb(data));
+  ['f-forn','f-nome','f-serie','f-cat','f-vol','f-custo','f-preco','f-est','f-estmin','f-obs'].forEach(id => document.getElementById(id).value = '');
+  renderProdutos(); toast('Produto adicionado!');
 }
 
-function resumirDados(headers, rows, fileName) {
-  var r = '';
-
-  // Metadados basicos
-  r += 'Arquivo: ' + fileName + '.\n';
-  r += 'Total de registros: ' + rows.length + '.\n';
-  r += 'Colunas: ' + headers.join(', ') + '.\n\n';
-
-  // Analise numerica de todas as colunas com valores
-  var numericas = [];
-  headers.forEach(function(h, ci) {
-    var vals = [];
-    rows.forEach(function(row) {
-      var raw = String(row[ci] || '').replace(/[R$\s.]/g,'').replace(',','.');
-      var v = parseFloat(raw);
-      if (!isNaN(v) && v > 0) vals.push(v);
-    });
-    if (vals.length > rows.length * 0.3) { // coluna com 30%+ de valores numericos
-      var soma = vals.reduce(function(a,b){return a+b;},0);
-      var media = soma / vals.length;
-      var min = Math.min.apply(null, vals);
-      var max = Math.max.apply(null, vals);
-      numericas.push(h);
-      r += 'Coluna "' + h + '": soma=' + soma.toFixed(2) + ', media=' + media.toFixed(2) + ', min=' + min.toFixed(2) + ', max=' + max.toFixed(2) + ', registros=' + vals.length + '.\n';
-    }
-  });
-
-  // Analise de frequencia para colunas de texto
-  headers.forEach(function(h, ci) {
-    var freq = {};
-    rows.forEach(function(row) {
-      var v = String(row[ci] || '').trim();
-      if (v && v.length > 0 && v.length < 60) freq[v] = (freq[v]||0) + 1;
-    });
-    var uniq = Object.keys(freq).length;
-    // Se tem entre 2 e 50 valores distintos, e interessante para analise
-    if (uniq >= 2 && uniq <= 50) {
-      var top = Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];}).slice(0,8);
-      r += 'Coluna "' + h + '" (' + uniq + ' categorias): ' + top.map(function(k){return k+'='+freq[k];}).join(', ') + '.\n';
-    }
-  });
-
-  // Amostra das primeiras 5 linhas completas
-  r += '\nAmostra das primeiras linhas:\n';
-  rows.slice(0, 5).forEach(function(row, i) {
-    var linha = headers.map(function(h, ci) { return h+': '+(row[ci]||''); }).join(' | ');
-    r += 'Linha '+(i+1)+': '+linha+'\n';
-  });
-
-  return r;
+function popularFiltrosProduto() {
+  const serieSel = document.getElementById('f-serie-filtro');
+  const catSel   = document.getElementById('f-cat-filtro');
+  const serieAtual = serieSel.value, catAtual = catSel.value;
+  const series = [...new Set(produtos.map(p => p.serie).filter(Boolean))].sort();
+  const cats   = [...new Set(produtos.map(p => p.categoria).filter(Boolean))].sort();
+  serieSel.innerHTML = '<option value="">Todas as linhas</option>' + series.map(s => `<option ${s===serieAtual?'selected':''}>${s}</option>`).join('');
+  catSel.innerHTML   = '<option value="">Todas categorias</option>' + cats.map(c => `<option ${c===catAtual?'selected':''}>${c}</option>`).join('');
 }
 
-function configurarUploadReal(zoneEl) {
-  // Remove o onclick inline que impede o listener de funcionar
-  zoneEl.removeAttribute('onclick');
+// ===== RENDER PRODUTOS =====
+function renderProdutos() {
+  popularFiltrosProduto();
+  const busca  = (document.getElementById('busca').value || '').toLowerCase();
+  const serie  = document.getElementById('f-serie-filtro').value;
+  const cat    = document.getElementById('f-cat-filtro').value;
+  const status = document.getElementById('f-status-filtro').value;
 
-  var input = document.createElement('input');
-  input.type='file'; input.accept='.xlsx,.xls,.csv'; input.style.display='none';
-  document.body.appendChild(input);
+  let lista = produtos.filter(p => {
+    if (busca && !p.nome.toLowerCase().includes(busca) && !(p.obs||'').toLowerCase().includes(busca)) return false;
+    if (serie && p.serie !== serie) return false;
+    if (cat   && p.categoria !== cat) return false;
+    if (status === 'ativo'   && !p.ativo) return false;
+    if (status === 'inativo' &&  p.ativo) return false;
+    if (status === 'baixo'   && !(p.ativo && p.estoque <= p.estoqueMin)) return false;
+    return true;
+  });
 
-  function processar(file) {
-    zoneEl.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:36px;margin-bottom:12px">⏳</div><p class="syne" style="font-weight:700;font-size:16px;color:#1e84c3">Lendo '+file.name+'...</p></div>';
-    lerPlanilha(file, function(res){
-      if (res.erro) {
-        zoneEl.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:36px">⚠️</div><p style="color:#dc2626;font-weight:600">'+res.erro+'</p></div>';
-        return;
-      }
-      zoneEl.innerHTML = '<div style="text-align:center;padding:16px"><div style="font-size:36px;margin-bottom:10px">✅</div><p class="syne" style="font-weight:700;font-size:15px;color:#15803d">'+file.name+'</p><p style="font-size:13px;color:#6b7280">'+res.totalLinhas+' registros · '+res.headers.slice(0,4).join(', ')+'</p></div>';
-      DADOS_REAIS = res.resumo;
-      setTimeout(function(){
-        gerarInsightsIA(res.resumo, USER.segmento||'outro', USER.nome||'Meu Negocio')
-          .then(function(ins){ INSIGHTS[USER.segmento||'outro']=ins; INSIGHTS['__ia__']=true; INSIGHTS['__real__']=true; navigate('dashboard'); })
-          .catch(function(){ navigate('dashboard'); });
-      }, 800);
-    });
+  document.getElementById('prod-count').textContent = `(${lista.length} de ${produtos.length})`;
+
+  if (!lista.length) {
+    document.getElementById('prod-table').innerHTML = '<div class="empty"><i class="ti ti-package"></i>Nenhum produto encontrado</div>';
+    return;
   }
 
-  // Clique na zona ou no botao interno abre o seletor
-  zoneEl.addEventListener('click', function(e){ input.click(); });
-  input.addEventListener('change', function(){ if(input.files&&input.files[0]) processar(input.files[0]); });
-  zoneEl.addEventListener('dragover', function(e){ e.preventDefault(); zoneEl.style.borderColor='#1e84c3'; zoneEl.style.background='#f0f7fd'; });
-  zoneEl.addEventListener('dragleave', function(){ zoneEl.style.borderColor=''; zoneEl.style.background=''; });
-  zoneEl.addEventListener('drop', function(e){ e.preventDefault(); zoneEl.style.borderColor=''; zoneEl.style.background=''; if(e.dataTransfer.files[0]) processar(e.dataTransfer.files[0]); });
-}
+  let h = `<table><thead><tr>
+    <th>Produto</th><th>Série</th><th>Categoria</th><th>Volume</th>
+    <th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th>Status</th><th></th>
+  </tr></thead><tbody>`;
 
-// ── IA ANTHROPIC ──────────────────────────────────────────────────
-async function gerarInsightsIA(dados, seg, nome) {
-  var segLabels = { barbearia:'Barbearia', restaurante:'Restaurante', varejo:'Varejo', saude:'Saude', servicos:'Servicos', educacao:'Educacao', outro:'Negocio' };
-  var segLabel = segLabels[seg] || seg;
+  lista.forEach(p => {
+    const margem = p.preco > 0 && p.custo > 0 ? ((p.preco - p.custo) / p.preco * 100).toFixed(0) + '%' : '—';
+    const baixo  = p.ativo && p.estoque <= p.estoqueMin;
+    const estBadge = p.estoque === 0 ? `<span class="badge badge-red">${p.estoque} un</span>`
+                   : baixo ? `<span class="badge badge-amber">${p.estoque} un</span>`
+                   : `${p.estoque} un`;
+    const statusBadge = !p.ativo ? `<span class="badge badge-gray">Inativo</span>`
+                      : baixo   ? `<span class="badge badge-amber"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> Baixo</span>`
+                      : `<span class="badge badge-green">Ativo</span>`;
 
-  // Sistema: define o papel e o nivel de qualidade esperado
-  var sistema = 'Voce e um analista de dados senior com 10 anos de experiencia em consultoria para pequenas e medias empresas brasileiras. ' +
-    'Seu trabalho e analisar dados reais de empresas e transformar esses dados em insights profundos, especificos e acionaveis. ' +
-    'Voce nunca gera insights genericos. Cada insight que voce entrega menciona numeros reais, categorias reais e sugere acoes concretas e implementaveis. ' +
-    'Voce escreve como um consultor de confianca que conhece o negocio do cliente — nao como um sistema automatizado.';
-
-  // Usuario: dados reais + instrucoes de raciocinio em cadeia
-  var usuario =
-    'Empresa: ' + nome + '
-' +
-    'Segmento: ' + segLabel + '
-
-' +
-    'DADOS REAIS DA PLANILHA:
-' +
-    dados + '
-
-' +
-    'PROCESSO DE ANALISE — siga estas etapas antes de responder:
-' +
-    '1. Leia todos os dados acima com atencao
-' +
-    '2. Identifique os 3 padroes mais relevantes: concentracoes, quedas, oportunidades de receita ou riscos operacionais
-' +
-    '3. Para cada padrao, calcule ou estime o impacto financeiro usando os numeros reais
-' +
-    '4. Formule uma sugestao acionavel e especifica para cada padrao
-
-' +
-    'REGRAS OBRIGATORIAS:
-' +
-    '- Cite numeros reais da planilha (ex: "R$ 3.240", "42 clientes", "produto X")
-' +
-    '- Nunca escreva frases vagas como "seus dados mostram oportunidades" ou "considere melhorar"
-' +
-    '- Cada descricao deve ter 2-3 frases densas com fatos concretos
-' +
-    '- Cada sugestao deve ser especifica: O QUE fazer, COMO fazer, em QUANTO TEMPO
-' +
-    '- Use linguagem de consultor de confianca, nao de sistema automatico
-' +
-    '- Se os dados forem insuficientes para um insight, diga o que falta e por que importa
-
-' +
-    'Responda APENAS com JSON valido, sem texto adicional, sem markdown:
-' +
-    '{"insights":[
-' +
-    '  {"icon":"emoji relevante","titulo":"titulo direto com dado real","impacto":"ALTO","badge":"badge-alto","desc":"2-3 frases com numeros e fatos concretos do negocio.","sug":"Acao especifica: o que fazer, como fazer e em quanto tempo."}
-' +
-    ']}
-' +
-    'badge: badge-alto para ALTO, badge-medio para MEDIO, badge-gray para BAIXO.';
-
-  // Usa system + user separados para melhor qualidade
-  var resp = await fetch(IA_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      system: sistema,
-      messages: [{ role: 'user', content: usuario }]
-    })
+    h += `<tr>
+      <td>
+        <div style="font-weight:600;color:var(--text);">${p.nome}</div>
+        ${p.obs ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${p.obs.length > 50 ? p.obs.slice(0,50)+'…' : p.obs}</div>` : ''}
+      </td>
+      <td>${serieBadge(p.serie)}</td>
+      <td style="font-size:12px;color:var(--text2);">${p.categoria || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${p.volume || '—'}</td>
+      <td>${p.custo > 0 ? 'R$ ' + p.custo.toFixed(2) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td>${p.preco > 0 ? '<span style="color:var(--accent);font-weight:600;">R$ ' + p.preco.toFixed(2) + '</span>' : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:12px;">${margem}</td>
+      <td>${estBadge}</td>
+      <td>${statusBadge}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-outline btn-sm" onclick="editEstoque('${p.id}')" title="Editar estoque/preço"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-outline btn-sm" onclick="toggleAtivo('${p.id}')" style="margin-left:4px;">${p.ativo ? 'Desativar' : 'Ativar'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProduto('${p.id}')" style="margin-left:4px;"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
   });
 
-  if (!resp.ok) throw new Error('API ' + resp.status);
-  var data = await resp.json();
-  var text = data.content[0].text.trim().replace(/```json|```/g, '').trim();
-
-  // Parse robusto
-  var parsed;
-  try {
-    parsed = JSON.parse(text);
-  } catch(e) {
-    // Tenta extrair o JSON do meio do texto
-    var match = text.match(/\{[\s\S]*\}/);
-    if (match) parsed = JSON.parse(match[0]);
-    else throw new Error('JSON invalido: ' + text.slice(0,100));
-  }
-
-  return parsed.insights;
+  h += '</tbody></table>';
+  document.getElementById('prod-table').innerHTML = h;
 }
 
-// ── ADMIN SHEETS ──────────────────────────────────────────────────
-function enviarParaAdmin(evento) {
-  try {
-    var seg = USER.segmento||'outro';
-    var segLabels = { barbearia:'Barbearia', restaurante:'Restaurante', varejo:'Varejo', saude:'Saúde', servicos:'Serviços', educacao:'Educação', outro:'Outro' };
-    var payload = { empresa:USER.nome||'Sem nome', segmento:segLabels[seg]||seg, plano:'P3 — Analista Recorrente', insights:(INSIGHTS[seg]||[]).length, ia:INSIGHTS['__ia__']?'Sim':'Não', ultimoAcesso:new Date().toLocaleString('pt-BR'), evento:evento||'acesso' };
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', ADMIN_URL, true);
-    xhr.setRequestHeader('Content-Type','text/plain');
-    xhr.send(JSON.stringify(payload));
-  } catch(e) {}
+async function toggleAtivo(id) {
+  const p = produtos.find(x => x.id === id);
+  if (!p) return;
+  const { error } = await supabaseClient.from('produtos').update({ ativo: !p.ativo }).eq('id', id);
+  if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
+  p.ativo = !p.ativo; renderProdutos();
 }
 
-// ── PDF EXPORT ────────────────────────────────────────────────────
-function gerarPDF() {
-  var btn = event.target;
-  btn.disabled = true; btn.textContent = '⟳ Gerando...';
-  try {
-    var doc = new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    var W=210, H=297;
-    var nome = USER.nome||'Meu Negócio';
-    var seg  = USER.segmento||'outro';
-    var segLabels = {barbearia:'Barbearia',restaurante:'Restaurante',varejo:'Varejo',saude:'Saúde',servicos:'Serviços',educacao:'Educação',outro:'Negócio'};
-    var ins  = INSIGHTS[seg]||INSIGHTS.outro||[];
-    var data = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-    var mes  = new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-
-    // CAPA
-    doc.setFillColor(13,29,45); doc.rect(0,0,W,H,'F');
-    doc.setFillColor(30,132,195); doc.rect(0,0,4,H,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(28); doc.setTextColor(255,255,255);
-    doc.text('DAAT',20,30);
-    doc.setTextColor(30,132,195); doc.text('.',20+doc.getTextWidth('DAAT'),30);
-    doc.setFontSize(38); doc.setTextColor(255,255,255);
-    doc.text('Relatório de',20,95); doc.text('Insights',20,113);
-    doc.setTextColor(30,132,195); doc.text(mes+'.',20,131);
-    doc.setDrawColor(30,132,195); doc.setLineWidth(1.5); doc.line(20,139,90,139);
-    doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(255,255,255,0.7);
-    doc.text(nome,20,153);
-    doc.setFontSize(10); doc.setTextColor(150,150,150);
-    doc.text(segLabels[seg]+' · Gerado em '+data,20,161);
-    doc.setFontSize(8); doc.setTextColor(100,100,100);
-    doc.text('daat.comercial@gmail.com · @daat.tech · Confidencial',W/2,H-10,{align:'center'});
-
-    // PAG 2
-    doc.addPage();
-    doc.setFillColor(244,244,246); doc.rect(0,0,W,H,'F');
-    doc.setFillColor(29,29,29); doc.rect(0,0,W,14,'F');
-    doc.setFillColor(30,132,195); doc.rect(0,14,W,1.5,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
-    doc.text('DAAT.',20,9);
-    doc.setFont('helvetica','normal'); doc.setTextColor(160,160,160);
-    doc.text('  |  '+nome,33,9);
-    doc.setTextColor(120,120,120); doc.text('Pág. 2',W-20,9,{align:'right'});
-
-    var py = 26;
-    doc.setFillColor(30,132,195); doc.rect(20,py,3,18,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(29,29,29);
-    doc.text('Insights Identificados',26,py+12);
-    doc.setDrawColor(200,200,210); doc.setLineWidth(0.3); doc.line(26,py+16,W-20,py+16);
-    py += 26;
-
-    var cores = {'badge-alto':[239,68,68],'badge-medio':[245,158,11],'badge-green':[34,197,94],'badge-gray':[107,114,128]};
-    var impLabels = {'badge-alto':'ALTO','badge-medio':'MÉDIO','badge-green':'ALTO','badge-gray':'BAIXO'};
-    ins.forEach(function(item,i){
-      var c = cores[item.badge]||[107,114,128];
-      doc.setFillColor(255,255,255); doc.roundedRect(20,py,W-40,46,3,3,'F');
-      doc.setFillColor(c[0],c[1],c[2]); doc.rect(20,py,W-40,2.5,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(c[0],c[1],c[2]);
-      doc.text(String(i+1).padStart(2,'0'),29,py+13,{align:'center'});
-      doc.setFontSize(11); doc.setTextColor(29,29,29);
-      doc.text(item.titulo||'',38,py+13);
-      var bl = 'IMPACTO: '+(impLabels[item.badge]||'MÉDIO');
-      doc.setFontSize(7); doc.setTextColor(c[0],c[1],c[2]);
-      doc.text(bl,W-22,py+12,{align:'right'});
-      doc.setDrawColor(240,240,244); doc.setLineWidth(0.3); doc.line(24,py+20,W-24,py+20);
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
-      var dlines = doc.splitTextToSize(item.desc||'',W-56);
-      doc.text(dlines.slice(0,2),38,py+27);
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(30,132,195);
-      doc.text('→',24,py+39);
-      doc.setFont('helvetica','normal'); doc.setTextColor(60,100,140);
-      var slines = doc.splitTextToSize(item.sug||'',W-56);
-      doc.text(slines[0]||'',30,py+39);
-      py += 52;
-    });
-
-    doc.setFillColor(29,29,29); doc.rect(0,H-14,W,14,'F');
-    doc.setFillColor(30,132,195); doc.rect(0,H-14,W,1.5,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
-    doc.text('DAAT.',20,H-5.5);
-    doc.setFont('helvetica','normal'); doc.setTextColor(130,130,130);
-    doc.text('daat.comercial@gmail.com',W/2,H-5.5,{align:'center'});
-    doc.setTextColor(100,100,100);
-    doc.text(data,W-20,H-5.5,{align:'right'});
-
-    var fname = 'DAAT_'+nome.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
-    doc.save(fname);
-  } catch(err) { alert('Erro PDF: '+err.message); }
-  finally { btn.disabled=false; btn.innerHTML='⬇ Exportar PDF'; }
+async function deleteProduto(id) {
+  if (!confirm('Remover produto?')) return;
+  const { error } = await supabaseClient.from('produtos').delete().eq('id', id);
+  if (error) { toast('Erro ao remover produto.'); console.error(error); return; }
+  produtos = produtos.filter(x => x.id !== id);
+  renderProdutos();
 }
 
-// ── HISTORICO PAGE ────────────────────────────────────────────────
-function buildHistorico() {
-  var c = document.getElementById('page-historico');
-  if (!c || c.innerHTML.trim()) return;
-  var hist = carregarHistorico();
-  var h = '<div style="padding:28px 32px">';
-  h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px"><div><h1 class="syne" style="font-weight:800;font-size:26px;color:#1d1d1d;margin-bottom:6px">Histórico de Relatórios</h1><p style="font-size:14px;color:#6b7280">Análises geradas para '+(USER.nome||'Meu Negócio')+'</p></div><button onclick="navigate(\'upload\')" class="btn-primary" style="font-size:14px;padding:12px 20px">+ Nova Análise</button></div>';
-  if (!hist.length) {
-    h += '<div style="text-align:center;padding:80px 40px;background:white;border-radius:16px;border:1.5px solid #e5e7eb"><div style="font-size:64px;margin-bottom:20px">🗂</div><h3 class="syne" style="font-weight:700;font-size:20px;margin-bottom:10px">Nenhum relatório ainda</h3><p style="font-size:14px;color:#6b7280;max-width:360px;margin:0 auto 24px">Gere seus primeiros insights no dashboard ou envie uma planilha.</p><button onclick="navigate(\'upload\')" class="btn-primary">Enviar planilha</button></div>';
+async function editEstoque(id) {
+  const p = produtos.find(x => x.id === id);
+  if (!p) return;
+  const novoEst  = prompt(`Estoque atual de "${p.nome}":`, p.estoque);
+  if (novoEst === null) return;
+  const novoCusto = prompt('Custo (R$):', p.custo);
+  if (novoCusto === null) return;
+  const novoPreco = prompt('Preço de venda (R$):', p.preco);
+  if (novoPreco === null) return;
+  const estoque = parseInt(novoEst) || 0;
+  const custo   = parseFloat(novoCusto) || 0;
+  const preco   = parseFloat(novoPreco) || 0;
+  const { error } = await supabaseClient.from('produtos').update({ estoque, custo, preco }).eq('id', id);
+  if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
+  p.estoque = estoque; p.custo = custo; p.preco = preco;
+  renderProdutos(); toast('Produto atualizado!');
+}
+
+// ===== VENDAS =====
+function setDefaultDate() {
+  const d = document.getElementById('v-data');
+  if (!d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+function renderItens() {
+  const ativos = produtos.filter(p => p.ativo);
+  let h = '';
+  itens.forEach((item, i) => {
+    const opts = ativos.map(p =>
+      `<option value="${p.id}" ${p.id == item.prodId ? 'selected' : ''}>${p.nome} — ${p.serie || ''}${p.volume ? ' ('+p.volume+')' : ''} · R$${p.preco.toFixed(2)}</option>`
+    ).join('');
+    h += `<div class="item-line">
+      <div class="form-group"><label>Produto</label><select onchange="updateItem(${i},'prodId',this.value)"><option value="">Selecionar...</option>${opts}</select></div>
+      <div class="form-group"><label>Qtd</label><input type="number" value="${item.qty}" min="1" step="1" onchange="updateItem(${i},'qty',this.value)" /></div>
+      <div class="form-group"><label>Preço unit.</label><input type="number" value="${item.preco.toFixed(2)}" step="0.01" onchange="updateItem(${i},'preco',this.value)" /></div>
+      <button class="btn btn-danger" onclick="removeItem(${i})" style="margin-bottom:1px;align-self:end;"><i class="ti ti-x"></i></button>
+    </div>`;
+  });
+  document.getElementById('itens-wrap').innerHTML = h;
+  calcTotal();
+}
+
+function updateItem(i, field, val) {
+  if (field === 'prodId') {
+    itens[i].prodId = val || '';
+    const p = produtos.find(x => x.id === val);
+    if (p) itens[i].preco = p.preco;
+  } else if (field === 'qty')   { itens[i].qty   = parseInt(val) || 1; }
+  else if (field === 'preco')   { itens[i].preco = parseFloat(val) || 0; }
+  renderItens();
+}
+
+function addItem()    { itens.push({ prodId:'', qty:1, preco:0 }); renderItens(); }
+function removeItem(i){ itens.splice(i, 1); if (!itens.length) itens = [{ prodId:'', qty:1, preco:0 }]; renderItens(); }
+
+function calcTotal() {
+  const total    = itens.reduce((s, i) => s + i.qty * i.preco, 0);
+  const pct      = parseFloat(document.getElementById('v-comissao-pct').value) || 0;
+  const comissao = total * (pct / 100);
+  const wrap     = document.getElementById('v-total-wrap');
+  document.getElementById('v-total').textContent = 'R$ ' + total.toFixed(2);
+  const comEl = document.getElementById('v-comissao');
+  if (comissao > 0) {
+    comEl.innerHTML = `<span style="font-size:13px;color:var(--blue);"><i class="ti ti-percentage" style="font-size:12px;"></i> Comissão (${pct}%): <strong>R$ ${comissao.toFixed(2)}</strong></span>`;
+    comEl.style.display = 'block';
   } else {
-    var totalIA = hist.filter(function(r){return r.geradoPorIA;}).length;
-    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">';
-    h += '<div class="card" style="padding:16px 20px"><p class="mono" style="font-size:10px;color:#9ca3af;letter-spacing:.5px;margin-bottom:6px">TOTAL DE ANÁLISES</p><p class="syne" style="font-weight:800;font-size:28px;color:#1d1d1d">'+hist.length+'</p></div>';
-    h += '<div class="card" style="padding:16px 20px"><p class="mono" style="font-size:10px;color:#9ca3af;letter-spacing:.5px;margin-bottom:6px">GERADAS POR IA</p><p class="syne" style="font-weight:800;font-size:28px;color:#1e84c3">'+totalIA+'</p></div>';
-    h += '<div class="card" style="padding:16px 20px"><p class="mono" style="font-size:10px;color:#9ca3af;letter-spacing:.5px;margin-bottom:6px">ÚLTIMO ACESSO</p><p class="syne" style="font-weight:800;font-size:20px;color:#8b5cf6">'+(hist[0]?hist[0].data:'—')+'</p></div>';
-    h += '</div><div style="display:flex;flex-direction:column;gap:12px">';
-    hist.forEach(function(rel,i){
-      var bc=rel.geradoPorIA?'rgba(30,132,195,.08)':'rgba(107,114,128,.08)';
-      var tc=rel.geradoPorIA?'#1e84c3':'#6b7280';
-      var bl=rel.geradoPorIA?'✦ IA':'⊞ Demo';
-      h += '<div class="card" style="padding:20px 24px;cursor:pointer" onclick="navigate(\'relatorio\')">';
-      h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
-      h += '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><p class="syne" style="font-weight:700;font-size:15px;color:#1d1d1d">Análise #'+(hist.length-i)+' — '+rel.empresa+'</p><span style="font-size:10px;background:'+bc+';color:'+tc+';padding:2px 8px;border-radius:3px;font-family:monospace">'+bl+'</span></div><p style="font-size:12px;color:#9ca3af">'+rel.segmento+' · '+rel.data+' às '+rel.hora+' · '+rel.insights+' insights</p></div>';
-      h += '<button onclick="event.stopPropagation();navigate(\'relatorio\')" class="btn-secondary" style="font-size:12px;padding:8px 14px">Ver →</button></div>';
-      h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-      (rel.resumoInsights||[]).forEach(function(ins){
-        var bg=ins.badge==='badge-alto'?'rgba(239,68,68,.08)':ins.badge==='badge-medio'?'rgba(245,158,11,.08)':'rgba(107,114,128,.08)';
-        var cl=ins.badge==='badge-alto'?'#dc2626':ins.badge==='badge-medio'?'#d97706':'#6b7280';
-        h += '<span style="font-size:11px;background:'+bg+';color:'+cl+';padding:4px 10px;border-radius:4px">'+ins.titulo+'</span>';
-      });
-      h += '</div></div>';
-    });
-    h += '</div>';
+    comEl.style.display = 'none';
   }
-  h += '</div>';
-  c.innerHTML = h;
+  wrap.style.display = total > 0 ? 'block' : 'none';
 }
 
-// ── PLANOS PAGE ───────────────────────────────────────────────────
-function buildPlanos() {
-  var c = document.getElementById('page-planos');
-  if (!c || c.innerHTML.trim()) return;
-  var planos = [
-    {id:'p1',num:'P1',cor:'#22c55e',corBg:'rgba(34,197,94,.08)',nome:'Formulário Personalizado',tipo:'Único',valor:'R$ 359',periodo:'pagamento único',itens:['Formulário digital personalizado para o seu segmento','Integração com Google Sheets — dados limpos','Entrega em até 5 dias úteis','1 rodada de ajustes gratuita'],cta:'Contratar P1',destaque:false},
-    {id:'p2',num:'P2',cor:'#1e84c3',corBg:'rgba(30,132,195,.08)',nome:'Análise dos Dados',tipo:'Único',valor:'R$ 897',periodo:'pagamento único',itens:['Análise completa dos dados do seu negócio','Relatório de insights em linguagem humana','Recomendações priorizadas com impacto estimado','Apresentação de 30 min por videochamada'],cta:'Contratar P2',destaque:true},
-    {id:'p3',num:'P3',cor:'#8b5cf6',corBg:'rgba(139,92,246,.08)',nome:'Analista Recorrente',tipo:'Mensal',valor:'R$ 497',periodo:'/ mês',itens:['Monitoramento mensal dos seus dados','Relatório mensal de insights e variações','Reunião mensal de 30 min + suporte WhatsApp','Cancela quando quiser após 3 meses'],cta:'Plano Atual',destaque:false}
-  ];
-  var h = '<div style="padding:28px 32px">';
-  h += '<div style="margin-bottom:24px"><h1 class="syne" style="font-weight:800;font-size:26px;color:#1d1d1d;margin-bottom:6px">Planos e Upgrade</h1><p style="font-size:14px;color:#6b7280">Escolha o plano ideal para o momento do seu negócio</p></div>';
-  h += '<div style="background:linear-gradient(135deg,#0a1929,#0d2235);border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center"><div><p class="syne" style="font-weight:700;font-size:15px;color:white;margin-bottom:4px">Por que DAAT em vez de analista CLT?</p><p style="font-size:13px;color:rgba(255,255,255,.5)">Analista CLT: R$ 8.000+/mês com encargos · DAAT: a partir de R$ 359</p></div><div style="text-align:right"><p class="syne" style="font-weight:800;font-size:28px;color:#22c55e;letter-spacing:-1px">-90%</p><p style="font-size:10px;color:rgba(255,255,255,.3);font-family:monospace">NO CUSTO MENSAL</p></div></div>';
-  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">';
-  planos.forEach(function(p){
-    var isAtual = p.id==='p3';
-    h += '<div style="background:white;border-radius:12px;border:'+(isAtual?'2px solid '+p.cor:'1.5px solid #e5e7eb')+';padding:24px;display:flex;flex-direction:column;position:relative;overflow:hidden">';
-    if(p.destaque) h += '<div style="position:absolute;top:0;right:0;background:'+p.cor+';color:white;font-size:10px;font-weight:600;padding:4px 12px;border-radius:0 12px 0 8px;font-family:monospace">POPULAR</div>';
-    if(isAtual) h += '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+p.cor+';border-radius:12px 12px 0 0"></div>';
-    h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:32px;height:32px;border-radius:8px;background:'+p.corBg+';display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:11px;font-weight:700;color:'+p.cor+'">'+p.num+'</div><p class="syne" style="font-weight:700;font-size:13px;color:#1d1d1d">'+p.nome+'</p></div>';
-    h += '<div style="margin-bottom:14px"><span class="syne" style="font-weight:800;font-size:30px;color:'+p.cor+';letter-spacing:-1px">'+p.valor+'</span><span style="font-size:13px;color:#9ca3af;margin-left:4px">'+p.periodo+'</span></div>';
-    h += '<div style="flex:1;display:flex;flex-direction:column;gap:7px;margin-bottom:18px">';
-    p.itens.forEach(function(it){ h += '<div style="display:flex;gap:8px;align-items:flex-start"><span style="color:'+p.cor+';font-size:12px;margin-top:1px;flex-shrink:0">✓</span><span style="font-size:12px;color:#374151;line-height:1.45">'+it+'</span></div>'; });
-    h += '</div>';
-    if(isAtual) { h += '<div style="text-align:center;padding:10px;background:'+p.corBg+';border-radius:8px;border:1.5px solid rgba(139,92,246,.2)"><p style="font-size:13px;font-weight:600;color:'+p.cor+'">✓ Plano atual</p></div>'; }
-    else { h += '<a href="https://wa.me/5511999999999" target="_blank" style="display:block;text-align:center;padding:11px;background:'+p.cor+';color:white;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">'+p.cta+' →</a>'; }
-    h += '</div>';
+async function salvarVenda() {
+  const data     = document.getElementById('v-data').value;
+  const vendedor = document.getElementById('v-vendedor').value.trim();
+  const canal    = document.getElementById('v-canal').value;
+  const cliente  = document.getElementById('v-cliente').value.trim();
+  const pct      = parseFloat(document.getElementById('v-comissao-pct').value) || 0;
+  const validos  = itens.filter(i => i.prodId && i.qty > 0);
+  if (!data || !validos.length) { toast('Preencha data e ao menos um produto.'); return; }
+  const total     = validos.reduce((s, i) => s + i.qty * i.preco, 0);
+  const comissao  = parseFloat((total * (pct / 100)).toFixed(2));
+
+  const { data: vendaSalva, error } = await supabaseClient.from('vendas').insert({
+    organizacao_id: organizacaoId, data, vendedor, canal, cliente,
+    itens: validos.map(i => ({ ...i })), total, comissao,
+  }).select().single();
+  if (error) { toast('Erro ao salvar venda.'); console.error(error); return; }
+  vendas.push(mapVendaDb(vendaSalva));
+
+  // atualiza estoque dos produtos vendidos (local + banco)
+  for (const item of validos) {
+    const p = produtos.find(x => x.id === item.prodId);
+    if (!p) continue;
+    const novoEstoque = Math.max(0, p.estoque - item.qty);
+    const { error: errEst } = await supabaseClient.from('produtos').update({ estoque: novoEstoque }).eq('id', p.id);
+    if (!errEst) p.estoque = novoEstoque;
+  }
+
+  itens = [{ prodId:'', qty:1, preco:0 }];
+  document.getElementById('v-cliente').value = '';
+  document.getElementById('v-canal').value = '';
+  document.getElementById('v-vendedor').value = '';
+  document.getElementById('v-comissao-pct').value = '';
+  renderItens(); toast('Venda salva! Estoque atualizado.');
+}
+
+// ===== HISTÓRICO =====
+function renderHistorico() {
+  const busca = (document.getElementById('h-busca').value || '').toLowerCase();
+  const de    = document.getElementById('h-de').value;
+  const ate   = document.getElementById('h-ate').value;
+
+  let lista = [...vendas].reverse().filter(v => {
+    if (busca && !(v.cliente||'').toLowerCase().includes(busca) && !(v.canal||'').toLowerCase().includes(busca) && !(v.vendedor||'').toLowerCase().includes(busca)) return false;
+    if (de  && v.data < de)  return false;
+    if (ate && v.data > ate) return false;
+    return true;
   });
-  h += '</div>';
-  h += '<div style="text-align:center;padding:24px;background:linear-gradient(135deg,rgba(30,132,195,.04),rgba(30,132,195,.08));border-radius:12px;border:1px solid rgba(30,132,195,.15)"><p class="syne" style="font-weight:700;font-size:16px;color:#1d1d1d;margin-bottom:6px">Diagnóstico gratuito de 30 min</p><p style="font-size:13px;color:#6b7280;margin-bottom:16px">Entendemos seu negócio e indicamos o melhor plano — sem compromisso.</p><a href="https://wa.me/5511999999999" target="_blank" style="display:inline-block;padding:13px 28px;background:#1e84c3;color:white;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none">Agendar diagnóstico →</a></div>';
-  h += '</div>';
-  c.innerHTML = h;
+
+  if (!lista.length) {
+    document.getElementById('hist-table').innerHTML = '<div class="empty"><i class="ti ti-receipt"></i>Nenhuma venda encontrada</div>';
+    return;
+  }
+
+  let h = `<table><thead><tr><th>Data</th><th>Vendedor</th><th>Canal</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Comissão</th><th></th></tr></thead><tbody>`;
+  lista.forEach(v => {
+    const nomes = v.itens.map(i => {
+      const p = produtos.find(x => x.id == i.prodId);
+      return (p ? p.nome : 'Removido') + ` ×${i.qty}`;
+    }).join(', ');
+    const comissaoCell = v.comissao > 0
+      ? `<span style="color:var(--blue);font-weight:600;">R$ ${v.comissao.toFixed(2)}</span>`
+      : `<span style="color:var(--text3);">—</span>`;
+    h += `<tr>
+      <td>${v.data.split('-').reverse().join('/')}</td>
+      <td>${v.vendedor ? `<span class="badge badge-gold"><i class="ti ti-user" style="font-size:10px;"></i> ${v.vendedor}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
+      <td><span class="badge badge-gray">${v.canal || '—'}</span></td>
+      <td style="color:var(--text2);font-size:12px;">${v.cliente || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${nomes}</td>
+      <td style="font-weight:700;color:var(--accent);">R$ ${v.total.toFixed(2)}</td>
+      <td>${comissaoCell}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteVenda('${v.id}')"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  document.getElementById('hist-table').innerHTML = h;
 }
 
-// ── JA TENHO CONTA ────────────────────────────────────────────────
-function tentarEntrar() {
-  var sessao = carregarSessao();
-  if (sessao && sessao.user && sessao.user.nome) {
-    USER.nome = sessao.user.nome||''; USER.user = sessao.user.user||'';
-    USER.segmento = sessao.user.segmento||''; USER.porte = sessao.user.porte||'';
-    if (sessao.insights) {
-      var seg = USER.segmento||'outro';
-      if (sessao.insights[seg]) INSIGHTS[seg] = sessao.insights[seg];
-      if (sessao.insights['__ia__']) INSIGHTS['__ia__'] = true;
-      if (sessao.insights['__real__']) INSIGHTS['__real__'] = true;
-    }
-    if (sessao.dadosReais) DADOS_REAIS = sessao.dadosReais;
-    enterApp();
-    setTimeout(function(){ mostrarToast('Bem-vindo de volta, '+(USER.user||'você')+'! 👋'); navigate(sessao.paginaAtiva||'dashboard'); }, 400);
-  } else {
-    var ex = document.getElementById('msg-conta'); if(ex) ex.remove();
-    var msg = document.createElement('div');
-    msg.id = 'msg-conta';
-    msg.style.cssText = 'background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;margin-top:12px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px;';
-    msg.innerHTML = '<span>⚠️</span> Nenhuma sessão encontrada. Complete o cadastro abaixo.';
-    var link = document.querySelector('a[onclick*="tentarEntrar"]');
-    if (link && link.parentNode) link.parentNode.insertAdjacentElement('afterend', msg);
-    setTimeout(function(){ if(msg&&msg.parentNode) msg.remove(); }, 4000);
-    goStep(1);
-  }
+async function deleteVenda(id) {
+  if (!confirm('Remover venda?')) return;
+  const { error } = await supabaseClient.from('vendas').delete().eq('id', id);
+  if (error) { toast('Erro ao remover venda.'); console.error(error); return; }
+  vendas = vendas.filter(v => v.id !== id);
+  renderHistorico();
 }
 
-// ── AUTO-RESTORE ──────────────────────────────────────────────────
-// Roda apos o DOM estar pronto e todas as funcoes definidas
-window.addEventListener('DOMContentLoaded', function() {
-  var sessao = carregarSessao();
-  if (!sessao || !sessao.user || !sessao.user.nome) return;
-  USER.nome = sessao.user.nome||''; USER.user = sessao.user.user||'';
-  USER.segmento = sessao.user.segmento||''; USER.porte = sessao.user.porte||'';
-  if (sessao.insights) {
-    var seg = USER.segmento||'outro';
-    if (sessao.insights[seg]) INSIGHTS[seg] = sessao.insights[seg];
-    if (sessao.insights['__ia__']) INSIGHTS['__ia__'] = true;
-    if (sessao.insights['__real__']) INSIGHTS['__real__'] = true;
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const totalRec  = vendas.reduce((s, v) => s + v.total, 0);
+  const nVendas   = vendas.length;
+  const ticket    = nVendas > 0 ? totalRec / nVendas : 0;
+  const ativos    = produtos.filter(p => p.ativo).length;
+  const baixo     = produtos.filter(p => p.ativo && p.estoque <= p.estoqueMin).length;
+
+  const comissaoTotal = vendas.reduce((s,v) => s + (v.comissao||0), 0);
+
+  document.getElementById('metricas').innerHTML = `
+    <div class="metric metric-accent">
+      <div class="metric-label">Receita total</div>
+      <div class="metric-value">R$ ${totalRec.toFixed(2)}</div>
+      <div class="metric-sub">todas as vendas</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Nº de vendas</div>
+      <div class="metric-value">${nVendas}</div>
+      <div class="metric-sub">registradas</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Ticket médio</div>
+      <div class="metric-value">R$ ${ticket.toFixed(2)}</div>
+      <div class="metric-sub">por venda</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Comissões</div>
+      <div class="metric-value" style="color:var(--blue);">R$ ${comissaoTotal.toFixed(2)}</div>
+      <div class="metric-sub">total no período</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Produtos ativos</div>
+      <div class="metric-value">${ativos}</div>
+      <div class="metric-sub">${baixo > 0 ? `<span style="color:var(--amber)">${baixo} com estoque baixo</span>` : 'estoque ok'}</div>
+    </div>
+  `;
+
+  // top produtos
+  const porProd = {};
+  vendas.forEach(v => v.itens.forEach(i => {
+    const p = produtos.find(x => x.id == i.prodId);
+    const nome = p ? p.nome : 'Removido';
+    if (!porProd[nome]) porProd[nome] = 0;
+    porProd[nome] += i.qty * i.preco;
+  }));
+  const topProd = Object.entries(porProd).sort((a,b) => b[1]-a[1]).slice(0,8);
+  const maxP = topProd[0]?.[1] || 1;
+  document.getElementById('rank-prod').innerHTML = topProd.length
+    ? topProd.map(([nome, val]) => `
+        <div class="bar-row">
+          <div class="bar-label"><span>${nome}</span><span>R$ ${val.toFixed(2)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxP*100)}%"></div></div>
+        </div>`).join('')
+    : '<div class="empty" style="padding:1.5rem"><i class="ti ti-chart-bar"></i>Sem dados</div>';
+
+  // top categorias
+  const porCat = {};
+  vendas.forEach(v => v.itens.forEach(i => {
+    const p = produtos.find(x => x.id == i.prodId);
+    const cat = p?.categoria || 'Outro';
+    if (!porCat[cat]) porCat[cat] = 0;
+    porCat[cat] += i.qty * i.preco;
+  }));
+  const topCat = Object.entries(porCat).sort((a,b) => b[1]-a[1]);
+  const colors = ['var(--accent)','var(--teal)','var(--purple)','var(--blue)','var(--green)','var(--amber)'];
+  const maxC = topCat[0]?.[1] || 1;
+  document.getElementById('rank-cat').innerHTML = topCat.length
+    ? topCat.map(([cat, val], i) => `
+        <div class="bar-row">
+          <div class="bar-label"><span>${cat}</span><span>R$ ${val.toFixed(2)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxC*100)}%;background:${colors[i%colors.length]}"></div></div>
+        </div>`).join('')
+    : '<div class="empty" style="padding:1.5rem"><i class="ti ti-tag"></i>Sem dados</div>';
+
+  // ranking vendedores
+  const vColorPalette = ['var(--blue)','var(--purple)','var(--accent)','var(--teal)','var(--green)','var(--red)'];
+  const porVend = {};
+  vendas.forEach(v => {
+    const nome = v.vendedor || 'Sem vendedor';
+    if (!porVend[nome]) porVend[nome] = { receita: 0, nVendas: 0, comissao: 0 };
+    porVend[nome].receita  += v.total;
+    porVend[nome].nVendas  += 1;
+    porVend[nome].comissao += (v.comissao || 0);
+  });
+  const rankV = Object.entries(porVend).sort((a,b) => b[1].receita - a[1].receita);
+  const vColors = {};
+  rankV.forEach(([nome], i) => { vColors[nome] = vColorPalette[i % vColorPalette.length]; });
+  const maxV  = rankV[0]?.[1].receita || 1;
+  const vHtml = rankV.map(([nome, d]) => `
+    <div class="bar-row" style="margin-bottom:14px;">
+      <div class="bar-label" style="margin-bottom:6px;">
+        <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);">
+          <i class="ti ti-user" style="font-size:14px;color:${vColors[nome]||'var(--text2)'}"></i>${nome}
+          <span style="font-size:11px;font-weight:400;color:var(--text3);">${d.nVendas} venda${d.nVendas!==1?'s':''}</span>
+          ${d.comissao > 0 ? `<span style="font-size:11px;font-weight:600;color:var(--blue);background:rgba(37,99,235,.12);padding:1px 7px;border-radius:10px;"><i class="ti ti-percentage" style="font-size:10px;"></i> R$ ${d.comissao.toFixed(2)}</span>` : ''}
+        </span>
+        <span style="color:${vColors[nome]||'var(--text)'};font-weight:700;">R$ ${d.receita.toFixed(2)}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${maxV>0?Math.round(d.receita/maxV*100):0}%;background:${vColors[nome]||'var(--accent)'}"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('rank-vendedor').innerHTML = rankV.length
+    ? vHtml
+    : '<div class="empty" style="padding:1.5rem"><i class="ti ti-users"></i>Nenhuma venda registrada ainda</div>';
+
+  // alertas
+  const alertas = produtos.filter(p => p.ativo && p.estoque <= p.estoqueMin);
+  if (!alertas.length) {
+    document.getElementById('alerta-estoque').innerHTML = '<div class="empty" style="padding:1.5rem"><i class="ti ti-circle-check" style="color:var(--green);"></i>Todos os produtos com estoque adequado</div>';
+    return;
   }
-  if (sessao.dadosReais) DADOS_REAIS = sessao.dadosReais;
-  var onb = document.getElementById('onboarding');
-  var app = document.getElementById('app');
-  if (onb && app) {
-    // Usa enterApp() para construir corretamente todas as paginas
-    // antes de navegar — evita pagina em branco
-    enterApp();
-    setTimeout(function(){
-      navigate(sessao.paginaAtiva||'dashboard');
-      mostrarToast('Bem-vindo de volta, '+(USER.user||'você')+'! 👋');
-    }, 200);
+  let ah = `<table><thead><tr><th>Produto</th><th>Série</th><th>Volume</th><th>Estoque atual</th><th>Mínimo</th><th>Status</th></tr></thead><tbody>`;
+  alertas.forEach(p => {
+    const s = p.estoque === 0 ? `<span class="badge badge-red">Zerado</span>` : `<span class="badge badge-amber">Baixo</span>`;
+    ah += `<tr><td><strong>${p.nome}</strong></td><td>${serieBadge(p.serie)}</td><td>${p.volume||'—'}</td><td>${p.estoque} un</td><td>${p.estoqueMin} un</td><td>${s}</td></tr>`;
+  });
+  ah += '</tbody></table>';
+  document.getElementById('alerta-estoque').innerHTML = ah;
+}
+
+// ===== CRM: CLIENTES =====
+function mapClienteDb(c) {
+  return { id: c.id, nome: c.nome, tel: c.telefone, obs: c.obs };
+}
+
+async function addCliente() {
+  const nome = document.getElementById('c-nome').value.trim();
+  if (!nome) { toast('Preencha o nome do cliente.'); return; }
+  const novo = {
+    organizacao_id: organizacaoId,
+    nome,
+    telefone: document.getElementById('c-tel').value.trim(),
+    obs: document.getElementById('c-obs').value.trim(),
+  };
+  const { data, error } = await supabaseClient.from('clientes').insert(novo).select().single();
+  if (error) { toast('Erro ao salvar cliente.'); console.error(error); return; }
+  clientes.push(mapClienteDb(data));
+  ['c-nome','c-tel','c-obs'].forEach(id => document.getElementById(id).value = '');
+  renderClientes(); renderClienteSelect(); toast('Cliente adicionado!');
+}
+
+async function deleteCliente(id) {
+  if (!confirm('Remover cliente? Agendamentos ligados a ele continuam na agenda.')) return;
+  const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
+  if (error) { toast('Erro ao remover cliente.'); console.error(error); return; }
+  clientes = clientes.filter(c => c.id !== id);
+  renderClientes(); renderClienteSelect();
+}
+
+function renderClienteSelect() {
+  const sel = document.getElementById('a-cliente');
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecionar...</option>' +
+    clientes.map(c => `<option value="${c.id}" ${c.id == atual ? 'selected' : ''}>${c.nome}${c.tel ? ' — ' + c.tel : ''}</option>`).join('');
+}
+
+function renderClientes() {
+  const wrap = document.getElementById('cliente-table');
+  if (!wrap) return;
+  document.getElementById('cliente-count').textContent = `(${clientes.length})`;
+  if (!clientes.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-address-book"></i>Nenhum cliente cadastrado ainda</div>';
+    return;
   }
-});
+  let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>Observações</th><th></th></tr></thead><tbody>`;
+  clientes.forEach(c => {
+    h += `<tr>
+      <td style="font-weight:600;">${c.nome}</td>
+      <td style="font-size:12px;color:var(--text2);">${c.tel || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${c.obs || '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+}
 
+// ===== CRM: AGENDAMENTOS =====
+async function addAgendamento() {
+  const clienteId = document.getElementById('a-cliente').value;
+  const data       = document.getElementById('a-data').value;
+  if (!clienteId || !data) { toast('Selecione o cliente e a data.'); return; }
+  const cliente = clientes.find(c => c.id === clienteId);
+  const novo = {
+    organizacao_id: organizacaoId,
+    cliente_id: clienteId,
+    cliente_nome: cliente ? cliente.nome : '—',
+    data,
+    hora: document.getElementById('a-hora').value || null,
+    motivo: document.getElementById('a-motivo').value,
+    obs: document.getElementById('a-obs').value.trim(),
+    status: 'Agendado',
+  };
+  const { data: salvo, error } = await supabaseClient.from('agendamentos').insert(novo).select().single();
+  if (error) { toast('Erro ao criar agendamento.'); console.error(error); return; }
+  agendamentos.push(mapAgendamentoDb(salvo));
+  ['a-data','a-hora','a-obs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('a-cliente').value = '';
+  document.getElementById('a-motivo').value = '';
+  renderAgenda(); toast('Agendamento criado!');
+}
 
+async function updateAgendaStatus(id, status) {
+  const { error } = await supabaseClient.from('agendamentos').update({ status }).eq('id', id);
+  if (error) { toast('Erro ao atualizar status.'); console.error(error); return; }
+  const a = agendamentos.find(x => x.id === id);
+  if (a) { a.status = status; renderAgenda(); }
+}
 
+async function deleteAgendamento(id) {
+  if (!confirm('Remover agendamento?')) return;
+  const { error } = await supabaseClient.from('agendamentos').delete().eq('id', id);
+  if (error) { toast('Erro ao remover agendamento.'); console.error(error); return; }
+  agendamentos = agendamentos.filter(a => a.id !== id);
+  renderAgenda();
+}
 
+function renderAgenda() {
+  const wrap = document.getElementById('agenda-table');
+  if (!wrap) return;
+  const statusFiltro = document.getElementById('ag-status-filtro').value;
+  let lista = [...agendamentos].sort((a, b) => (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')));
+  if (statusFiltro) lista = lista.filter(a => a.status === statusFiltro);
 
+  document.getElementById('agenda-count').textContent = `(${lista.length} de ${agendamentos.length})`;
+
+  if (!lista.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-calendar-event"></i>Nenhum agendamento encontrado</div>';
+    return;
+  }
+
+  const statusCls = { 'Agendado':'badge-amber', 'Confirmado':'badge-blue', 'Concluído':'badge-green', 'Cancelado':'badge-red' };
+  let h = `<table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Motivo</th><th>Status</th><th>Observações</th><th></th></tr></thead><tbody>`;
+  lista.forEach(a => {
+    h += `<tr>
+      <td>${a.data.split('-').reverse().join('/')}</td>
+      <td>${a.hora || '—'}</td>
+      <td style="font-weight:600;">${a.clienteNome}</td>
+      <td style="font-size:12px;color:var(--text2);">${a.motivo || '—'}</td>
+      <td>
+        <select onchange="updateAgendaStatus('${a.id}', this.value)" style="padding:4px 8px;font-size:11px;">
+          ${['Agendado','Confirmado','Concluído','Cancelado'].map(s => `<option ${s===a.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.obs || '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteAgendamento('${a.id}')"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+}
+
+// ===== CONFIG =====
+async function renderConfig() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  document.getElementById('cfg-email').value = user?.email || '';
+  const { data: org } = await supabaseClient.from('organizacoes').select('nome').eq('id', organizacaoId).single();
+  document.getElementById('cfg-empresa').value = org?.nome || '';
+  document.getElementById('cfg-nova-senha').value = '';
+  document.getElementById('cfg-confirma-senha').value = '';
+  const msg = document.getElementById('cfg-senha-msg');
+  msg.style.display = 'none';
+}
+
+function toggleSenhaVisivelCfg(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+async function trocarSenha() {
+  const nova = document.getElementById('cfg-nova-senha').value;
+  const confirma = document.getElementById('cfg-confirma-senha').value;
+  const msg = document.getElementById('cfg-senha-msg');
+  msg.style.display = 'block';
+
+  if (!nova || !confirma) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Preencha os dois campos.'; return;
+  }
+  if (nova.length < 6) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; return;
+  }
+  if (nova !== confirma) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'As senhas não coincidem.'; return;
+  }
+
+  const { error } = await supabaseClient.auth.updateUser({ password: nova });
+  if (error) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao trocar senha: ' + error.message; return;
+  }
+
+  msg.style.color = 'var(--green)'; msg.textContent = 'Senha atualizada com sucesso!';
+  document.getElementById('cfg-nova-senha').value = '';
+  document.getElementById('cfg-confirma-senha').value = '';
+  toast('Senha atualizada!');
+}
+
+// ===== INIT =====
+// (a inicialização acontece em iniciarApp(), chamada após login ou sessão existente)
 </script>
 </body>
 </html>
