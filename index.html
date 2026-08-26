@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DAAT. Sell — Sistema de Vendas & CRM</title>
+<title>DAAT.</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,21 +15,23 @@
     --bg: #f3ecdd;
     --bg2: #fffdf6;
     --bg3: #ffffff;
-    --border: rgba(20,18,12,0.14);
-    --border2: rgba(20,18,12,0.28);
+    --border: rgba(20,18,12,0.10);
+    --border2: rgba(20,18,12,0.16);
     --text: #14120c;
     --text2: #5c5748;
     --text3: #8d8672;
     --accent: #f5c400;
     --accent2: #ffd633;
-    --green: #1f9d63;
-    --red: #d1393b;
-    --amber: #b5790a;
-    --purple: #6b4fd6;
-    --teal: #0f9488;
-    --blue: #2563eb;
-    --radius: 8px;
-    --radius-sm: 4px;
+    --green: #7a9b6e;
+    --red: #c98a7a;
+    --amber: #c99a4a;
+    --sage: #93a884;
+    --terracota: #d3a184;
+    --lavanda: #b9ac9a;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 2px rgba(20,18,12,.04), 0 8px 24px -12px rgba(20,18,12,.12);
+    --shadow-sm: 0 1px 2px rgba(20,18,12,.05);
     --font-title: 'Archivo Black', sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
     --font-body: 'Inter', sans-serif;
@@ -38,15 +40,15 @@
   body {
     font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px;
     background-image:
-      linear-gradient(rgba(20,18,12,0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(20,18,12,0.05) 1px, transparent 1px);
-    background-size: 22px 22px;
+      linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
   /* HEADER */
-  header { background: var(--bg2); border-bottom: 1.5px solid var(--text); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 0; z-index: 100; }
+  header { background: rgba(255,253,246,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 72px; position: sticky; top: 0; z-index: 100; }
   .logo { display: flex; align-items: center; gap: 12px; }
-  .logo-word { font-family: var(--font-title); font-size: 19px; letter-spacing: 0.01em; color: var(--text); }
+  .logo-word { font-family: var(--font-title); font-size: 26px; letter-spacing: 0.01em; color: var(--text); }
   .logo-word .dot { color: var(--accent); }
   .header-sup { font-size: 10px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
   .by-daat { font-family: var(--font-mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; }
@@ -55,10 +57,10 @@
   #header-date { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
 
   /* TABS */
-  .tabs { display: flex; gap: 2px; padding: 0 2rem; background: var(--bg2); border-bottom: 1.5px solid var(--text); overflow-x: auto; }
-  .tab { padding: 12px 18px; font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: color .2s, border-color .2s; white-space: nowrap; }
-  .tab:hover { color: var(--text); }
-  .tab.active { color: var(--text); background: var(--accent); border-bottom-color: var(--text); font-weight: 600; }
+  .tabs { display: flex; gap: 4px; padding: 10px 2rem; background: transparent; overflow-x: auto; }
+  .tab { padding: 10px 16px; font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; background: transparent; border: none; border-radius: 999px; cursor: pointer; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: all .18s; white-space: nowrap; }
+  .tab:hover { color: var(--text); background: rgba(20,18,12,.04); }
+  .tab.active { color: var(--text); background: var(--accent); font-weight: 700; box-shadow: var(--shadow-sm); }
   .tab i { font-size: 16px; }
 
   /* LAYOUT */
@@ -67,74 +69,74 @@
   .section.active { display: block; }
 
   /* CARDS */
-  .card { background: var(--bg2); border: 1.5px solid var(--text); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
-  .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; font-family: var(--font-body); }
-  .card-title i { color: var(--text); background: var(--accent); border-radius: 4px; padding: 3px; font-size: 15px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; font-family: var(--font-body); }
+  .card-title i { color: var(--text); background: var(--accent); border-radius: 8px; padding: 6px; font-size: 15px; }
 
   /* GRID */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
-  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
   .form-group.full { grid-column: 1 / -1; }
   label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-family: var(--font-mono); }
 
   /* INPUTS */
   input, select, textarea {
-    background: var(--bg3); border: 1.5px solid var(--border2); border-radius: var(--radius-sm);
-    color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 8px 11px;
-    outline: none; transition: border-color .15s;
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 10px 13px;
+    outline: none; transition: border-color .15s, box-shadow .15s;
   }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,196,0,.25); }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,196,0,.2); }
   select option { background: var(--bg2); }
   textarea { resize: vertical; min-height: 68px; }
 
   /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font-body); border: 1.5px solid var(--text); transition: opacity .15s, transform .1s; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-body); border: none; transition: opacity .15s, transform .1s, box-shadow .15s; }
   .btn:active { transform: scale(.98); }
-  .btn-gold { background: var(--accent); color: var(--text); }
-  .btn-gold:hover { background: var(--accent2); }
-  .btn-outline { background: transparent; border: 1.5px solid var(--border2); color: var(--text2); }
+  .btn-gold { background: var(--accent); color: var(--text); box-shadow: var(--shadow-sm); }
+  .btn-gold:hover { background: var(--accent2); box-shadow: var(--shadow); }
+  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
   .btn-outline:hover { border-color: var(--text); color: var(--text); }
-  .btn-danger { background: transparent; border: 1.5px solid rgba(209,57,59,.4); color: var(--red); font-size: 12px; padding: 5px 9px; }
-  .btn-danger:hover { background: rgba(209,57,59,.1); }
-  .btn-sm { padding: 5px 11px; font-size: 12px; }
+  .btn-danger { background: transparent; border: 1px solid rgba(201,138,122,.4); color: var(--red); font-size: 12px; padding: 6px 12px; }
+  .btn-danger:hover { background: rgba(201,138,122,.12); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
   .actions { display: flex; gap: 10px; margin-top: 1.25rem; align-items: center; }
 
   /* METRICS */
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
-  .metric { background: var(--bg2); border: 1.5px solid var(--text); border-radius: var(--radius); padding: 1.1rem 1.25rem; }
-  .metric-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; font-family: var(--font-mono); }
-  .metric-value { font-size: 24px; font-weight: 400; color: var(--text); line-height: 1; font-family: var(--font-title); }
-  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
-  .metric-accent { border-top: 4px solid var(--accent); }
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; box-shadow: var(--shadow); }
+  .metric-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; font-family: var(--font-mono); }
+  .metric-value { font-size: 26px; font-weight: 400; color: var(--text); line-height: 1; font-family: var(--font-title); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 8px; }
+  .metric-accent { background: linear-gradient(135deg, var(--bg2), rgba(245,196,0,.12)); border-color: rgba(245,196,0,.35); }
 
   /* TABLE */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  td { padding: 11px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  td { padding: 12px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,.02); }
+  tr:hover td { background: rgba(20,18,12,.02); }
 
   /* BADGES */
-  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-  .badge-green { background: rgba(62,207,142,.15); color: var(--green); }
-  .badge-amber { background: rgba(240,165,0,.15); color: var(--amber); }
-  .badge-red { background: rgba(246,102,102,.15); color: var(--red); }
-  .badge-gray { background: rgba(255,255,255,.07); color: var(--text3); }
-  .badge-purple { background: rgba(167,139,250,.15); color: var(--purple); }
-  .badge-teal { background: rgba(45,212,191,.15); color: var(--teal); }
-  .badge-blue { background: rgba(96,165,250,.15); color: var(--blue); }
-  .badge-gold { background: rgba(201,168,76,.15); color: var(--accent); }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-green { background: rgba(122,155,110,.16); color: var(--green); }
+  .badge-amber { background: rgba(201,154,74,.16); color: var(--amber); }
+  .badge-red { background: rgba(201,138,122,.16); color: var(--red); }
+  .badge-gray { background: rgba(20,18,12,.06); color: var(--text3); }
+  .badge-purple { background: rgba(185,172,154,.22); color: var(--text2); }
+  .badge-teal { background: rgba(147,168,132,.18); color: var(--sage); }
+  .badge-blue { background: rgba(211,161,132,.18); color: var(--terracota); }
+  .badge-gold { background: rgba(245,196,0,.18); color: var(--amber); }
 
   /* SERIE colors */
   .serie-premium { color: var(--accent); font-size: 11px; font-weight: 600; }
-  .serie-menstyle { color: var(--teal); font-size: 11px; font-weight: 600; }
-  .serie-intense { color: var(--purple); font-size: 11px; font-weight: 600; }
+  .serie-menstyle { color: var(--sage); font-size: 11px; font-weight: 600; }
+  .serie-intense { color: var(--terracota); font-size: 11px; font-weight: 600; }
 
   /* FILTER ROW */
   .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
-  .filter-row input, .filter-row select { font-size: 12px; padding: 6px 10px; }
+  .filter-row input, .filter-row select { font-size: 12px; padding: 7px 11px; }
 
   /* VENDA ITEM */
   .item-line { display: grid; grid-template-columns: 2fr 90px 90px 32px; gap: 8px; align-items: end; margin-bottom: 8px; }
@@ -144,11 +146,11 @@
   .bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
   .bar-label span:first-child { color: var(--text2); }
   .bar-label span:last-child { font-weight: 600; color: var(--text); }
-  .bar-track { background: var(--bg3); border-radius: 3px; height: 6px; }
-  .bar-fill { height: 6px; border-radius: 3px; background: var(--accent); }
+  .bar-track { background: var(--bg3); border-radius: 999px; height: 7px; }
+  .bar-fill { height: 7px; border-radius: 999px; background: var(--accent); }
 
   /* TOAST */
-  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--accent); color: #000; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; }
+  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: var(--bg2); padding: 12px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; box-shadow: var(--shadow); }
   #toast.show { opacity: 1; }
 
   /* EMPTY */
@@ -162,15 +164,15 @@
     .form-grid, .form-grid.cols3, .two-col { grid-template-columns: 1fr; }
     .form-group.full { grid-column: 1; }
     .container { padding: 1rem; }
-    .tabs { padding: 0 1rem; overflow-x: auto; }
+    .tabs { padding: 10px 1rem; overflow-x: auto; }
     header { padding: 0 1rem; }
     .item-line { grid-template-columns: 1fr 70px 70px 32px; }
   }
 
   /* LOGIN */
-  #login-screen { position: fixed; inset: 0; background: var(--bg); background-image: linear-gradient(rgba(20,18,12,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.05) 1px, transparent 1px); background-size: 22px 22px; display: flex; align-items: center; justify-content: center; z-index: 999; }
-  #login-box { background: var(--bg2); border: 1.5px solid var(--text); border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 380px; }
-  #login-box .logo-word { font-size: 24px; text-align: center; margin-bottom: 4px; }
+  #login-screen { position: fixed; inset: 0; background: var(--bg); background-image: linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px); background-size: 24px 24px; display: flex; align-items: center; justify-content: center; z-index: 999; }
+  #login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.75rem; width: 100%; max-width: 380px; box-shadow: var(--shadow); }
+  #login-box .logo-word { font-size: 32px; text-align: center; margin-bottom: 4px; }
   #login-box .header-sup { text-align: center; margin-bottom: 1.75rem; }
   #login-box .form-group { margin-bottom: 14px; }
   #login-box .btn { width: 100%; justify-content: center; margin-top: 8px; }
@@ -183,53 +185,48 @@
 <!-- ===== LOGIN ===== -->
 <div id="login-screen">
   <div id="login-box">
-    <div class="logo-word">DAAT<span class="dot">.</span> SELL</div>
-    <div class="header-sup">Sistema de Vendas & CRM</div>
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="form-group">
       <label>E-mail</label>
-      <input id="login-email" type="email" placeholder="seu@email.com" />
+      <input id="login-email" type="email" placeholder="" />
     </div>
     <div class="form-group">
       <label>Senha</label>
       <div style="position:relative;">
-        <input id="login-senha" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') fazerLogin()" style="width:100%;padding-right:70px;" />
+        <input id="login-senha" type="password" placeholder="" onkeydown="if(event.key==='Enter') fazerLogin()" style="width:100%;padding-right:70px;" />
         <button type="button" onclick="toggleSenhaVisivel()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
       </div>
     </div>
-    <button class="btn btn-gold" onclick="fazerLogin()"><i class="ti ti-login"></i> Entrar</button>
+    <button class="btn btn-gold" onclick="fazerLogin()">Entrar</button>
     <div id="login-error"></div>
-    <div style="text-align:center;margin-top:16px;">
-      <a href="#" onclick="mostrarCadastro();return false;" style="font-size:12px;color:var(--text3);font-family:var(--font-mono);">+ Cadastrar novo cliente</a>
-    </div>
+    <button class="btn btn-outline btn-sm" onclick="mostrarCadastro();return false;" style="width:100%;justify-content:center;margin-top:12px;">Não tenho cadastro</button>
   </div>
 
   <div id="cadastro-box" style="display:none;">
-    <div class="logo-word">DAAT<span class="dot">.</span> SELL</div>
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Novo cliente</div>
     <div class="form-group">
       <label>Nome da empresa</label>
-      <input id="cad-empresa" placeholder="Ex: Estúdio Fulano" />
+      <input id="cad-empresa" placeholder="" />
     </div>
     <div class="form-group">
       <label>Nome do responsável</label>
-      <input id="cad-nome" placeholder="Ex: Fulano de Tal" />
+      <input id="cad-nome" placeholder="" />
     </div>
     <div class="form-group">
       <label>E-mail de acesso</label>
-      <input id="cad-email" type="email" placeholder="cliente@email.com" />
+      <input id="cad-email" type="email" placeholder="" />
     </div>
     <div class="form-group">
       <label>Senha</label>
       <div style="position:relative;">
-        <input id="cad-senha" type="password" placeholder="mínimo 6 caracteres" style="width:100%;padding-right:70px;" />
+        <input id="cad-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
         <button type="button" onclick="toggleSenhaVisivelCadastro()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
       </div>
     </div>
     <button class="btn btn-gold" onclick="cadastrarNovoCliente()"><i class="ti ti-user-plus"></i> Criar acesso do cliente</button>
     <div id="cadastro-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
-    <div style="text-align:center;margin-top:16px;">
-      <a href="#" onclick="mostrarLogin();return false;" style="font-size:12px;color:var(--text3);font-family:var(--font-mono);">&larr; Voltar pro login</a>
-    </div>
+    <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
   </div>
 </div>
 
@@ -238,9 +235,8 @@
 <header>
   <div class="logo">
     <div>
-      <div class="logo-word">DAAT<span class="dot">.</span> SELL</div>
-      <div class="header-sup">Sistema de Vendas & CRM</div>
-    </div>
+      <div class="logo-word">DAAT<span class="dot">.</span></div>
+      </div>
   </div>
   <div class="header-right">
     <div id="header-date"></div>
@@ -249,32 +245,32 @@
 </header>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('produtos')"><i class="ti ti-package"></i> Produtos</button>
+  <button class="tab active" onclick="switchTab('crm')"><i class="ti ti-calendar-event"></i> CRM</button>
+  <button class="tab" onclick="switchTab('produtos')"><i class="ti ti-package"></i> Produtos</button>
   <button class="tab" onclick="switchTab('vendas')"><i class="ti ti-receipt"></i> Registrar venda</button>
-  <button class="tab" onclick="switchTab('crm')"><i class="ti ti-calendar-event"></i> CRM</button>
   <button class="tab" onclick="switchTab('historico')"><i class="ti ti-history"></i> Histórico</button>
   <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-chart-bar"></i> Dashboard</button>
-  <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings"></i> Config</button>
+  <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings"></i> Configurações</button>
 </div>
 
 <!-- ===== PRODUTOS ===== -->
-<div id="tab-produtos" class="section active">
+<div id="tab-produtos" class="section">
 <div class="container">
 
   <div class="card">
     <div class="card-title"><i class="ti ti-plus"></i> Adicionar produto</div>
     <div class="form-grid cols3">
-      <div class="form-group"><label>Fornecedor</label><input id="f-forn" placeholder="Nome do fornecedor" /></div>
-      <div class="form-group"><label>Nome do produto</label><input id="f-nome" placeholder="Ex: Camiseta básica" /></div>
+      <div class="form-group"><label>Fornecedor</label><input id="f-forn" placeholder="" /></div>
+      <div class="form-group"><label>Nome do produto</label><input id="f-nome" placeholder="" /></div>
       <div class="form-group">
         <label>Linha / Coleção</label>
-        <input id="f-serie" placeholder="Ex: Verão 2026 (opcional)" />
+        <input id="f-serie" placeholder="" />
       </div>
       <div class="form-group">
         <label>Categoria</label>
-        <input id="f-cat" placeholder="Ex: Roupas, Acessórios..." />
+        <input id="f-cat" placeholder="" />
       </div>
-      <div class="form-group"><label>Volume / Variação</label><input id="f-vol" placeholder="Ex: 500ml, Tamanho M" /></div>
+      <div class="form-group"><label>Volume / Variação</label><input id="f-vol" placeholder="" /></div>
       <div class="form-group">
         <label>Unidade</label>
         <select id="f-un">
@@ -282,11 +278,11 @@
           <option value="cx">Caixa (cx)</option>
         </select>
       </div>
-      <div class="form-group"><label>Custo (R$)</label><input id="f-custo" type="number" step="0.01" min="0" placeholder="0,00" /></div>
-      <div class="form-group"><label>Preço de venda (R$)</label><input id="f-preco" type="number" step="0.01" min="0" placeholder="0,00" /></div>
-      <div class="form-group"><label>Estoque atual</label><input id="f-est" type="number" min="0" placeholder="0" /></div>
-      <div class="form-group"><label>Alerta estoque mínimo</label><input id="f-estmin" type="number" min="0" placeholder="3" /></div>
-      <div class="form-group full"><label>Observações</label><textarea id="f-obs" placeholder="Detalhes, características, uso, etc."></textarea></div>
+      <div class="form-group"><label>Custo (R$)</label><input id="f-custo" type="number" step="0.01" min="0" placeholder="" /></div>
+      <div class="form-group"><label>Preço de venda (R$)</label><input id="f-preco" type="number" step="0.01" min="0" placeholder="" /></div>
+      <div class="form-group"><label>Estoque atual</label><input id="f-est" type="number" min="0" placeholder="" /></div>
+      <div class="form-group"><label>Alerta estoque mínimo</label><input id="f-estmin" type="number" min="0" placeholder="" /></div>
+      <div class="form-group full"><label>Observações</label><textarea id="f-obs" placeholder=""></textarea></div>
     </div>
     <div class="actions">
       <button class="btn btn-gold" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar produto</button>
@@ -324,7 +320,7 @@
     <div class="card-title"><i class="ti ti-receipt"></i> Nova venda</div>
     <div class="form-grid cols3">
       <div class="form-group"><label>Data</label><input id="v-data" type="date" /></div>
-      <div class="form-group"><label>Vendedor</label><input id="v-vendedor" placeholder="Nome do vendedor" oninput="calcTotal()" /></div>
+      <div class="form-group"><label>Vendedor</label><input id="v-vendedor" placeholder="" oninput="calcTotal()" /></div>
       <div class="form-group">
         <label>Canal</label>
         <select id="v-canal">
@@ -332,8 +328,8 @@
           <option>Balcão</option><option>Serviço (uso interno)</option><option>Encomenda</option><option>Outro</option>
         </select>
       </div>
-      <div class="form-group"><label>Cliente / referência</label><input id="v-cliente" placeholder="Nome, mesa, pedido..." /></div>
-      <div class="form-group"><label>Comissão do vendedor (%)</label><input id="v-comissao-pct" type="number" step="0.1" min="0" placeholder="Ex: 10 (opcional)" oninput="calcTotal()" /></div>
+      <div class="form-group"><label>Cliente / referência</label><input id="v-cliente" placeholder="" /></div>
+      <div class="form-group"><label>Comissão do vendedor (%)</label><input id="v-comissao-pct" type="number" step="0.1" min="0" placeholder="" oninput="calcTotal()" /></div>
     </div>
 
     <div style="margin-top:1.25rem;">
@@ -359,16 +355,19 @@
 </div>
 
 <!-- ===== CRM ===== -->
-<div id="tab-crm" class="section">
+<div id="tab-crm" class="section active">
 <div class="container">
 
   <div class="two-col">
     <div class="card">
       <div class="card-title"><i class="ti ti-user-plus"></i> Novo cliente</div>
       <div class="form-grid">
-        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="Nome do cliente" /></div>
-        <div class="form-group"><label>Telefone / WhatsApp</label><input id="c-tel" placeholder="(00) 00000-0000" /></div>
-        <div class="form-group full"><label>Observações</label><input id="c-obs" placeholder="Preferências, série que mais compra, etc." /></div>
+        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="" /></div>
+        <div class="form-group"><label>Telefone / WhatsApp</label><input id="c-tel" placeholder="" /></div>
+        <div class="form-group"><label>E-mail</label><input id="c-email" type="email" placeholder="" /></div>
+        <div class="form-group"><label>CPF</label><input id="c-cpf" placeholder="" /></div>
+        <div class="form-group"><label>CNPJ</label><input id="c-cnpj" placeholder="" /></div>
+        <div class="form-group full"><label>Observações</label><input id="c-obs" placeholder="" /></div>
       </div>
       <div class="actions">
         <button class="btn btn-gold" onclick="addCliente()"><i class="ti ti-plus"></i> Adicionar cliente</button>
@@ -395,7 +394,7 @@
             <option>Outro</option>
           </select>
         </div>
-        <div class="form-group full"><label>Observações</label><input id="a-obs" placeholder="Detalhes do agendamento" /></div>
+        <div class="form-group full"><label>Observações</label><input id="a-obs" placeholder="" /></div>
       </div>
       <div class="actions">
         <button class="btn btn-gold" onclick="addAgendamento()"><i class="ti ti-check"></i> Agendar</button>
@@ -483,14 +482,14 @@
       <div class="form-group">
         <label>Nova senha</label>
         <div style="position:relative;">
-          <input id="cfg-nova-senha" type="password" placeholder="mínimo 6 caracteres" style="width:100%;padding-right:70px;" />
+          <input id="cfg-nova-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
           <button type="button" onclick="toggleSenhaVisivelCfg('cfg-nova-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
         </div>
       </div>
       <div class="form-group">
         <label>Confirmar nova senha</label>
         <div style="position:relative;">
-          <input id="cfg-confirma-senha" type="password" placeholder="repita a senha" style="width:100%;padding-right:70px;" />
+          <input id="cfg-confirma-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
           <button type="button" onclick="toggleSenhaVisivelCfg('cfg-confirma-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
         </div>
       </div>
@@ -688,7 +687,9 @@ async function iniciarApp() {
   await carregarTudo();
   setDefaultDate();
   renderItens();
-  renderProdutos();
+  renderClienteSelect();
+  renderAgenda();
+  renderClientes();
 }
 
 async function carregarTudo() {
@@ -734,7 +735,7 @@ function toast(msg) {
 
 // ===== TABS =====
 function switchTab(tab) {
-  const names = ['produtos','vendas','crm','historico','dashboard','config'];
+  const names = ['crm','produtos','vendas','historico','dashboard','config'];
   document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', names[i] === tab));
   document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
@@ -938,7 +939,7 @@ function calcTotal() {
   document.getElementById('v-total').textContent = 'R$ ' + total.toFixed(2);
   const comEl = document.getElementById('v-comissao');
   if (comissao > 0) {
-    comEl.innerHTML = `<span style="font-size:13px;color:var(--blue);"><i class="ti ti-percentage" style="font-size:12px;"></i> Comissão (${pct}%): <strong>R$ ${comissao.toFixed(2)}</strong></span>`;
+    comEl.innerHTML = `<span style="font-size:13px;color:var(--terracota);"><i class="ti ti-percentage" style="font-size:12px;"></i> Comissão (${pct}%): <strong>R$ ${comissao.toFixed(2)}</strong></span>`;
     comEl.style.display = 'block';
   } else {
     comEl.style.display = 'none';
@@ -1006,7 +1007,7 @@ function renderHistorico() {
       return (p ? p.nome : 'Removido') + ` ×${i.qty}`;
     }).join(', ');
     const comissaoCell = v.comissao > 0
-      ? `<span style="color:var(--blue);font-weight:600;">R$ ${v.comissao.toFixed(2)}</span>`
+      ? `<span style="color:var(--terracota);font-weight:600;">R$ ${v.comissao.toFixed(2)}</span>`
       : `<span style="color:var(--text3);">—</span>`;
     h += `<tr>
       <td>${v.data.split('-').reverse().join('/')}</td>
@@ -1059,7 +1060,7 @@ function renderDashboard() {
     </div>
     <div class="metric">
       <div class="metric-label">Comissões</div>
-      <div class="metric-value" style="color:var(--blue);">R$ ${comissaoTotal.toFixed(2)}</div>
+      <div class="metric-value" style="color:var(--terracota);">R$ ${comissaoTotal.toFixed(2)}</div>
       <div class="metric-sub">total no período</div>
     </div>
     <div class="metric">
@@ -1096,7 +1097,7 @@ function renderDashboard() {
     porCat[cat] += i.qty * i.preco;
   }));
   const topCat = Object.entries(porCat).sort((a,b) => b[1]-a[1]);
-  const colors = ['var(--accent)','var(--teal)','var(--purple)','var(--blue)','var(--green)','var(--amber)'];
+  const colors = ['var(--accent)','var(--sage)','var(--terracota)','var(--lavanda)','var(--green)','var(--amber)'];
   const maxC = topCat[0]?.[1] || 1;
   document.getElementById('rank-cat').innerHTML = topCat.length
     ? topCat.map(([cat, val], i) => `
@@ -1107,7 +1108,7 @@ function renderDashboard() {
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-tag"></i>Sem dados</div>';
 
   // ranking vendedores
-  const vColorPalette = ['var(--blue)','var(--purple)','var(--accent)','var(--teal)','var(--green)','var(--red)'];
+  const vColorPalette = ['var(--accent)','var(--sage)','var(--terracota)','var(--lavanda)','var(--amber)','var(--green)'];
   const porVend = {};
   vendas.forEach(v => {
     const nome = v.vendedor || 'Sem vendedor';
@@ -1126,7 +1127,7 @@ function renderDashboard() {
         <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);">
           <i class="ti ti-user" style="font-size:14px;color:${vColors[nome]||'var(--text2)'}"></i>${nome}
           <span style="font-size:11px;font-weight:400;color:var(--text3);">${d.nVendas} venda${d.nVendas!==1?'s':''}</span>
-          ${d.comissao > 0 ? `<span style="font-size:11px;font-weight:600;color:var(--blue);background:rgba(37,99,235,.12);padding:1px 7px;border-radius:10px;"><i class="ti ti-percentage" style="font-size:10px;"></i> R$ ${d.comissao.toFixed(2)}</span>` : ''}
+          ${d.comissao > 0 ? `<span style="font-size:11px;font-weight:600;color:var(--terracota);background:rgba(211,161,132,.16);padding:1px 7px;border-radius:10px;"><i class="ti ti-percentage" style="font-size:10px;"></i> R$ ${d.comissao.toFixed(2)}</span>` : ''}
         </span>
         <span style="color:${vColors[nome]||'var(--text)'};font-weight:700;">R$ ${d.receita.toFixed(2)}</span>
       </div>
@@ -1155,7 +1156,7 @@ function renderDashboard() {
 
 // ===== CRM: CLIENTES =====
 function mapClienteDb(c) {
-  return { id: c.id, nome: c.nome, tel: c.telefone, obs: c.obs };
+  return { id: c.id, nome: c.nome, tel: c.telefone, email: c.email, cpf: c.cpf, cnpj: c.cnpj, obs: c.obs };
 }
 
 async function addCliente() {
@@ -1165,12 +1166,15 @@ async function addCliente() {
     organizacao_id: organizacaoId,
     nome,
     telefone: document.getElementById('c-tel').value.trim(),
+    email: document.getElementById('c-email').value.trim(),
+    cpf: document.getElementById('c-cpf').value.trim(),
+    cnpj: document.getElementById('c-cnpj').value.trim(),
     obs: document.getElementById('c-obs').value.trim(),
   };
   const { data, error } = await supabaseClient.from('clientes').insert(novo).select().single();
   if (error) { toast('Erro ao salvar cliente.'); console.error(error); return; }
   clientes.push(mapClienteDb(data));
-  ['c-nome','c-tel','c-obs'].forEach(id => document.getElementById(id).value = '');
+  ['c-nome','c-tel','c-email','c-cpf','c-cnpj','c-obs'].forEach(id => document.getElementById(id).value = '');
   renderClientes(); renderClienteSelect(); toast('Cliente adicionado!');
 }
 
@@ -1198,11 +1202,14 @@ function renderClientes() {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-address-book"></i>Nenhum cliente cadastrado ainda</div>';
     return;
   }
-  let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>Observações</th><th></th></tr></thead><tbody>`;
+  let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>CPF</th><th>CNPJ</th><th>Observações</th><th></th></tr></thead><tbody>`;
   clientes.forEach(c => {
     h += `<tr>
       <td style="font-weight:600;">${c.nome}</td>
       <td style="font-size:12px;color:var(--text2);">${c.tel || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${c.email || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${c.cpf || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${c.cnpj || '—'}</td>
       <td style="font-size:12px;color:var(--text2);">${c.obs || '—'}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')"><i class="ti ti-trash"></i></button></td>
     </tr>`;
