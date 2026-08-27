@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root {
@@ -206,14 +207,6 @@
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Novo cliente</div>
     <div class="form-group">
-      <label>Nome da empresa</label>
-      <input id="cad-empresa" placeholder="" />
-    </div>
-    <div class="form-group">
-      <label>Nome do responsável</label>
-      <input id="cad-nome" placeholder="" />
-    </div>
-    <div class="form-group">
       <label>E-mail de acesso</label>
       <input id="cad-email" type="email" placeholder="" />
     </div>
@@ -222,6 +215,13 @@
       <div style="position:relative;">
         <input id="cad-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
         <button type="button" onclick="toggleSenhaVisivelCadastro()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirmar senha</label>
+      <div style="position:relative;">
+        <input id="cad-senha-confirma" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelCadastroConfirma()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
       </div>
     </div>
     <button class="btn btn-gold" onclick="cadastrarNovoCliente()"><i class="ti ti-user-plus"></i> Criar acesso do cliente</button>
@@ -240,7 +240,10 @@
   </div>
   <div class="header-right">
     <div id="header-date"></div>
-    <button class="btn btn-outline btn-sm" onclick="fazerLogout()" style="margin-top:4px;"><i class="ti ti-logout"></i> Sair</button>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button class="btn btn-outline btn-sm" onclick="mostrarLembretesManual()" title="Ver lembretes de hoje"><i class="ti ti-bell"></i></button>
+      <button class="btn btn-outline btn-sm" onclick="fazerLogout()"><i class="ti ti-logout"></i> Sair</button>
+    </div>
   </div>
 </header>
 
@@ -290,7 +293,10 @@
   </div>
 
   <div class="card">
-    <div class="card-title"><i class="ti ti-list"></i> Catálogo <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="prod-count"></span></div>
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-list"></i> Catálogo <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="prod-count"></span></span>
+      <button class="btn btn-outline btn-sm" onclick="exportarProdutos()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
     <div class="filter-row">
       <input id="busca" placeholder="Buscar..." oninput="renderProdutos()" style="flex:1;min-width:100px;" />
       <select id="f-serie-filtro" onchange="renderProdutos()">
@@ -403,7 +409,10 @@
   </div>
 
   <div class="card">
-    <div class="card-title"><i class="ti ti-calendar-event"></i> Agenda <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="agenda-count"></span></div>
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-calendar-event"></i> Agenda <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="agenda-count"></span></span>
+      <button class="btn btn-outline btn-sm" onclick="exportarAgendamentos()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
     <div class="filter-row">
       <select id="ag-status-filtro" onchange="renderAgenda()">
         <option value="">Todos os status</option>
@@ -417,7 +426,10 @@
   </div>
 
   <div class="card">
-    <div class="card-title"><i class="ti ti-address-book"></i> Clientes <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="cliente-count"></span></div>
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-address-book"></i> Clientes <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="cliente-count"></span></span>
+      <button class="btn btn-outline btn-sm" onclick="exportarClientes()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
     <div class="table-wrap" id="cliente-table"></div>
   </div>
 
@@ -428,7 +440,10 @@
 <div id="tab-historico" class="section">
 <div class="container">
   <div class="card">
-    <div class="card-title"><i class="ti ti-history"></i> Vendas registradas</div>
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-history"></i> Vendas registradas</span>
+      <button class="btn btn-outline btn-sm" onclick="exportarVendas()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
     <div class="filter-row">
       <input id="h-busca" placeholder="Buscar cliente, vendedor, canal..." oninput="renderHistorico()" style="flex:1;" />
       <input id="h-de" type="date" onchange="renderHistorico()" />
@@ -471,8 +486,20 @@
   <div class="card">
     <div class="card-title"><i class="ti ti-building"></i> Conta</div>
     <div class="form-grid">
-      <div class="form-group"><label>Empresa</label><input id="cfg-empresa" disabled /></div>
+      <div class="form-group"><label>Empresa</label><input id="cfg-empresa" placeholder="" /></div>
       <div class="form-group"><label>E-mail de login</label><input id="cfg-email" disabled /></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="salvarEmpresa()"><i class="ti ti-check"></i> Salvar</button>
+    </div>
+    <div id="cfg-empresa-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-file-spreadsheet"></i> Exportar dados</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Baixe todos os seus dados (produtos, vendas, clientes e agenda) num único arquivo Excel — abre normal no Excel, Google Sheets ou qualquer planilha.</p>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="exportarTudo()"><i class="ti ti-download"></i> Exportar tudo (Excel)</button>
     </div>
   </div>
 
@@ -501,6 +528,21 @@
   </div>
 
 </div>
+</div>
+
+<!-- ===== LEMBRETES DE HOJE ===== -->
+<div id="lembretes-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,18,12,.45);z-index:998;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-width:420px;width:100%;padding:1.75rem;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <i class="ti ti-bell-ringing" style="color:var(--text);background:var(--accent);border-radius:8px;padding:6px;font-size:18px;"></i>
+      <div style="font-size:15px;font-weight:700;color:var(--text);">Lembretes de hoje</div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:1.25rem;font-family:var(--font-mono);" id="lembretes-data"></div>
+    <div id="lembretes-lista"></div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="fecharLembretes()" style="width:100%;justify-content:center;">Entendi</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -568,6 +610,13 @@ function toggleSenhaVisivelCadastro() {
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
 
+function toggleSenhaVisivelCadastroConfirma() {
+  const input = document.getElementById('cad-senha-confirma');
+  const btn = event.target;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
 function mostrarCadastro() {
   document.getElementById('login-box').style.display = 'none';
   document.getElementById('cadastro-box').style.display = 'block';
@@ -579,19 +628,24 @@ function mostrarLogin() {
 }
 
 async function cadastrarNovoCliente() {
-  const empresa = document.getElementById('cad-empresa').value.trim();
-  const nome    = document.getElementById('cad-nome').value.trim();
-  const email   = document.getElementById('cad-email').value.trim();
-  const senha   = document.getElementById('cad-senha').value;
-  const errEl   = document.getElementById('cadastro-error');
+  const email          = document.getElementById('cad-email').value.trim();
+  const senha           = document.getElementById('cad-senha').value;
+  const senhaConfirma  = document.getElementById('cad-senha-confirma').value;
+  const errEl          = document.getElementById('cadastro-error');
   errEl.style.display = 'none';
 
-  if (!empresa || !nome || !email || !senha) {
+  if (!email || !senha || !senhaConfirma) {
     errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return;
   }
   if (senha.length < 6) {
     errEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; errEl.style.display = 'block'; return;
   }
+  if (senha !== senhaConfirma) {
+    errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return;
+  }
+
+  // nome provisório da empresa — o cliente pode trocar depois em Configurações
+  const empresa = 'Empresa de ' + email.split('@')[0];
 
   // 1) cria o usuário de login
   const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({ email, password: senha });
@@ -626,7 +680,7 @@ async function cadastrarNovoCliente() {
   }
   const { error: cadastroErr } = await supabaseClient.rpc('cadastrar_novo_cliente', {
     p_nome_empresa: empresa,
-    p_nome_responsavel: nome,
+    p_nome_responsavel: '',
   });
   if (cadastroErr) {
     errEl.textContent = 'Usuário criado, mas houve erro ao vincular a organização: ' + cadastroErr.message;
@@ -635,8 +689,8 @@ async function cadastrarNovoCliente() {
   }
 
   toast('Cliente cadastrado! Pode fazer login agora.');
-  enviarEmailBoasVindas(empresa, nome, email);
-  ['cad-empresa','cad-nome','cad-email','cad-senha'].forEach(id => document.getElementById(id).value = '');
+  enviarEmailBoasVindas(empresa, '', email);
+  ['cad-email','cad-senha','cad-senha-confirma'].forEach(id => document.getElementById(id).value = '');
   await supabaseClient.auth.signOut(); // sai da sessão do cliente recém-criado, volta pro login
   mostrarLogin();
 }
@@ -690,6 +744,7 @@ async function iniciarApp() {
   renderClienteSelect();
   renderAgenda();
   renderClientes();
+  verificarLembretesHoje();
 }
 
 async function carregarTudo() {
@@ -1303,6 +1358,22 @@ async function renderConfig() {
   document.getElementById('cfg-confirma-senha').value = '';
   const msg = document.getElementById('cfg-senha-msg');
   msg.style.display = 'none';
+  document.getElementById('cfg-empresa-msg').style.display = 'none';
+}
+
+async function salvarEmpresa() {
+  const nome = document.getElementById('cfg-empresa').value.trim();
+  const msg = document.getElementById('cfg-empresa-msg');
+  msg.style.display = 'block';
+  if (!nome) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Preencha o nome da empresa.'; return;
+  }
+  const { error } = await supabaseClient.from('organizacoes').update({ nome }).eq('id', organizacaoId);
+  if (error) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao salvar: ' + error.message; return;
+  }
+  msg.style.color = 'var(--green)'; msg.textContent = 'Empresa atualizada!';
+  toast('Empresa atualizada!');
 }
 
 function toggleSenhaVisivelCfg(inputId, btn) {
@@ -1336,6 +1407,194 @@ async function trocarSenha() {
   document.getElementById('cfg-nova-senha').value = '';
   document.getElementById('cfg-confirma-senha').value = '';
   toast('Senha atualizada!');
+}
+
+// ===== LEMBRETES DE HOJE =====
+function hojeLocal() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function montarListaLembretes(deHoje) {
+  const hoje = hojeLocal();
+  const dataFormatada = new Date(hoje + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  document.getElementById('lembretes-data').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+
+  const statusCls = { 'Agendado': 'badge-amber', 'Confirmado': 'badge-gold' };
+  let html = '';
+  if (!deHoje.length) {
+    html = '<div class="empty" style="padding:1.5rem 0;"><i class="ti ti-calendar-check"></i>Nenhum agendamento pendente pra hoje</div>';
+  } else {
+    deHoje.sort((a,b) => (a.hora||'').localeCompare(b.hora||'')).forEach(a => {
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:600;font-size:13px;color:var(--text);">${a.clienteNome}</div>
+          <div style="font-size:12px;color:var(--text2);">${a.motivo || 'Sem motivo definido'}${a.hora ? ' · ' + a.hora : ''}</div>
+        </div>
+        <span class="badge ${statusCls[a.status] || 'badge-gray'}">${a.status}</span>
+      </div>`;
+    });
+  }
+  document.getElementById('lembretes-lista').innerHTML = html;
+  document.getElementById('lembretes-overlay').style.display = 'flex';
+}
+
+function agendamentosDeHoje() {
+  const hoje = hojeLocal();
+  return agendamentos.filter(a => a.data === hoje && a.status !== 'Cancelado' && a.status !== 'Concluído');
+}
+
+// chamado automaticamente ao logar — só aparece uma vez por dia nesse navegador, e só se tiver algo
+function verificarLembretesHoje() {
+  const hoje = hojeLocal();
+  const chaveVisto = `daat_lembretes_${organizacaoId}_${hoje}`;
+  if (localStorage.getItem(chaveVisto)) return; // já mostrado hoje nesse navegador
+  localStorage.setItem(chaveVisto, '1'); // marca como visto, mesmo se a lista vier vazia
+
+  const deHoje = agendamentosDeHoje();
+  if (!deHoje.length) return;
+  montarListaLembretes(deHoje);
+}
+
+// chamado pelo sininho no header — sempre mostra, mesmo que já tenha visto hoje ou não tenha nada
+function mostrarLembretesManual() {
+  montarListaLembretes(agendamentosDeHoje());
+}
+
+function fecharLembretes() {
+  document.getElementById('lembretes-overlay').style.display = 'none';
+}
+
+// ===== EXPORTAR (EXCEL) =====
+function nomeArquivoComData(prefixo) {
+  const hoje = new Date().toISOString().split('T')[0];
+  return `${prefixo}-${hoje}.xlsx`;
+}
+
+function exportarProdutos() {
+  if (!produtos.length) { toast('Nenhum produto pra exportar.'); return; }
+  const linhas = produtos.map(p => ({
+    'Nome': p.nome,
+    'Fornecedor': p.fornecedor || '',
+    'Linha/Coleção': p.serie || '',
+    'Categoria': p.categoria || '',
+    'Volume/Variação': p.volume || '',
+    'Unidade': p.unidade || '',
+    'Custo (R$)': p.custo,
+    'Preço (R$)': p.preco,
+    'Estoque': p.estoque,
+    'Estoque mínimo': p.estoqueMin,
+    'Ativo': p.ativo ? 'Sim' : 'Não',
+    'Observações': p.obs || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+  XLSX.writeFile(wb, nomeArquivoComData('produtos'));
+  toast('Exportado!');
+}
+
+function exportarVendas() {
+  if (!vendas.length) { toast('Nenhuma venda pra exportar.'); return; }
+  const linhas = [...vendas].reverse().map(v => ({
+    'Data': v.data.split('-').reverse().join('/'),
+    'Vendedor': v.vendedor || '',
+    'Canal': v.canal || '',
+    'Cliente': v.cliente || '',
+    'Itens': (v.itens || []).map(i => {
+      const p = produtos.find(x => x.id === i.prodId);
+      return `${p ? p.nome : '?'} x${i.qty}`;
+    }).join('; '),
+    'Total (R$)': v.total,
+    'Comissão (R$)': v.comissao || 0,
+  }));
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
+  XLSX.writeFile(wb, nomeArquivoComData('vendas'));
+  toast('Exportado!');
+}
+
+function exportarClientes() {
+  if (!clientes.length) { toast('Nenhum cliente pra exportar.'); return; }
+  const linhas = clientes.map(c => ({
+    'Nome': c.nome,
+    'Telefone': c.tel || '',
+    'E-mail': c.email || '',
+    'CPF': c.cpf || '',
+    'CNPJ': c.cnpj || '',
+    'Observações': c.obs || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+  XLSX.writeFile(wb, nomeArquivoComData('clientes'));
+  toast('Exportado!');
+}
+
+function exportarAgendamentos() {
+  if (!agendamentos.length) { toast('Nenhum agendamento pra exportar.'); return; }
+  const linhas = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
+    'Data': a.data.split('-').reverse().join('/'),
+    'Hora': a.hora || '',
+    'Cliente': a.clienteNome || '',
+    'Motivo': a.motivo || '',
+    'Status': a.status || '',
+    'Observações': a.obs || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Agendamentos');
+  XLSX.writeFile(wb, nomeArquivoComData('agendamentos'));
+  toast('Exportado!');
+}
+
+function exportarTudo() {
+  if (!produtos.length && !vendas.length && !clientes.length && !agendamentos.length) {
+    toast('Nenhum dado pra exportar ainda.'); return;
+  }
+  const wb = XLSX.utils.book_new();
+
+  if (produtos.length) {
+    const shProdutos = produtos.map(p => ({
+      'Nome': p.nome, 'Fornecedor': p.fornecedor || '', 'Linha/Coleção': p.serie || '',
+      'Categoria': p.categoria || '', 'Volume/Variação': p.volume || '', 'Unidade': p.unidade || '',
+      'Custo (R$)': p.custo, 'Preço (R$)': p.preco, 'Estoque': p.estoque, 'Estoque mínimo': p.estoqueMin,
+      'Ativo': p.ativo ? 'Sim' : 'Não', 'Observações': p.obs || '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shProdutos), 'Produtos');
+  }
+
+  if (vendas.length) {
+    const shVendas = [...vendas].reverse().map(v => ({
+      'Data': v.data.split('-').reverse().join('/'), 'Vendedor': v.vendedor || '', 'Canal': v.canal || '',
+      'Cliente': v.cliente || '',
+      'Itens': (v.itens || []).map(i => { const p = produtos.find(x => x.id === i.prodId); return `${p ? p.nome : '?'} x${i.qty}`; }).join('; '),
+      'Total (R$)': v.total, 'Comissão (R$)': v.comissao || 0,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shVendas), 'Vendas');
+  }
+
+  if (clientes.length) {
+    const shClientes = clientes.map(c => ({
+      'Nome': c.nome, 'Telefone': c.tel || '', 'E-mail': c.email || '', 'CPF': c.cpf || '', 'CNPJ': c.cnpj || '', 'Observações': c.obs || '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shClientes), 'Clientes');
+  }
+
+  if (agendamentos.length) {
+    const shAgenda = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
+      'Data': a.data.split('-').reverse().join('/'), 'Hora': a.hora || '', 'Cliente': a.clienteNome || '',
+      'Motivo': a.motivo || '', 'Status': a.status || '', 'Observações': a.obs || '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shAgenda), 'Agendamentos');
+  }
+
+  XLSX.writeFile(wb, nomeArquivoComData('daat-dados-completos'));
+  toast('Exportado!');
 }
 
 // ===== INIT =====
