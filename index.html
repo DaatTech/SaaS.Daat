@@ -1449,13 +1449,19 @@ function agendamentosDeHoje() {
 
 // chamado automaticamente ao logar — só aparece uma vez por dia nesse navegador, e só se tiver algo
 function verificarLembretesHoje() {
+  // limpeza de uma versão antiga da chave (que marcava o dia inteiro, não cada agendamento)
   const hoje = hojeLocal();
-  const chaveVisto = `daat_lembretes_${organizacaoId}_${hoje}`;
-  if (localStorage.getItem(chaveVisto)) return; // já mostrado hoje nesse navegador
-  localStorage.setItem(chaveVisto, '1'); // marca como visto, mesmo se a lista vier vazia
+  localStorage.removeItem(`daat_lembretes_${organizacaoId}_${hoje}`);
+  const chave = `daat_lembretes_ids_${organizacaoId}_${hoje}`;
+  const idsJaMostrados = JSON.parse(localStorage.getItem(chave) || '[]');
 
   const deHoje = agendamentosDeHoje();
   if (!deHoje.length) return;
+
+  const temNovo = deHoje.some(a => !idsJaMostrados.includes(a.id));
+  if (!temNovo) return; // todos os agendamentos de hoje já foram mostrados nesse navegador
+
+  localStorage.setItem(chave, JSON.stringify(deHoje.map(a => a.id)));
   montarListaLembretes(deHoje);
 }
 
