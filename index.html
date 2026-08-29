@@ -200,12 +200,54 @@
     </div>
     <button class="btn btn-gold" onclick="fazerLogin()">Entrar</button>
     <div id="login-error"></div>
+    <div style="text-align:center;margin-top:12px;">
+      <a href="#" onclick="mostrarRecuperarSenha();return false;" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);">Esqueci minha senha</a>
+    </div>
     <button class="btn btn-outline btn-sm" onclick="mostrarCadastro();return false;" style="width:100%;justify-content:center;margin-top:12px;">Não tenho cadastro</button>
+  </div>
+
+  <div id="recuperar-box" style="display:none;">
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
+    <div class="header-sup">Recuperar senha</div>
+    <p style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:16px;">Digite o e-mail da sua conta. Vamos te mandar um link pra você criar uma senha nova.</p>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input id="recuperar-email" type="email" placeholder="" />
+    </div>
+    <button class="btn btn-gold" onclick="enviarRecuperacaoSenha()">Enviar link de recuperação</button>
+    <div id="recuperar-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
+    <div id="recuperar-sucesso" style="color:var(--green);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
+    <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
+  </div>
+
+  <div id="nova-senha-box" style="display:none;">
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
+    <div class="header-sup">Criar nova senha</div>
+    <div class="form-group">
+      <label>Nova senha</label>
+      <div style="position:relative;">
+        <input id="ns-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelNS('ns-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirmar nova senha</label>
+      <div style="position:relative;">
+        <input id="ns-senha-confirma" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelNS('ns-senha-confirma', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
+    </div>
+    <button class="btn btn-gold" onclick="salvarNovaSenhaRecuperacao()">Salvar nova senha</button>
+    <div id="ns-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
   </div>
 
   <div id="cadastro-box" style="display:none;">
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Novo cliente</div>
+    <div class="form-group">
+      <label>Nome da empresa</label>
+      <input id="cad-empresa" placeholder="" />
+    </div>
     <div class="form-group">
       <label>E-mail de acesso</label>
       <input id="cad-email" type="email" placeholder="" />
@@ -230,6 +272,19 @@
   </div>
 </div>
 
+<!-- ===== ACESSO BLOQUEADO ===== -->
+<div id="bloqueado-screen" style="display:none;position:fixed;inset:0;background:var(--bg);background-image:linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);background-size:24px 24px;align-items:center;justify-content:center;z-index:999;padding:1rem;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2.75rem;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;">
+    <div class="logo-word" style="font-size:26px;margin-bottom:14px;">DAAT<span class="dot">.</span></div>
+    <div id="bloqueado-titulo" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;">Acesso temporariamente indisponível</div>
+    <p id="bloqueado-msg" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;"></p>
+    <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);line-height:2;margin-bottom:20px;">
+      Instagram <strong style="color:var(--text);">@daat.tech</strong><br>
+      E-mail <strong style="color:var(--text);">daat.comercial@gmail.com</strong>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="fazerLogoutBloqueado()" style="width:100%;justify-content:center;">Sair</button>
+  </div>
+</div>
 
 <div id="app-wrap">
 <header>
@@ -624,17 +679,74 @@ function mostrarCadastro() {
 
 function mostrarLogin() {
   document.getElementById('cadastro-box').style.display = 'none';
+  document.getElementById('recuperar-box').style.display = 'none';
+  document.getElementById('nova-senha-box').style.display = 'none';
   document.getElementById('login-box').style.display = 'block';
+}
+
+function mostrarRecuperarSenha() {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('recuperar-box').style.display = 'block';
+  document.getElementById('recuperar-error').style.display = 'none';
+  document.getElementById('recuperar-sucesso').style.display = 'none';
+}
+
+function toggleSenhaVisivelNS(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+async function enviarRecuperacaoSenha() {
+  const email = document.getElementById('recuperar-email').value.trim();
+  const errEl = document.getElementById('recuperar-error');
+  const sucEl = document.getElementById('recuperar-sucesso');
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+
+  if (!email) { errEl.textContent = 'Preencha seu e-mail.'; errEl.style.display = 'block'; return; }
+
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: DAAT_SELL_APP_URL,
+  });
+
+  if (error) {
+    errEl.textContent = 'Erro ao enviar: ' + error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  sucEl.textContent = 'Link enviado! Confere seu e-mail (e a caixa de spam) e clica no link pra criar uma senha nova.';
+  sucEl.style.display = 'block';
+  document.getElementById('recuperar-email').value = '';
+}
+
+async function salvarNovaSenhaRecuperacao() {
+  const senha = document.getElementById('ns-senha').value;
+  const confirma = document.getElementById('ns-senha-confirma').value;
+  const errEl = document.getElementById('ns-error');
+  errEl.style.display = 'none';
+
+  if (!senha || !confirma) { errEl.textContent = 'Preencha os dois campos.'; errEl.style.display = 'block'; return; }
+  if (senha.length < 6) { errEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; errEl.style.display = 'block'; return; }
+  if (senha !== confirma) { errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return; }
+
+  const { error } = await supabaseClient.auth.updateUser({ password: senha });
+  if (error) { errEl.textContent = 'Erro ao salvar: ' + error.message; errEl.style.display = 'block'; return; }
+
+  toast('Senha atualizada! Você já está logado.');
+  document.getElementById('nova-senha-box').style.display = 'none';
+  await iniciarApp();
 }
 
 async function cadastrarNovoCliente() {
   const email          = document.getElementById('cad-email').value.trim();
+  const empresa        = document.getElementById('cad-empresa').value.trim();
   const senha           = document.getElementById('cad-senha').value;
   const senhaConfirma  = document.getElementById('cad-senha-confirma').value;
   const errEl          = document.getElementById('cadastro-error');
   errEl.style.display = 'none';
 
-  if (!email || !senha || !senhaConfirma) {
+  if (!empresa || !email || !senha || !senhaConfirma) {
     errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return;
   }
   if (senha.length < 6) {
@@ -643,9 +755,6 @@ async function cadastrarNovoCliente() {
   if (senha !== senhaConfirma) {
     errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return;
   }
-
-  // nome provisório da empresa — o cliente pode trocar depois em Configurações
-  const empresa = 'Empresa de ' + email.split('@')[0];
 
   // 1) cria o usuário de login
   const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({ email, password: senha });
@@ -690,7 +799,7 @@ async function cadastrarNovoCliente() {
 
   toast('Cliente cadastrado! Pode fazer login agora.');
   enviarEmailBoasVindas(empresa, '', email);
-  ['cad-email','cad-senha','cad-senha-confirma'].forEach(id => document.getElementById(id).value = '');
+  ['cad-empresa','cad-email','cad-senha','cad-senha-confirma'].forEach(id => document.getElementById(id).value = '');
   await supabaseClient.auth.signOut(); // sai da sessão do cliente recém-criado, volta pro login
   mostrarLogin();
 }
@@ -735,6 +844,30 @@ async function iniciarApp() {
   }
 
   organizacaoId = perfil.organizacao_id;
+
+  // checa status de pagamento e teste grátis antes de liberar o app
+  const { data: org, error: orgErr } = await supabaseClient
+    .from('organizacoes').select('nome, status, em_teste, trial_fim').eq('id', organizacaoId).single();
+
+  if (!orgErr && org && org.status !== 'ativo') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('bloqueado-titulo').textContent = 'Acesso temporariamente indisponível';
+    document.getElementById('bloqueado-msg').innerHTML = `Identificamos uma pendência na assinatura da <strong>${org.nome || 'sua empresa'}</strong>. Entre em contato com a DAAT pra regularizar e liberar o acesso de novo.`;
+    document.getElementById('bloqueado-screen').style.display = 'flex';
+    return;
+  }
+
+  if (!orgErr && org && org.em_teste && org.trial_fim) {
+    const hoje = hojeLocal();
+    if (org.trial_fim < hoje) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('bloqueado-titulo').textContent = 'Seu teste grátis terminou';
+      document.getElementById('bloqueado-msg').innerHTML = `O período de 7 dias de teste da <strong>${org.nome || 'sua empresa'}</strong> chegou ao fim. Fala com a gente pra continuar usando o DAAT. sem interrupção.`;
+      document.getElementById('bloqueado-screen').style.display = 'flex';
+      return;
+    }
+  }
+
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-wrap').style.display = 'block';
 
@@ -745,6 +878,12 @@ async function iniciarApp() {
   renderAgenda();
   renderClientes();
   verificarLembretesHoje();
+}
+
+async function fazerLogoutBloqueado() {
+  await supabaseClient.auth.signOut();
+  document.getElementById('bloqueado-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
 }
 
 async function carregarTudo() {
@@ -782,8 +921,24 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// detecta quando o usuário chega pelo link de recuperação de senha do e-mail
+const isRecoveryLink = window.location.hash.includes('type=recovery');
+
+supabaseClient.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-wrap').style.display = 'none';
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('cadastro-box').style.display = 'none';
+    document.getElementById('recuperar-box').style.display = 'none';
+    document.getElementById('nova-senha-box').style.display = 'block';
+  }
+});
+
 // checa se já existe sessão ativa ao carregar a página
+// (pula essa checagem se for um link de recuperação — nesse caso o evento acima cuida da tela)
 (async function checkSession() {
+  if (isRecoveryLink) return;
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) await iniciarApp();
 })();
@@ -1097,11 +1252,29 @@ function renderDashboard() {
 
   const comissaoTotal = vendas.reduce((s,v) => s + (v.comissao||0), 0);
 
+  // custo total (usa o custo ATUAL de cada produto — não é um custo "congelado" no momento da venda)
+  const custoTotal = vendas.reduce((s, v) => s + v.itens.reduce((si, i) => {
+    const p = produtos.find(x => x.id === i.prodId);
+    return si + (p ? p.custo * i.qty : 0);
+  }, 0), 0);
+  const lucroBruto = totalRec - custoTotal;
+  const margem = totalRec > 0 ? (lucroBruto / totalRec * 100) : 0;
+
   document.getElementById('metricas').innerHTML = `
     <div class="metric metric-accent">
       <div class="metric-label">Receita total</div>
       <div class="metric-value">R$ ${totalRec.toFixed(2)}</div>
       <div class="metric-sub">todas as vendas</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Custo total</div>
+      <div class="metric-value" style="color:var(--terracota);">R$ ${custoTotal.toFixed(2)}</div>
+      <div class="metric-sub">estimado, custo atual dos produtos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Lucro bruto</div>
+      <div class="metric-value" style="color:var(--sage);">R$ ${lucroBruto.toFixed(2)}</div>
+      <div class="metric-sub">margem de ${margem.toFixed(0)}%</div>
     </div>
     <div class="metric">
       <div class="metric-label">Nº de vendas</div>
