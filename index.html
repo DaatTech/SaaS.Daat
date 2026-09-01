@@ -3,157 +3,966 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DAAT. — Painel de Acompanhamento</title>
+<title>DAAT.</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root {
-    --bg: #f3ecdd; --bg2: #fffdf6; --bg3: #ffffff;
-    --border: rgba(20,18,12,0.10); --border2: rgba(20,18,12,0.16);
-    --text: #14120c; --text2: #5c5748; --text3: #8d8672;
-    --accent: #f5c400; --accent2: #ffd633;
-    --green: #7a9b6e; --red: #c98a7a; --amber: #c99a4a; --sage: #93a884;
-    --radius: 14px; --radius-sm: 8px;
+    --bg: #f3ecdd;
+    --bg2: #fffdf6;
+    --bg3: #ffffff;
+    --border: rgba(20,18,12,0.10);
+    --border2: rgba(20,18,12,0.16);
+    --text: #14120c;
+    --text2: #5c5748;
+    --text3: #8d8672;
+    --accent: #f5c400;
+    --accent2: #ffd633;
+    --green: #7a9b6e;
+    --red: #c98a7a;
+    --amber: #c99a4a;
+    --sage: #93a884;
+    --terracota: #d3a184;
+    --lavanda: #b9ac9a;
+    --radius: 14px;
+    --radius-sm: 8px;
     --shadow: 0 1px 2px rgba(20,18,12,.04), 0 8px 24px -12px rgba(20,18,12,.12);
-    --font-title: 'Archivo Black', sans-serif; --font-mono: 'IBM Plex Mono', monospace; --font-body: 'Inter', sans-serif;
+    --shadow-sm: 0 1px 2px rgba(20,18,12,.05);
+    --font-title: 'Archivo Black', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-body: 'Inter', sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px;
-    background-image: linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);
+    background-image:
+      linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);
     background-size: 24px 24px;
   }
+
+  /* HEADER */
   header { background: rgba(255,253,246,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 72px; position: sticky; top: 0; z-index: 100; }
-  .logo-word { font-family: var(--font-title); font-size: 24px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-word { font-family: var(--font-title); font-size: 26px; letter-spacing: 0.01em; color: var(--text); }
   .logo-word .dot { color: var(--accent); }
-  .header-sup { font-size: 10px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
-  .container { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+  .header-sup { font-size: 10px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .by-daat { font-family: var(--font-mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; }
+  .by-daat b { color: var(--text); font-weight: 700; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  #header-date { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; padding: 10px 2rem; background: transparent; overflow-x: auto; }
+  .tab { padding: 10px 16px; font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; background: transparent; border: none; border-radius: 999px; cursor: pointer; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: all .18s; white-space: nowrap; }
+  .tab:hover { color: var(--text); background: rgba(20,18,12,.04); }
+  .tab.active { color: var(--text); background: var(--accent); font-weight: 700; box-shadow: var(--shadow-sm); }
+  .tab i { font-size: 16px; }
+
+  /* LAYOUT */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
   .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
-  .card-title { font-size: 14px; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; font-family: var(--font-body); }
-  .btn-gold { background: var(--accent); color: var(--text); }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; font-family: var(--font-body); }
+  .card-title i { color: var(--text); background: var(--accent); border-radius: 8px; padding: 6px; font-size: 15px; }
+
+  /* GRID */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-family: var(--font-mono); }
+
+  /* INPUTS */
+  input, select, textarea {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 10px 13px;
+    outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,196,0,.2); }
+  select option { background: var(--bg2); }
+  textarea { resize: vertical; min-height: 68px; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-body); border: none; transition: opacity .15s, transform .1s, box-shadow .15s; }
+  .btn:active { transform: scale(.98); }
+  .btn-gold { background: var(--accent); color: var(--text); box-shadow: var(--shadow-sm); }
+  .btn-gold:hover { background: var(--accent2); box-shadow: var(--shadow); }
   .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
-  .btn-sm { padding: 6px 12px; font-size: 12px; }
-  input, select { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 7px 10px; }
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  th { text-align: left; font-size: 9.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; font-family: var(--font-mono); }
-  td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:hover td { background: rgba(20,18,12,.02); }
-  .badge { display: inline-flex; padding: 3px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
-  .badge-green { background: rgba(122,155,110,.16); color: var(--green); }
-  .badge-red { background: rgba(201,138,122,.16); color: var(--red); }
-  .badge-amber { background: rgba(201,154,74,.16); color: var(--amber); }
-  .badge-gray { background: rgba(20,18,12,.06); color: var(--text3); }
+  .btn-outline:hover { border-color: var(--text); color: var(--text); }
+  .btn-danger { background: transparent; border: 1px solid rgba(201,138,122,.4); color: var(--red); font-size: 12px; padding: 6px 12px; }
+  .btn-danger:hover { background: rgba(201,138,122,.12); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .actions { display: flex; gap: 10px; margin-top: 1.25rem; align-items: center; }
+
+  /* METRICS */
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
-  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.3rem; box-shadow: var(--shadow); }
-  .metric-label { font-size: 9.5px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; font-family: var(--font-mono); }
-  .metric-value { font-size: 22px; font-family: var(--font-title); }
-  input.mini { width: 90px; padding: 4px 6px; font-size: 12px; }
-  #login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; }
-  #login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 360px; box-shadow: var(--shadow); text-align: center; }
-  #login-box .form-group { margin: 14px 0; text-align: left; }
-  #login-box label { font-size: 10px; font-family: var(--font-mono); text-transform: uppercase; color: var(--text3); display: block; margin-bottom: 5px; }
-  #login-box input { width: 100%; }
-  #login-error { color: var(--red); font-size: 12px; margin-top: 10px; }
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; box-shadow: var(--shadow); }
+  .metric-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; font-family: var(--font-mono); }
+  .metric-value { font-size: 26px; font-weight: 400; color: var(--text); line-height: 1; font-family: var(--font-title); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 8px; }
+  .metric-accent { background: linear-gradient(135deg, var(--bg2), rgba(245,196,0,.12)); border-color: rgba(245,196,0,.35); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 12px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(20,18,12,.02); }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-green { background: rgba(122,155,110,.16); color: var(--green); }
+  .badge-amber { background: rgba(201,154,74,.16); color: var(--amber); }
+  .badge-red { background: rgba(201,138,122,.16); color: var(--red); }
+  .badge-gray { background: rgba(20,18,12,.06); color: var(--text3); }
+  .badge-purple { background: rgba(185,172,154,.22); color: var(--text2); }
+  .badge-teal { background: rgba(147,168,132,.18); color: var(--sage); }
+  .badge-blue { background: rgba(211,161,132,.18); color: var(--terracota); }
+  .badge-gold { background: rgba(245,196,0,.18); color: var(--amber); }
+
+  /* SERIE colors */
+  .serie-premium { color: var(--accent); font-size: 11px; font-weight: 600; }
+  .serie-menstyle { color: var(--sage); font-size: 11px; font-weight: 600; }
+  .serie-intense { color: var(--terracota); font-size: 11px; font-weight: 600; }
+
+  /* FILTER ROW */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+  .filter-row input, .filter-row select { font-size: 12px; padding: 7px 11px; }
+
+  /* VENDA ITEM */
+  .item-line { display: grid; grid-template-columns: 2fr 90px 90px 32px; gap: 8px; align-items: end; margin-bottom: 8px; }
+
+  /* CHART BAR */
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .bar-label span:first-child { color: var(--text2); }
+  .bar-label span:last-child { font-weight: 600; color: var(--text); }
+  .bar-track { background: var(--bg3); border-radius: 999px; height: 7px; }
+  .bar-fill { height: 7px; border-radius: 999px; background: var(--accent); }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: var(--bg2); padding: 12px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; box-shadow: var(--shadow); }
+  #toast.show { opacity: 1; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+  .empty i { font-size: 32px; display: block; margin-bottom: 10px; }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+  @media (max-width: 700px) {
+    .form-grid, .form-grid.cols3, .two-col { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .container { padding: 1rem; }
+    .tabs { padding: 10px 1rem; overflow-x: auto; }
+    header { padding: 0 1rem; }
+    .item-line { grid-template-columns: 1fr 70px 70px 32px; }
+  }
+
+  /* LOGIN */
+  #login-screen { position: fixed; inset: 0; background: var(--bg); background-image: linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px); background-size: 24px 24px; display: flex; align-items: center; justify-content: center; z-index: 999; }
+  #login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.75rem; width: 100%; max-width: 380px; box-shadow: var(--shadow); }
+  #login-box .logo-word { font-size: 32px; text-align: center; margin-bottom: 4px; }
+  #login-box .header-sup { text-align: center; margin-bottom: 1.75rem; }
+  #login-box .form-group { margin-bottom: 14px; }
+  #login-box .btn { width: 100%; justify-content: center; margin-top: 8px; }
+  #login-error { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; display: none; font-family: var(--font-mono); }
   #app-wrap { display: none; }
 </style>
 </head>
 <body>
 
+<!-- ===== LOGIN ===== -->
 <div id="login-screen">
   <div id="login-box">
-    <div class="logo-word" style="font-size:28px;">DAAT<span class="dot">.</span></div>
-    <div class="header-sup" style="margin-top:4px;">Painel de Acompanhamento</div>
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="form-group">
       <label>E-mail</label>
-      <input id="login-email" type="email" style="width:100%;" />
+      <input id="login-email" type="email" placeholder="" />
     </div>
     <div class="form-group">
       <label>Senha</label>
-      <input id="login-senha" type="password" style="width:100%;" onkeydown="if(event.key==='Enter') fazerLogin()" />
+      <div style="position:relative;">
+        <input id="login-senha" type="password" placeholder="" onkeydown="if(event.key==='Enter') fazerLogin()" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivel()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
     </div>
-    <button class="btn btn-gold" style="width:100%;justify-content:center;" onclick="fazerLogin()">Entrar</button>
+    <button class="btn btn-gold" onclick="fazerLogin()">Entrar</button>
     <div id="login-error"></div>
+    <div style="text-align:center;margin-top:12px;">
+      <a href="#" onclick="mostrarRecuperarSenha();return false;" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);">Esqueci minha senha</a>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="mostrarCadastro();return false;" style="width:100%;justify-content:center;margin-top:12px;">Não tenho cadastro</button>
+  </div>
+
+  <div id="recuperar-box" style="display:none;">
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
+    <div class="header-sup">Recuperar senha</div>
+    <p style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:16px;">Digite o e-mail da sua conta. Vamos te mandar um link pra você criar uma senha nova.</p>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input id="recuperar-email" type="email" placeholder="" />
+    </div>
+    <button class="btn btn-gold" onclick="enviarRecuperacaoSenha()">Enviar link de recuperação</button>
+    <div id="recuperar-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
+    <div id="recuperar-sucesso" style="color:var(--green);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
+    <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
+  </div>
+
+  <div id="nova-senha-box" style="display:none;">
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
+    <div class="header-sup">Criar nova senha</div>
+    <div class="form-group">
+      <label>Nova senha</label>
+      <div style="position:relative;">
+        <input id="ns-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelNS('ns-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirmar nova senha</label>
+      <div style="position:relative;">
+        <input id="ns-senha-confirma" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelNS('ns-senha-confirma', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
+    </div>
+    <button class="btn btn-gold" onclick="salvarNovaSenhaRecuperacao()">Salvar nova senha</button>
+    <div id="ns-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+  <div id="cadastro-box" style="display:none;">
+    <div class="logo-word">DAAT<span class="dot">.</span></div>
+    <div class="header-sup">Novo cliente</div>
+    <div class="form-group">
+      <label>Nome da empresa</label>
+      <input id="cad-empresa" placeholder="" />
+    </div>
+    <div class="form-group">
+      <label>E-mail de acesso</label>
+      <input id="cad-email" type="email" placeholder="" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <div style="position:relative;">
+        <input id="cad-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelCadastro()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirmar senha</label>
+      <div style="position:relative;">
+        <input id="cad-senha-confirma" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+        <button type="button" onclick="toggleSenhaVisivelCadastroConfirma()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+      </div>
+    </div>
+    <div class="form-group" style="flex-direction:row;align-items:flex-start;gap:8px;margin-bottom:14px;">
+      <input type="checkbox" id="cad-aceite" style="width:16px;height:16px;margin-top:2px;flex-shrink:0;" />
+      <label for="cad-aceite" style="text-transform:none;font-weight:400;font-size:11px;letter-spacing:0;color:var(--text2);font-family:var(--font-body);">Li e concordo com a <a href="politica-privacidade.html" target="_blank" style="color:var(--text);text-decoration:underline;">Política de Privacidade</a> do DAAT.</label>
+    </div>
+    <button class="btn btn-gold" onclick="cadastrarNovoCliente()"><i class="ti ti-user-plus"></i> Criar acesso do cliente</button>
+    <div id="cadastro-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
+    <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
+  </div>
+</div>
+
+<!-- ===== ACESSO BLOQUEADO ===== -->
+<div id="bloqueado-screen" style="display:none;position:fixed;inset:0;background:var(--bg);background-image:linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);background-size:24px 24px;align-items:center;justify-content:center;z-index:999;padding:1rem;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2.75rem;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;">
+    <div class="logo-word" style="font-size:26px;margin-bottom:14px;">DAAT<span class="dot">.</span></div>
+    <div id="bloqueado-titulo" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;">Acesso temporariamente indisponível</div>
+    <p id="bloqueado-msg" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;"></p>
+    <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);line-height:2;margin-bottom:20px;">
+      Instagram <strong style="color:var(--text);">@daat.tech</strong><br>
+      E-mail <strong style="color:var(--text);">daat.comercial@gmail.com</strong>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="fazerLogoutBloqueado()" style="width:100%;justify-content:center;">Sair</button>
   </div>
 </div>
 
 <div id="app-wrap">
 <header>
-  <div>
-    <div class="logo-word">DAAT<span class="dot">.</span></div>
-    <div class="header-sup">Painel de Acompanhamento</div>
+  <div class="logo">
+    <div>
+      <div class="logo-word">DAAT<span class="dot">.</span></div>
+      </div>
   </div>
-  <button class="btn btn-outline btn-sm" onclick="sair()"><i class="ti ti-logout"></i> Sair</button>
+  <div class="header-right">
+    <div id="header-date"></div>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button class="btn btn-outline btn-sm" onclick="mostrarLembretesManual()" title="Ver lembretes de hoje"><i class="ti ti-bell"></i></button>
+      <button class="btn btn-outline btn-sm" onclick="fazerLogout()"><i class="ti ti-logout"></i> Sair</button>
+    </div>
+  </div>
 </header>
 
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('crm')"><i class="ti ti-calendar-event"></i> CRM</button>
+  <button class="tab" onclick="switchTab('produtos')"><i class="ti ti-package"></i> Produtos</button>
+  <button class="tab" onclick="switchTab('vendas')"><i class="ti ti-receipt"></i> Registrar venda</button>
+  <button class="tab" onclick="switchTab('historico')"><i class="ti ti-history"></i> Histórico</button>
+  <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-chart-bar"></i> Dashboard</button>
+  <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings"></i> Configurações</button>
+  <button class="tab" onclick="switchTab('ajuda')"><i class="ti ti-lifebuoy"></i> Ajuda</button>
+</div>
+
+<!-- ===== PRODUTOS ===== -->
+<div id="tab-produtos" class="section">
 <div class="container">
 
-  <div class="metrics" id="metricas"></div>
-
   <div class="card">
-    <div class="card-title">
-      <span><i class="ti ti-building-store"></i> Clientes</span>
-      <div style="display:flex;gap:8px;">
-        <select id="f-status" onchange="renderTabela()">
-          <option value="">Todos os status</option>
-          <option value="ativo">Ativo</option>
-          <option value="inadimplente">Inadimplente</option>
-        </select>
-        <select id="f-teste" onchange="renderTabela()">
-          <option value="">Teste + pagantes</option>
-          <option value="teste">Só em teste</option>
-          <option value="pagante">Só pagantes (fora do teste)</option>
-        </select>
-        <button class="btn btn-outline btn-sm" onclick="exportarExcel()"><i class="ti ti-download"></i> Exportar</button>
+    <div class="card-title"><i class="ti ti-plus"></i> Adicionar produto</div>
+    <div class="form-grid cols3">
+      <div class="form-group"><label>Fornecedor</label><input id="f-forn" placeholder="" /></div>
+      <div class="form-group"><label>Nome do produto</label><input id="f-nome" placeholder="" /></div>
+      <div class="form-group">
+        <label>Linha / Coleção</label>
+        <input id="f-serie" placeholder="" />
       </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <input id="f-cat" placeholder="" />
+      </div>
+      <div class="form-group"><label>Volume / Variação</label><input id="f-vol" placeholder="" /></div>
+      <div class="form-group">
+        <label>Unidade</label>
+        <select id="f-un">
+          <option value="un">Unidade (un)</option>
+          <option value="cx">Caixa (cx)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Custo (R$)</label><input id="f-custo" type="number" step="0.01" min="0" placeholder="" /></div>
+      <div class="form-group"><label>Preço de venda (R$)</label><input id="f-preco" type="number" step="0.01" min="0" placeholder="" /></div>
+      <div class="form-group"><label>Estoque atual</label><input id="f-est" type="number" min="0" placeholder="" /></div>
+      <div class="form-group"><label>Alerta estoque mínimo</label><input id="f-estmin" type="number" min="0" placeholder="" /></div>
+      <div class="form-group full"><label>Observações</label><textarea id="f-obs" placeholder=""></textarea></div>
     </div>
-    <div style="overflow-x:auto;">
-      <table id="tabela-clientes">
-        <thead>
-          <tr>
-            <th>Empresa</th>
-            <th>Responsável</th>
-            <th>Cadastro</th>
-            <th>Teste até</th>
-            <th>Status</th>
-            <th>Valor mensal</th>
-            <th>Último pagamento</th>
-            <th>Salvar</th>
-          </tr>
-        </thead>
-        <tbody id="tabela-body"></tbody>
-      </table>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar produto</button>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">
-      <span><i class="ti ti-message-2"></i> Chamados de suporte</span>
-      <select id="f-chamado-status" onchange="renderChamadosAdmin()">
-        <option value="">Todos os status</option>
-        <option value="aberto">Abertos</option>
-        <option value="respondido">Respondidos</option>
-        <option value="fechado">Fechados</option>
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-list"></i> Catálogo <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="prod-count"></span></span>
+      <button class="btn btn-outline btn-sm" onclick="exportarProdutos()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
+    <div class="filter-row">
+      <input id="busca" placeholder="Buscar..." oninput="renderProdutos()" style="flex:1;min-width:100px;" />
+      <select id="f-serie-filtro" onchange="renderProdutos()">
+        <option value="">Todas as linhas</option>
+      </select>
+      <select id="f-cat-filtro" onchange="renderProdutos()">
+        <option value="">Todas categorias</option>
+      </select>
+      <select id="f-status-filtro" onchange="renderProdutos()">
+        <option value="">Todos</option>
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+        <option value="baixo">Estoque baixo</option>
       </select>
     </div>
-    <div id="chamados-admin-lista"></div>
+    <div class="table-wrap" id="prod-table"></div>
   </div>
 
 </div>
 </div>
 
+<!-- ===== VENDAS ===== -->
+<div id="tab-vendas" class="section">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-receipt"></i> Nova venda</div>
+    <div class="form-grid cols3">
+      <div class="form-group"><label>Data</label><input id="v-data" type="date" /></div>
+      <div class="form-group"><label>Vendedor</label><input id="v-vendedor" placeholder="" oninput="calcTotal()" /></div>
+      <div class="form-group">
+        <label>Canal</label>
+        <select id="v-canal">
+          <option value="">Selecionar...</option>
+          <option>Balcão</option><option>Serviço (uso interno)</option><option>Encomenda</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Cliente / referência</label><input id="v-cliente" placeholder="" /></div>
+      <div class="form-group"><label>Comissão do vendedor (%)</label><input id="v-comissao-pct" type="number" step="0.1" min="0" placeholder="" oninput="calcTotal()" /></div>
+    </div>
+
+    <div style="margin-top:1.25rem;">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Itens</div>
+      <div id="itens-wrap"></div>
+      <button class="btn btn-outline btn-sm" onclick="addItem()" style="margin-top:4px;"><i class="ti ti-plus"></i> Item</button>
+    </div>
+
+    <div id="v-total-wrap" style="display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+        <span style="color:var(--text2);">Total:</span>
+        <span id="v-total" style="font-size:22px;font-weight:700;color:var(--accent);"></span>
+      </div>
+      <div id="v-comissao" style="margin-top:6px;display:none;"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-gold" onclick="salvarVenda()"><i class="ti ti-check"></i> Salvar venda</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== CRM ===== -->
+<div id="tab-crm" class="section active">
+<div class="container">
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-user-plus"></i> Novo cliente</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="" /></div>
+        <div class="form-group"><label>Telefone / WhatsApp</label><input id="c-tel" placeholder="" /></div>
+        <div class="form-group"><label>E-mail</label><input id="c-email" type="email" placeholder="" /></div>
+        <div class="form-group"><label>CPF</label><input id="c-cpf" placeholder="" /></div>
+        <div class="form-group"><label>CNPJ</label><input id="c-cnpj" placeholder="" /></div>
+        <div class="form-group full"><label>Observações</label><input id="c-obs" placeholder="" /></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-gold" onclick="addCliente()"><i class="ti ti-plus"></i> Adicionar cliente</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar-plus"></i> Novo agendamento</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Cliente</label>
+          <select id="a-cliente"><option value="">Selecionar...</option></select>
+        </div>
+        <div class="form-group"><label>Data</label><input id="a-data" type="date" /></div>
+        <div class="form-group"><label>Horário</label><input id="a-hora" type="time" /></div>
+        <div class="form-group">
+          <label>Motivo</label>
+          <select id="a-motivo">
+            <option value="">Selecionar...</option>
+            <option>Retorno de compra</option>
+            <option>Encomenda</option>
+            <option>Reposição de estoque do cliente</option>
+            <option>Follow-up / pós-venda</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Observações</label><input id="a-obs" placeholder="" /></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-gold" onclick="addAgendamento()"><i class="ti ti-check"></i> Agendar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-calendar-event"></i> Agenda <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="agenda-count"></span></span>
+      <button class="btn btn-outline btn-sm" onclick="exportarAgendamentos()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
+    <div class="filter-row">
+      <select id="ag-status-filtro" onchange="renderAgenda()">
+        <option value="">Todos os status</option>
+        <option>Agendado</option>
+        <option>Confirmado</option>
+        <option>Concluído</option>
+        <option>Cancelado</option>
+      </select>
+    </div>
+    <div class="table-wrap" id="agenda-table"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-address-book"></i> Clientes <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="cliente-count"></span></span>
+      <button class="btn btn-outline btn-sm" onclick="exportarClientes()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
+    <div class="table-wrap" id="cliente-table"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== HISTÓRICO ===== -->
+<div id="tab-historico" class="section">
+<div class="container">
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-history"></i> Vendas registradas</span>
+      <button class="btn btn-outline btn-sm" onclick="exportarVendas()"><i class="ti ti-download"></i> Exportar</button>
+    </div>
+    <div class="filter-row">
+      <input id="h-busca" placeholder="Buscar cliente, vendedor, canal..." oninput="renderHistorico()" style="flex:1;" />
+      <input id="h-de" type="date" onchange="renderHistorico()" />
+      <input id="h-ate" type="date" onchange="renderHistorico()" />
+    </div>
+    <div class="table-wrap" id="hist-table"></div>
+  </div>
+</div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="tab-dashboard" class="section">
+<div class="container">
+  <div class="metrics" id="metricas"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-trending-up"></i> Top produtos por receita</div>
+      <div id="rank-prod"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-tag"></i> Receita por categoria</div>
+      <div id="rank-cat"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-users"></i> Desempenho por vendedor</div>
+    <div id="rank-vendedor"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-alert-triangle"></i> Alertas de estoque</div>
+    <div id="alerta-estoque"></div>
+  </div>
+</div>
+</div>
+
+<!-- ===== CONFIG ===== -->
+<div id="tab-config" class="section">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-building"></i> Conta</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Empresa</label><input id="cfg-empresa" placeholder="" /></div>
+      <div class="form-group"><label>E-mail de login</label><input id="cfg-email" disabled /></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="salvarEmpresa()"><i class="ti ti-check"></i> Salvar</button>
+    </div>
+    <div id="cfg-empresa-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-file-spreadsheet"></i> Exportar dados</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Baixe todos os seus dados (produtos, vendas, clientes e agenda) num único arquivo Excel — abre normal no Excel, Google Sheets ou qualquer planilha.</p>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="exportarTudo()"><i class="ti ti-download"></i> Exportar tudo (Excel)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-trash"></i> Lixeira</span>
+      <button class="btn btn-outline btn-sm" onclick="renderLixeira()"><i class="ti ti-refresh"></i> Atualizar</button>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Produtos, clientes, vendas e agendamentos excluídos ficam aqui, recuperáveis a qualquer momento.</p>
+    <div id="lixeira-lista"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-lock"></i> Trocar senha</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nova senha</label>
+        <div style="position:relative;">
+          <input id="cfg-nova-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+          <button type="button" onclick="toggleSenhaVisivelCfg('cfg-nova-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirmar nova senha</label>
+        <div style="position:relative;">
+          <input id="cfg-confirma-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+          <button type="button" onclick="toggleSenhaVisivelCfg('cfg-confirma-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="trocarSenha()"><i class="ti ti-check"></i> Salvar nova senha</button>
+    </div>
+    <div id="cfg-senha-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== AJUDA ===== -->
+<div id="tab-ajuda" class="section">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-help-circle"></i> Perguntas frequentes</div>
+    <div id="faq-lista"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-message-2"></i> Não encontrou o que precisava?</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Manda sua dúvida ou problema pra gente. Você vê a resposta aqui mesmo, assim que respondermos.</p>
+    <div class="form-grid">
+      <div class="form-group full"><label>Assunto</label><input id="ch-assunto" placeholder="" /></div>
+      <div class="form-group full"><label>Mensagem</label><textarea id="ch-mensagem" placeholder=""></textarea></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="abrirChamado()"><i class="ti ti-send"></i> Enviar</button>
+    </div>
+    <div id="ch-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-list-details"></i> Meus chamados <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="chamados-count"></span></div>
+    <div class="table-wrap" id="chamados-lista"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== LEMBRETES DE HOJE ===== -->
+<div id="lembretes-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,18,12,.45);z-index:998;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-width:420px;width:100%;padding:1.75rem;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <i class="ti ti-bell-ringing" style="color:var(--text);background:var(--accent);border-radius:8px;padding:6px;font-size:18px;"></i>
+      <div style="font-size:15px;font-weight:700;color:var(--text);">Lembretes de hoje</div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:1.25rem;font-family:var(--font-mono);" id="lembretes-data"></div>
+    <div id="lembretes-lista"></div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="fecharLembretes()" style="width:100%;justify-content:center;">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+</div>
+
+
+
 <script>
+// =========================================================
+// CONFIGURAÇÃO DO SUPABASE — troque pelos dados do seu projeto
+// (Project Settings > API no painel do Supabase)
+// =========================================================
 const SUPABASE_URL = 'https://mdekuwxqqdbokbzsibrh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZWt1d3hxcWRib2tienNpYnJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NjM0NzQsImV4cCI6MjEwMzIzOTQ3NH0.zMkm02EAvDsOw3pCBg9h1QxTZbW_gcYUZXfJl-8WCfo';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let clientes = [];
-let chamadosAdmin = [];
+// =========================================================
+// CONFIGURAÇÃO DO EMAILJS — troque pelos dados da sua conta
+// (emailjs.com > Email Services / API Keys)
+// =========================================================
+const EMAILJS_SERVICE_ID = 'service_votjuei';
+const EMAILJS_TEMPLATE_ID = 'template_zektyll';
+const EMAILJS_PUBLIC_KEY = '0dja_oBx-MN5tkBfv';
+const DAAT_SELL_APP_URL = 'https://daattech.github.io/SaaS.Daat/';
+if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
+async function enviarEmailBoasVindas(empresa, nome, email) {
+  if (!window.emailjs || EMAILJS_SERVICE_ID.includes('SEU_')) {
+    console.warn('EmailJS não configurado ainda — pulando envio de e-mail de boas-vindas.');
+    return;
+  }
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: email,
+      empresa: empresa,
+      nome: nome,
+      app_url: DAAT_SELL_APP_URL,
+    });
+  } catch (e) {
+    console.error('Falha ao enviar e-mail de boas-vindas:', e);
+    // não bloqueia o cadastro — o cliente já foi criado com sucesso de qualquer forma
+  }
+}
+
+// ===== STATE (cache local, alimentado pelo Supabase) =====
+let produtos = [];
+let vendas = [];
+let clientes = [];
+let agendamentos = [];
+let itens = [{ prodId:'', qty:1, preco:0 }];
+let organizacaoId = null;
+
+// ===== AUTH =====
+function toggleSenhaVisivel() {
+  const input = document.getElementById('login-senha');
+  const btn = event.target;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+function toggleSenhaVisivelCadastro() {
+  const input = document.getElementById('cad-senha');
+  const btn = event.target;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+function toggleSenhaVisivelCadastroConfirma() {
+  const input = document.getElementById('cad-senha-confirma');
+  const btn = event.target;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+function mostrarCadastro() {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('cadastro-box').style.display = 'block';
+}
+
+function mostrarLogin() {
+  document.getElementById('cadastro-box').style.display = 'none';
+  document.getElementById('recuperar-box').style.display = 'none';
+  document.getElementById('nova-senha-box').style.display = 'none';
+  document.getElementById('login-box').style.display = 'block';
+}
+
+function mostrarRecuperarSenha() {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('recuperar-box').style.display = 'block';
+  document.getElementById('recuperar-error').style.display = 'none';
+  document.getElementById('recuperar-sucesso').style.display = 'none';
+}
+
+function toggleSenhaVisivelNS(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+async function enviarRecuperacaoSenha() {
+  const email = document.getElementById('recuperar-email').value.trim();
+  const errEl = document.getElementById('recuperar-error');
+  const sucEl = document.getElementById('recuperar-sucesso');
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+
+  if (!email) { errEl.textContent = 'Preencha seu e-mail.'; errEl.style.display = 'block'; return; }
+
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: DAAT_SELL_APP_URL,
+  });
+
+  if (error) {
+    errEl.textContent = 'Erro ao enviar: ' + error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  sucEl.textContent = 'Link enviado! Confere seu e-mail (e a caixa de spam) e clica no link pra criar uma senha nova.';
+  sucEl.style.display = 'block';
+  document.getElementById('recuperar-email').value = '';
+}
+
+async function salvarNovaSenhaRecuperacao() {
+  const senha = document.getElementById('ns-senha').value;
+  const confirma = document.getElementById('ns-senha-confirma').value;
+  const errEl = document.getElementById('ns-error');
+  errEl.style.display = 'none';
+
+  if (!senha || !confirma) { errEl.textContent = 'Preencha os dois campos.'; errEl.style.display = 'block'; return; }
+  if (senha.length < 8) { errEl.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; errEl.style.display = 'block'; return; }
+  if (senha !== confirma) { errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return; }
+
+  const { error } = await supabaseClient.auth.updateUser({ password: senha });
+  if (error) { errEl.textContent = 'Erro ao salvar: ' + error.message; errEl.style.display = 'block'; return; }
+
+  toast('Senha atualizada! Você já está logado.');
+  document.getElementById('nova-senha-box').style.display = 'none';
+  await iniciarApp();
+}
+
+async function cadastrarNovoCliente() {
+  const email          = document.getElementById('cad-email').value.trim();
+  const empresa        = document.getElementById('cad-empresa').value.trim();
+  const senha           = document.getElementById('cad-senha').value;
+  const senhaConfirma  = document.getElementById('cad-senha-confirma').value;
+  const errEl          = document.getElementById('cadastro-error');
+  errEl.style.display = 'none';
+
+  if (!empresa || !email || !senha || !senhaConfirma) {
+    errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return;
+  }
+  if (!document.getElementById('cad-aceite').checked) {
+    errEl.textContent = 'Você precisa aceitar a Política de Privacidade pra continuar.'; errEl.style.display = 'block'; return;
+  }
+  if (senha.length < 8) {
+    errEl.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; errEl.style.display = 'block'; return;
+  }
+  if (senha !== senhaConfirma) {
+    errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return;
+  }
+
+  // 1) cria o usuário de login
+  const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({ email, password: senha });
+  if (signUpErr) {
+    errEl.textContent = 'Erro ao criar acesso: ' + signUpErr.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  const userId = signUpData.user?.id;
+  if (!userId || !signUpData.session) {
+    errEl.textContent = 'Usuário criado, mas precisa confirmar por e-mail antes de continuar. Pra evitar isso, desative a confirmação de e-mail em Authentication > Providers > Email (desmarque "Confirm email") no painel do Supabase.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // força a sessão recém-criada a ficar ativa no client antes de prosseguir
+  // (evita problema de timing onde o insert seguinte sai sem o token do usuário novo)
+  await supabaseClient.auth.setSession({
+    access_token: signUpData.session.access_token,
+    refresh_token: signUpData.session.refresh_token,
+  });
+
+  // 2) cria a organização + o perfil numa única operação no banco
+  // (contorna o paradoxo de RLS: ver a organização recém-criada exige
+  // um perfil que só existe depois dela — por isso usamos uma função
+  // no banco que faz as duas coisas de uma vez)
+  const { data: sessaoCheck } = await supabaseClient.auth.getSession();
+  if (!sessaoCheck.session) {
+    errEl.textContent = 'Usuário criado, mas a sessão não ficou ativa. Provavelmente a confirmação de e-mail ainda está exigida no projeto — veja Authentication > Providers > Email > "Confirm email".';
+    errEl.style.display = 'block';
+    return;
+  }
+  const { error: cadastroErr } = await supabaseClient.rpc('cadastrar_novo_cliente', {
+    p_nome_empresa: empresa,
+    p_nome_responsavel: '',
+  });
+  if (cadastroErr) {
+    errEl.textContent = 'Usuário criado, mas houve erro ao vincular a organização: ' + cadastroErr.message;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  toast('Cliente cadastrado! Pode fazer login agora.');
+  enviarEmailBoasVindas(empresa, '', email);
+  ['cad-empresa','cad-email','cad-senha','cad-senha-confirma'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cad-aceite').checked = false;
+  await supabaseClient.auth.signOut(); // sai da sessão do cliente recém-criado, volta pro login
+  mostrarLogin();
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; errEl.style.display = 'block'; return; }
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+  if (error) {
+    errEl.textContent = 'Erro: ' + error.message + (error.status ? ' (status ' + error.status + ')' : '');
+    errEl.style.display = 'block';
+    console.error('Erro de login completo:', error);
+    return;
+  }
+  await iniciarApp();
+}
+
+async function fazerLogout() {
+  await supabaseClient.auth.signOut();
+  document.getElementById('app-wrap').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-senha').value = '';
+}
+
+async function iniciarApp() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return;
+
+  const { data: perfil, error: perfilErr } = await supabaseClient
+    .from('perfis').select('organizacao_id').eq('id', user.id).single();
+
+  if (perfilErr || !perfil) {
+    document.getElementById('login-error').textContent = 'Usuário sem organização vinculada. Fale com a DAAT.';
+    document.getElementById('login-error').style.display = 'block';
+    await supabaseClient.auth.signOut();
+    return;
+  }
+
+  organizacaoId = perfil.organizacao_id;
+
+  // checa status de pagamento e teste grátis antes de liberar o app
+  const { data: org, error: orgErr } = await supabaseClient
+    .from('organizacoes').select('nome, status, em_teste, trial_fim').eq('id', organizacaoId).single();
+
+  if (!orgErr && org && org.status !== 'ativo') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('bloqueado-titulo').textContent = 'Acesso temporariamente indisponível';
+    document.getElementById('bloqueado-msg').innerHTML = `Identificamos uma pendência na assinatura da <strong>${org.nome || 'sua empresa'}</strong>. Entre em contato com a DAAT pra regularizar e liberar o acesso de novo.`;
+    document.getElementById('bloqueado-screen').style.display = 'flex';
+    return;
+  }
+
+  if (!orgErr && org && org.em_teste && org.trial_fim) {
+    const hoje = hojeLocal();
+    if (org.trial_fim < hoje) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('bloqueado-titulo').textContent = 'Seu teste grátis terminou';
+      document.getElementById('bloqueado-msg').innerHTML = `O período de 7 dias de teste da <strong>${org.nome || 'sua empresa'}</strong> chegou ao fim. Fala com a gente pra continuar usando o DAAT. sem interrupção.`;
+      document.getElementById('bloqueado-screen').style.display = 'flex';
+      return;
+    }
+  }
+
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-wrap').style.display = 'block';
+
+  await carregarTudo();
+  setDefaultDate();
+  renderItens();
+  renderClienteSelect();
+  renderAgenda();
+  renderClientes();
+  verificarLembretesHoje();
+}
+
+async function fazerLogoutBloqueado() {
+  await supabaseClient.auth.signOut();
+  document.getElementById('bloqueado-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function carregarTudo() {
+  const [p, v, c, a] = await Promise.all([
+    supabaseClient.from('produtos').select('*').is('deletado_em', null).order('nome'),
+    supabaseClient.from('vendas').select('*').is('deletado_em', null).order('data', { ascending: false }),
+    supabaseClient.from('clientes').select('*').is('deletado_em', null).order('nome'),
+    supabaseClient.from('agendamentos').select('*').is('deletado_em', null).order('data'),
+  ]);
+  produtos = (p.data || []).map(mapProdutoDb);
+  vendas = (v.data || []).map(mapVendaDb);
+  clientes = (c.data || []).map(mapClienteDb);
+  agendamentos = (a.data || []).map(mapAgendamentoDb);
+}
+
+// mapeia nomes de coluna do banco (snake_case) pros nomes usados no front (camelCase)
+function mapProdutoDb(p) {
+  return { id: p.id, nome: p.nome, fornecedor: p.fornecedor, serie: p.serie, categoria: p.categoria,
+    volume: p.volume, unidade: p.unidade, custo: Number(p.custo), preco: Number(p.preco),
+    estoque: p.estoque, estoqueMin: p.estoque_min, obs: p.obs, ativo: p.ativo };
+}
+function mapVendaDb(v) {
+  return { id: v.id, data: v.data, vendedor: v.vendedor, canal: v.canal, cliente: v.cliente,
+    itens: v.itens || [], total: Number(v.total), comissao: Number(v.comissao || 0) };
+}
+function mapAgendamentoDb(a) {
+  return { id: a.id, clienteId: a.cliente_id, clienteNome: a.cliente_nome, data: a.data,
+    hora: a.hora, motivo: a.motivo, obs: a.obs, status: a.status };
+}
+
+// ===== TOAST =====
 // ===== SEGURANÇA: escapa texto do usuário antes de inserir na página (previne XSS) =====
 function escapeHTML(str) {
   if (str === null || str === undefined) return '';
@@ -165,225 +974,1056 @@ function escapeHTML(str) {
     .replace(/'/g, '&#039;');
 }
 
-function hojeLocal() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-async function fazerLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const senha = document.getElementById('login-senha').value;
-  const errEl = document.getElementById('login-error');
-  errEl.textContent = '';
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
-  if (error) { errEl.textContent = 'E-mail ou senha incorretos.'; return; }
-  await iniciar();
+// detecta quando o usuário chega pelo link de recuperação de senha do e-mail
+const isRecoveryLink = window.location.hash.includes('type=recovery');
+
+supabaseClient.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-wrap').style.display = 'none';
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('cadastro-box').style.display = 'none';
+    document.getElementById('recuperar-box').style.display = 'none';
+    document.getElementById('nova-senha-box').style.display = 'block';
+  }
+});
+
+// checa se já existe sessão ativa ao carregar a página
+// (pula essa checagem se for um link de recuperação — nesse caso o evento acima cuida da tela)
+(async function checkSession() {
+  if (isRecoveryLink) return;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) await iniciarApp();
+})();
+
+// ===== TABS =====
+function switchTab(tab) {
+  const names = ['crm','produtos','vendas','historico','dashboard','config','ajuda'];
+  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', names[i] === tab));
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'produtos')   renderProdutos();
+  if (tab === 'vendas')     { setDefaultDate(); renderItens(); }
+  if (tab === 'crm')        { renderClienteSelect(); renderAgenda(); renderClientes(); }
+  if (tab === 'historico')  renderHistorico();
+  if (tab === 'dashboard')  renderDashboard();
+  if (tab === 'config')     renderConfig();
+  if (tab === 'ajuda')      renderAjuda();
 }
 
-async function sair() {
-  await supabaseClient.auth.signOut();
-  document.getElementById('app-wrap').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
+// ===== HEADER DATE =====
+function updateDate() {
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+}
+updateDate();
+
+// ===== LINHA BADGE =====
+function serieBadge(s) {
+  if (!s) return '';
+  return `<span class="badge badge-gold">${escapeHTML(s)}</span>`;
 }
 
-async function iniciar() {
-  // tenta buscar todas as organizações — só funciona se o usuário estiver na tabela "admins"
-  const { data, error } = await supabaseClient
-    .from('organizacoes')
-    .select('id, nome, criado_em, status, em_teste, trial_fim, valor_mensal, ultimo_pagamento')
-    .order('criado_em', { ascending: false });
+// ===== ADD PRODUTO =====
+async function addProduto() {
+  const nome = document.getElementById('f-nome').value.trim();
+  if (!nome) { toast('Preencha o nome do produto.'); return; }
+  const novo = {
+    organizacao_id: organizacaoId,
+    nome,
+    fornecedor: document.getElementById('f-forn').value.trim(),
+    serie: document.getElementById('f-serie').value.trim(),
+    categoria: document.getElementById('f-cat').value.trim(),
+    volume: document.getElementById('f-vol').value.trim(),
+    unidade: document.getElementById('f-un').value,
+    custo: parseFloat(document.getElementById('f-custo').value) || 0,
+    preco: parseFloat(document.getElementById('f-preco').value) || 0,
+    estoque: parseInt(document.getElementById('f-est').value) || 0,
+    estoque_min: parseInt(document.getElementById('f-estmin').value) || 3,
+    obs: document.getElementById('f-obs').value.trim(),
+    ativo: true,
+  };
+  const { data, error } = await supabaseClient.from('produtos').insert(novo).select().single();
+  if (error) { toast('Erro ao salvar produto.'); console.error(error); return; }
+  produtos.push(mapProdutoDb(data));
+  ['f-forn','f-nome','f-serie','f-cat','f-vol','f-custo','f-preco','f-est','f-estmin','f-obs'].forEach(id => document.getElementById(id).value = '');
+  renderProdutos(); toast('Produto adicionado!');
+}
 
-  if (error || !data) {
-    document.getElementById('login-error').textContent = 'Erro ao carregar dados. Você tem certeza que está cadastrado como admin?';
+function popularFiltrosProduto() {
+  const serieSel = document.getElementById('f-serie-filtro');
+  const catSel   = document.getElementById('f-cat-filtro');
+  const serieAtual = serieSel.value, catAtual = catSel.value;
+  const series = [...new Set(produtos.map(p => p.serie).filter(Boolean))].sort();
+  const cats   = [...new Set(produtos.map(p => p.categoria).filter(Boolean))].sort();
+  serieSel.innerHTML = '<option value="">Todas as linhas</option>' + series.map(s => `<option ${s===serieAtual?'selected':''}>${s}</option>`).join('');
+  catSel.innerHTML   = '<option value="">Todas categorias</option>' + cats.map(c => `<option ${c===catAtual?'selected':''}>${c}</option>`).join('');
+}
+
+// ===== RENDER PRODUTOS =====
+function renderProdutos() {
+  popularFiltrosProduto();
+  const busca  = (document.getElementById('busca').value || '').toLowerCase();
+  const serie  = document.getElementById('f-serie-filtro').value;
+  const cat    = document.getElementById('f-cat-filtro').value;
+  const status = document.getElementById('f-status-filtro').value;
+
+  let lista = produtos.filter(p => {
+    if (busca && !p.nome.toLowerCase().includes(busca) && !(p.obs||'').toLowerCase().includes(busca)) return false;
+    if (serie && p.serie !== serie) return false;
+    if (cat   && p.categoria !== cat) return false;
+    if (status === 'ativo'   && !p.ativo) return false;
+    if (status === 'inativo' &&  p.ativo) return false;
+    if (status === 'baixo'   && !(p.ativo && p.estoque <= p.estoqueMin)) return false;
+    return true;
+  });
+
+  document.getElementById('prod-count').textContent = `(${lista.length} de ${produtos.length})`;
+
+  if (!lista.length) {
+    document.getElementById('prod-table').innerHTML = '<div class="empty"><i class="ti ti-package"></i>Nenhum produto encontrado</div>';
     return;
   }
 
-  const { data: perfisData } = await supabaseClient.from('perfis').select('organizacao_id, nome');
-  const nomesPorOrg = {};
-  (perfisData || []).forEach(p => { nomesPorOrg[p.organizacao_id] = p.nome; });
+  let h = `<table><thead><tr>
+    <th>Produto</th><th>Série</th><th>Categoria</th><th>Volume</th>
+    <th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th>Status</th><th></th>
+  </tr></thead><tbody>`;
 
-  clientes = data.map(o => ({ ...o, responsavel: nomesPorOrg[o.id] || '' }));
-
-  // se só retornou a própria organização (1 linha), provavelmente não é admin
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app-wrap').style.display = 'block';
-  renderMetricas();
-  renderTabela();
-  await carregarChamadosAdmin();
-}
-
-function diasRestantes(trialFim) {
-  const hoje = new Date(hojeLocal() + 'T00:00:00');
-  const fim = new Date(trialFim + 'T00:00:00');
-  return Math.round((fim - hoje) / 86400000);
-}
-
-function renderMetricas() {
-  const total = clientes.length;
-  const emTeste = clientes.filter(c => c.em_teste && diasRestantes(c.trial_fim) >= 0).length;
-  const testeExpirado = clientes.filter(c => c.em_teste && diasRestantes(c.trial_fim) < 0).length;
-  const pagantes = clientes.filter(c => !c.em_teste).length;
-  const ativos = clientes.filter(c => c.status === 'ativo').length;
-  const inadimplentes = clientes.filter(c => c.status === 'inadimplente').length;
-  const receitaMensal = clientes.filter(c => !c.em_teste && c.status === 'ativo').reduce((s,c) => s + Number(c.valor_mensal || 0), 0);
-
-  document.getElementById('metricas').innerHTML = `
-    <div class="metric"><div class="metric-label">Total de clientes</div><div class="metric-value">${total}</div></div>
-    <div class="metric"><div class="metric-label">Em teste grátis</div><div class="metric-value" style="color:var(--amber);">${emTeste}</div></div>
-    <div class="metric"><div class="metric-label">Teste expirado</div><div class="metric-value" style="color:var(--red);">${testeExpirado}</div></div>
-    <div class="metric"><div class="metric-label">Pagantes</div><div class="metric-value" style="color:var(--sage);">${pagantes}</div></div>
-    <div class="metric"><div class="metric-label">Inadimplentes</div><div class="metric-value" style="color:var(--red);">${inadimplentes}</div></div>
-    <div class="metric"><div class="metric-label">Receita mensal (ativos)</div><div class="metric-value">R$ ${receitaMensal.toFixed(2)}</div></div>
-  `;
-}
-
-function renderTabela() {
-  const fStatus = document.getElementById('f-status').value;
-  const fTeste = document.getElementById('f-teste').value;
-  let lista = [...clientes];
-  if (fStatus) lista = lista.filter(c => c.status === fStatus);
-  if (fTeste === 'teste') lista = lista.filter(c => c.em_teste);
-  if (fTeste === 'pagante') lista = lista.filter(c => !c.em_teste);
-
-  let h = '';
-  lista.forEach(c => {
-    const dias = diasRestantes(c.trial_fim);
-    let testeBadge = '';
-    if (c.em_teste) {
-      testeBadge = dias >= 0
-        ? `<span class="badge badge-amber">${dias}d restantes</span>`
-        : `<span class="badge badge-red">expirado há ${Math.abs(dias)}d</span>`;
-    } else {
-      testeBadge = `<span class="badge badge-gray">pagante</span>`;
-    }
-    const statusBadge = c.status === 'ativo'
-      ? '<span class="badge badge-green">Ativo</span>'
-      : '<span class="badge badge-red">Inadimplente</span>';
+  lista.forEach(p => {
+    const margem = p.preco > 0 && p.custo > 0 ? ((p.preco - p.custo) / p.preco * 100).toFixed(0) + '%' : '—';
+    const baixo  = p.ativo && p.estoque <= p.estoqueMin;
+    const estBadge = p.estoque === 0 ? `<span class="badge badge-red">${p.estoque} un</span>`
+                   : baixo ? `<span class="badge badge-amber">${p.estoque} un</span>`
+                   : `${p.estoque} un`;
+    const statusBadge = !p.ativo ? `<span class="badge badge-gray">Inativo</span>`
+                      : baixo   ? `<span class="badge badge-amber"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> Baixo</span>`
+                      : `<span class="badge badge-green">Ativo</span>`;
 
     h += `<tr>
-      <td style="font-weight:600;">${escapeHTML(c.nome)}</td>
-      <td>${escapeHTML(c.responsavel) || '—'}</td>
-      <td style="font-family:var(--font-mono);font-size:11px;">${(c.criado_em||'').split('T')[0].split('-').reverse().join('/')}</td>
-      <td>${testeBadge}</td>
       <td>
-        <select class="mini" id="status-${c.id}" style="width:120px;">
-          <option value="ativo" ${c.status==='ativo'?'selected':''}>Ativo</option>
-          <option value="inadimplente" ${c.status==='inadimplente'?'selected':''}>Inadimplente</option>
-        </select>
+        <div style="font-weight:600;color:var(--text);">${escapeHTML(p.nome)}</div>
+        ${p.obs ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${escapeHTML(p.obs.length > 50 ? p.obs.slice(0,50)+'…' : p.obs)}</div>` : ''}
       </td>
-      <td><input class="mini" id="valor-${c.id}" type="number" step="0.01" value="${c.valor_mensal}" /></td>
-      <td><input class="mini" id="pag-${c.id}" type="date" value="${c.ultimo_pagamento || ''}" /></td>
-      <td><button class="btn btn-gold btn-sm" onclick="salvarLinha('${c.id}')"><i class="ti ti-check"></i></button></td>
+      <td>${serieBadge(p.serie)}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(p.categoria) || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(p.volume) || '—'}</td>
+      <td>${p.custo > 0 ? 'R$ ' + p.custo.toFixed(2) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td>${p.preco > 0 ? '<span style="color:var(--accent);font-weight:600;">R$ ' + p.preco.toFixed(2) + '</span>' : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:12px;">${margem}</td>
+      <td>${estBadge}</td>
+      <td>${statusBadge}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-outline btn-sm" onclick="editEstoque('${p.id}')" title="Editar estoque/preço"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-outline btn-sm" onclick="toggleAtivo('${p.id}')" style="margin-left:4px;">${p.ativo ? 'Desativar' : 'Ativar'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProduto('${p.id}')" style="margin-left:4px;"><i class="ti ti-trash"></i></button>
+      </td>
     </tr>`;
   });
-  document.getElementById('tabela-body').innerHTML = h || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">Nenhum cliente encontrado</td></tr>';
+
+  h += '</tbody></table>';
+  document.getElementById('prod-table').innerHTML = h;
 }
 
-async function salvarLinha(id) {
-  const status = document.getElementById(`status-${id}`).value;
-  const valor = parseFloat(document.getElementById(`valor-${id}`).value) || 0;
-  const pag = document.getElementById(`pag-${id}`).value || null;
-
-  const { error } = await supabaseClient.from('organizacoes')
-    .update({ status, valor_mensal: valor, ultimo_pagamento: pag })
-    .eq('id', id);
-
-  if (error) { alert('Erro ao salvar: ' + error.message); return; }
-
-  const c = clientes.find(x => x.id === id);
-  if (c) { c.status = status; c.valor_mensal = valor; c.ultimo_pagamento = pag; }
-  renderMetricas();
-  renderTabela();
+async function toggleAtivo(id) {
+  const p = produtos.find(x => x.id === id);
+  if (!p) return;
+  const { error } = await supabaseClient.from('produtos').update({ ativo: !p.ativo }).eq('id', id);
+  if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
+  p.ativo = !p.ativo; renderProdutos();
 }
 
-function exportarExcel() {
-  const linhas = clientes.map(c => ({
-    'Empresa': c.nome,
-    'Responsável': c.responsavel || '',
-    'Cadastro': (c.criado_em||'').split('T')[0],
-    'Em teste': c.em_teste ? 'Sim' : 'Não',
-    'Teste até': c.trial_fim,
-    'Status': c.status,
-    'Valor mensal': c.valor_mensal,
-    'Último pagamento': c.ultimo_pagamento || '',
+async function deleteProduto(id) {
+  if (!confirm('Mover produto pra lixeira? Você pode restaurar depois em Configurações.')) return;
+  const { error } = await supabaseClient.from('produtos').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  if (error) { toast('Erro ao remover produto.'); console.error(error); return; }
+  produtos = produtos.filter(x => x.id !== id);
+  renderProdutos();
+  toast('Produto movido pra lixeira.');
+}
+
+async function editEstoque(id) {
+  const p = produtos.find(x => x.id === id);
+  if (!p) return;
+  const novoEst  = prompt(`Estoque atual de "${p.nome}":`, p.estoque);
+  if (novoEst === null) return;
+  const novoCusto = prompt('Custo (R$):', p.custo);
+  if (novoCusto === null) return;
+  const novoPreco = prompt('Preço de venda (R$):', p.preco);
+  if (novoPreco === null) return;
+  const estoque = parseInt(novoEst) || 0;
+  const custo   = parseFloat(novoCusto) || 0;
+  const preco   = parseFloat(novoPreco) || 0;
+  const { error } = await supabaseClient.from('produtos').update({ estoque, custo, preco }).eq('id', id);
+  if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
+  p.estoque = estoque; p.custo = custo; p.preco = preco;
+  renderProdutos(); toast('Produto atualizado!');
+}
+
+// ===== VENDAS =====
+function setDefaultDate() {
+  const d = document.getElementById('v-data');
+  if (!d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+function renderItens() {
+  const ativos = produtos.filter(p => p.ativo);
+  let h = '';
+  itens.forEach((item, i) => {
+    const opts = ativos.map(p =>
+      `<option value="${p.id}" ${p.id == item.prodId ? 'selected' : ''}>${escapeHTML(p.nome)} — ${escapeHTML(p.serie) || ''}${p.volume ? ' ('+escapeHTML(p.volume)+')' : ''} · R$${p.preco.toFixed(2)}</option>`
+    ).join('');
+    h += `<div class="item-line">
+      <div class="form-group"><label>Produto</label><select onchange="updateItem(${i},'prodId',this.value)"><option value="">Selecionar...</option>${opts}</select></div>
+      <div class="form-group"><label>Qtd</label><input type="number" value="${item.qty}" min="1" step="1" onchange="updateItem(${i},'qty',this.value)" /></div>
+      <div class="form-group"><label>Preço unit.</label><input type="number" value="${item.preco.toFixed(2)}" step="0.01" onchange="updateItem(${i},'preco',this.value)" /></div>
+      <button class="btn btn-danger" onclick="removeItem(${i})" style="margin-bottom:1px;align-self:end;"><i class="ti ti-x"></i></button>
+    </div>`;
+  });
+  document.getElementById('itens-wrap').innerHTML = h;
+  calcTotal();
+}
+
+function updateItem(i, field, val) {
+  if (field === 'prodId') {
+    itens[i].prodId = val || '';
+    const p = produtos.find(x => x.id === val);
+    if (p) itens[i].preco = p.preco;
+  } else if (field === 'qty')   { itens[i].qty   = parseInt(val) || 1; }
+  else if (field === 'preco')   { itens[i].preco = parseFloat(val) || 0; }
+  renderItens();
+}
+
+function addItem()    { itens.push({ prodId:'', qty:1, preco:0 }); renderItens(); }
+function removeItem(i){ itens.splice(i, 1); if (!itens.length) itens = [{ prodId:'', qty:1, preco:0 }]; renderItens(); }
+
+function calcTotal() {
+  const total    = itens.reduce((s, i) => s + i.qty * i.preco, 0);
+  const pct      = parseFloat(document.getElementById('v-comissao-pct').value) || 0;
+  const comissao = total * (pct / 100);
+  const wrap     = document.getElementById('v-total-wrap');
+  document.getElementById('v-total').textContent = 'R$ ' + total.toFixed(2);
+  const comEl = document.getElementById('v-comissao');
+  if (comissao > 0) {
+    comEl.innerHTML = `<span style="font-size:13px;color:var(--terracota);"><i class="ti ti-percentage" style="font-size:12px;"></i> Comissão (${pct}%): <strong>R$ ${comissao.toFixed(2)}</strong></span>`;
+    comEl.style.display = 'block';
+  } else {
+    comEl.style.display = 'none';
+  }
+  wrap.style.display = total > 0 ? 'block' : 'none';
+}
+
+async function salvarVenda() {
+  const data     = document.getElementById('v-data').value;
+  const vendedor = document.getElementById('v-vendedor').value.trim();
+  const canal    = document.getElementById('v-canal').value;
+  const cliente  = document.getElementById('v-cliente').value.trim();
+  const pct      = parseFloat(document.getElementById('v-comissao-pct').value) || 0;
+  const validos  = itens.filter(i => i.prodId && i.qty > 0);
+  if (!data || !validos.length) { toast('Preencha data e ao menos um produto.'); return; }
+  const total     = validos.reduce((s, i) => s + i.qty * i.preco, 0);
+  const comissao  = parseFloat((total * (pct / 100)).toFixed(2));
+
+  const { data: vendaSalva, error } = await supabaseClient.from('vendas').insert({
+    organizacao_id: organizacaoId, data, vendedor, canal, cliente,
+    itens: validos.map(i => ({ ...i })), total, comissao,
+  }).select().single();
+  if (error) { toast('Erro ao salvar venda.'); console.error(error); return; }
+  vendas.push(mapVendaDb(vendaSalva));
+
+  // atualiza estoque dos produtos vendidos (local + banco)
+  for (const item of validos) {
+    const p = produtos.find(x => x.id === item.prodId);
+    if (!p) continue;
+    const novoEstoque = Math.max(0, p.estoque - item.qty);
+    const { error: errEst } = await supabaseClient.from('produtos').update({ estoque: novoEstoque }).eq('id', p.id);
+    if (!errEst) p.estoque = novoEstoque;
+  }
+
+  itens = [{ prodId:'', qty:1, preco:0 }];
+  document.getElementById('v-cliente').value = '';
+  document.getElementById('v-canal').value = '';
+  document.getElementById('v-vendedor').value = '';
+  document.getElementById('v-comissao-pct').value = '';
+  renderItens(); toast('Venda salva! Estoque atualizado.');
+}
+
+// ===== HISTÓRICO =====
+function renderHistorico() {
+  const busca = (document.getElementById('h-busca').value || '').toLowerCase();
+  const de    = document.getElementById('h-de').value;
+  const ate   = document.getElementById('h-ate').value;
+
+  let lista = [...vendas].reverse().filter(v => {
+    if (busca && !(v.cliente||'').toLowerCase().includes(busca) && !(v.canal||'').toLowerCase().includes(busca) && !(v.vendedor||'').toLowerCase().includes(busca)) return false;
+    if (de  && v.data < de)  return false;
+    if (ate && v.data > ate) return false;
+    return true;
+  });
+
+  if (!lista.length) {
+    document.getElementById('hist-table').innerHTML = '<div class="empty"><i class="ti ti-receipt"></i>Nenhuma venda encontrada</div>';
+    return;
+  }
+
+  let h = `<table><thead><tr><th>Data</th><th>Vendedor</th><th>Canal</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Comissão</th><th></th></tr></thead><tbody>`;
+  lista.forEach(v => {
+    const nomes = v.itens.map(i => {
+      const p = produtos.find(x => x.id == i.prodId);
+      return escapeHTML(p ? p.nome : 'Removido') + ` ×${i.qty}`;
+    }).join(', ');
+    const comissaoCell = v.comissao > 0
+      ? `<span style="color:var(--terracota);font-weight:600;">R$ ${v.comissao.toFixed(2)}</span>`
+      : `<span style="color:var(--text3);">—</span>`;
+    h += `<tr>
+      <td>${v.data.split('-').reverse().join('/')}</td>
+      <td>${v.vendedor ? `<span class="badge badge-gold"><i class="ti ti-user" style="font-size:10px;"></i> ${escapeHTML(v.vendedor)}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
+      <td><span class="badge badge-gray">${escapeHTML(v.canal) || '—'}</span></td>
+      <td style="color:var(--text2);font-size:12px;">${escapeHTML(v.cliente) || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${nomes}</td>
+      <td style="font-weight:700;color:var(--accent);">R$ ${v.total.toFixed(2)}</td>
+      <td>${comissaoCell}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteVenda('${v.id}')"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  document.getElementById('hist-table').innerHTML = h;
+}
+
+async function deleteVenda(id) {
+  if (!confirm('Mover venda pra lixeira? Você pode restaurar depois em Configurações.')) return;
+  const { error } = await supabaseClient.from('vendas').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  if (error) { toast('Erro ao remover venda.'); console.error(error); return; }
+  vendas = vendas.filter(v => v.id !== id);
+  renderHistorico();
+  toast('Venda movida pra lixeira.');
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const totalRec  = vendas.reduce((s, v) => s + v.total, 0);
+  const nVendas   = vendas.length;
+  const ticket    = nVendas > 0 ? totalRec / nVendas : 0;
+  const ativos    = produtos.filter(p => p.ativo).length;
+  const baixo     = produtos.filter(p => p.ativo && p.estoque <= p.estoqueMin).length;
+
+  const comissaoTotal = vendas.reduce((s,v) => s + (v.comissao||0), 0);
+
+  // custo total (usa o custo ATUAL de cada produto — não é um custo "congelado" no momento da venda)
+  const custoTotal = vendas.reduce((s, v) => s + v.itens.reduce((si, i) => {
+    const p = produtos.find(x => x.id === i.prodId);
+    return si + (p ? p.custo * i.qty : 0);
+  }, 0), 0);
+  const lucroBruto = totalRec - custoTotal;
+  const margem = totalRec > 0 ? (lucroBruto / totalRec * 100) : 0;
+
+  document.getElementById('metricas').innerHTML = `
+    <div class="metric metric-accent">
+      <div class="metric-label">Receita total</div>
+      <div class="metric-value">R$ ${totalRec.toFixed(2)}</div>
+      <div class="metric-sub">todas as vendas</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Custo total</div>
+      <div class="metric-value" style="color:var(--terracota);">R$ ${custoTotal.toFixed(2)}</div>
+      <div class="metric-sub">estimado, custo atual dos produtos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Lucro bruto</div>
+      <div class="metric-value" style="color:var(--sage);">R$ ${lucroBruto.toFixed(2)}</div>
+      <div class="metric-sub">margem de ${margem.toFixed(0)}%</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Nº de vendas</div>
+      <div class="metric-value">${nVendas}</div>
+      <div class="metric-sub">registradas</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Ticket médio</div>
+      <div class="metric-value">R$ ${ticket.toFixed(2)}</div>
+      <div class="metric-sub">por venda</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Comissões</div>
+      <div class="metric-value" style="color:var(--terracota);">R$ ${comissaoTotal.toFixed(2)}</div>
+      <div class="metric-sub">total no período</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Produtos ativos</div>
+      <div class="metric-value">${ativos}</div>
+      <div class="metric-sub">${baixo > 0 ? `<span style="color:var(--amber)">${baixo} com estoque baixo</span>` : 'estoque ok'}</div>
+    </div>
+  `;
+
+  // top produtos
+  const porProd = {};
+  vendas.forEach(v => v.itens.forEach(i => {
+    const p = produtos.find(x => x.id == i.prodId);
+    const nome = p ? p.nome : 'Removido';
+    if (!porProd[nome]) porProd[nome] = 0;
+    porProd[nome] += i.qty * i.preco;
+  }));
+  const topProd = Object.entries(porProd).sort((a,b) => b[1]-a[1]).slice(0,8);
+  const maxP = topProd[0]?.[1] || 1;
+  document.getElementById('rank-prod').innerHTML = topProd.length
+    ? topProd.map(([nome, val]) => `
+        <div class="bar-row">
+          <div class="bar-label"><span>${escapeHTML(nome)}</span><span>R$ ${val.toFixed(2)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxP*100)}%"></div></div>
+        </div>`).join('')
+    : '<div class="empty" style="padding:1.5rem"><i class="ti ti-chart-bar"></i>Sem dados</div>';
+
+  // top categorias
+  const porCat = {};
+  vendas.forEach(v => v.itens.forEach(i => {
+    const p = produtos.find(x => x.id == i.prodId);
+    const cat = p?.categoria || 'Outro';
+    if (!porCat[cat]) porCat[cat] = 0;
+    porCat[cat] += i.qty * i.preco;
+  }));
+  const topCat = Object.entries(porCat).sort((a,b) => b[1]-a[1]);
+  const colors = ['var(--accent)','var(--sage)','var(--terracota)','var(--lavanda)','var(--green)','var(--amber)'];
+  const maxC = topCat[0]?.[1] || 1;
+  document.getElementById('rank-cat').innerHTML = topCat.length
+    ? topCat.map(([cat, val], i) => `
+        <div class="bar-row">
+          <div class="bar-label"><span>${escapeHTML(cat)}</span><span>R$ ${val.toFixed(2)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxC*100)}%;background:${colors[i%colors.length]}"></div></div>
+        </div>`).join('')
+    : '<div class="empty" style="padding:1.5rem"><i class="ti ti-tag"></i>Sem dados</div>';
+
+  // ranking vendedores
+  const vColorPalette = ['var(--accent)','var(--sage)','var(--terracota)','var(--lavanda)','var(--amber)','var(--green)'];
+  const porVend = {};
+  vendas.forEach(v => {
+    const nome = v.vendedor || 'Sem vendedor';
+    if (!porVend[nome]) porVend[nome] = { receita: 0, nVendas: 0, comissao: 0 };
+    porVend[nome].receita  += v.total;
+    porVend[nome].nVendas  += 1;
+    porVend[nome].comissao += (v.comissao || 0);
+  });
+  const rankV = Object.entries(porVend).sort((a,b) => b[1].receita - a[1].receita);
+  const vColors = {};
+  rankV.forEach(([nome], i) => { vColors[nome] = vColorPalette[i % vColorPalette.length]; });
+  const maxV  = rankV[0]?.[1].receita || 1;
+  const vHtml = rankV.map(([nome, d]) => `
+    <div class="bar-row" style="margin-bottom:14px;">
+      <div class="bar-label" style="margin-bottom:6px;">
+        <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);">
+          <i class="ti ti-user" style="font-size:14px;color:${vColors[nome]||'var(--text2)'}"></i>${escapeHTML(nome)}
+          <span style="font-size:11px;font-weight:400;color:var(--text3);">${d.nVendas} venda${d.nVendas!==1?'s':''}</span>
+          ${d.comissao > 0 ? `<span style="font-size:11px;font-weight:600;color:var(--terracota);background:rgba(211,161,132,.16);padding:1px 7px;border-radius:10px;"><i class="ti ti-percentage" style="font-size:10px;"></i> R$ ${d.comissao.toFixed(2)}</span>` : ''}
+        </span>
+        <span style="color:${vColors[nome]||'var(--text)'};font-weight:700;">R$ ${d.receita.toFixed(2)}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${maxV>0?Math.round(d.receita/maxV*100):0}%;background:${vColors[nome]||'var(--accent)'}"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('rank-vendedor').innerHTML = rankV.length
+    ? vHtml
+    : '<div class="empty" style="padding:1.5rem"><i class="ti ti-users"></i>Nenhuma venda registrada ainda</div>';
+
+  // alertas
+  const alertas = produtos.filter(p => p.ativo && p.estoque <= p.estoqueMin);
+  if (!alertas.length) {
+    document.getElementById('alerta-estoque').innerHTML = '<div class="empty" style="padding:1.5rem"><i class="ti ti-circle-check" style="color:var(--green);"></i>Todos os produtos com estoque adequado</div>';
+    return;
+  }
+  let ah = `<table><thead><tr><th>Produto</th><th>Série</th><th>Volume</th><th>Estoque atual</th><th>Mínimo</th><th>Status</th></tr></thead><tbody>`;
+  alertas.forEach(p => {
+    const s = p.estoque === 0 ? `<span class="badge badge-red">Zerado</span>` : `<span class="badge badge-amber">Baixo</span>`;
+    ah += `<tr><td><strong>${escapeHTML(p.nome)}</strong></td><td>${serieBadge(p.serie)}</td><td>${escapeHTML(p.volume)||'—'}</td><td>${p.estoque} un</td><td>${p.estoqueMin} un</td><td>${s}</td></tr>`;
+  });
+  ah += '</tbody></table>';
+  document.getElementById('alerta-estoque').innerHTML = ah;
+}
+
+// ===== CRM: CLIENTES =====
+function mapClienteDb(c) {
+  return { id: c.id, nome: c.nome, tel: c.telefone, email: c.email, cpf: c.cpf, cnpj: c.cnpj, obs: c.obs };
+}
+
+async function addCliente() {
+  const nome = document.getElementById('c-nome').value.trim();
+  if (!nome) { toast('Preencha o nome do cliente.'); return; }
+  const novo = {
+    organizacao_id: organizacaoId,
+    nome,
+    telefone: document.getElementById('c-tel').value.trim(),
+    email: document.getElementById('c-email').value.trim(),
+    cpf: document.getElementById('c-cpf').value.trim(),
+    cnpj: document.getElementById('c-cnpj').value.trim(),
+    obs: document.getElementById('c-obs').value.trim(),
+  };
+  const { data, error } = await supabaseClient.from('clientes').insert(novo).select().single();
+  if (error) { toast('Erro ao salvar cliente.'); console.error(error); return; }
+  clientes.push(mapClienteDb(data));
+  ['c-nome','c-tel','c-email','c-cpf','c-cnpj','c-obs'].forEach(id => document.getElementById(id).value = '');
+  renderClientes(); renderClienteSelect(); toast('Cliente adicionado!');
+}
+
+async function deleteCliente(id) {
+  if (!confirm('Mover cliente pra lixeira? Agendamentos ligados a ele continuam na agenda. Você pode restaurar depois em Configurações.')) return;
+  const { error } = await supabaseClient.from('clientes').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  if (error) { toast('Erro ao remover cliente.'); console.error(error); return; }
+  clientes = clientes.filter(c => c.id !== id);
+  renderClientes(); renderClienteSelect();
+  toast('Cliente movido pra lixeira.');
+}
+
+function renderClienteSelect() {
+  const sel = document.getElementById('a-cliente');
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Selecionar...</option>' +
+    clientes.map(c => `<option value="${c.id}" ${c.id == atual ? 'selected' : ''}>${escapeHTML(c.nome)}${c.tel ? ' — ' + escapeHTML(c.tel) : ''}</option>`).join('');
+}
+
+function renderClientes() {
+  const wrap = document.getElementById('cliente-table');
+  if (!wrap) return;
+  document.getElementById('cliente-count').textContent = `(${clientes.length})`;
+  if (!clientes.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-address-book"></i>Nenhum cliente cadastrado ainda</div>';
+    return;
+  }
+  let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>CPF</th><th>CNPJ</th><th>Observações</th><th></th></tr></thead><tbody>`;
+  clientes.forEach(c => {
+    h += `<tr>
+      <td style="font-weight:600;">${escapeHTML(c.nome)}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.tel) || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.email) || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.cpf) || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.cnpj) || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.obs) || '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+}
+
+// ===== CRM: AGENDAMENTOS =====
+async function addAgendamento() {
+  const clienteId = document.getElementById('a-cliente').value;
+  const data       = document.getElementById('a-data').value;
+  if (!clienteId || !data) { toast('Selecione o cliente e a data.'); return; }
+  const cliente = clientes.find(c => c.id === clienteId);
+  const novo = {
+    organizacao_id: organizacaoId,
+    cliente_id: clienteId,
+    cliente_nome: cliente ? cliente.nome : '—',
+    data,
+    hora: document.getElementById('a-hora').value || null,
+    motivo: document.getElementById('a-motivo').value,
+    obs: document.getElementById('a-obs').value.trim(),
+    status: 'Agendado',
+  };
+  const { data: salvo, error } = await supabaseClient.from('agendamentos').insert(novo).select().single();
+  if (error) { toast('Erro ao criar agendamento.'); console.error(error); return; }
+  agendamentos.push(mapAgendamentoDb(salvo));
+  ['a-data','a-hora','a-obs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('a-cliente').value = '';
+  document.getElementById('a-motivo').value = '';
+  renderAgenda(); toast('Agendamento criado!');
+}
+
+async function updateAgendaStatus(id, status) {
+  const { error } = await supabaseClient.from('agendamentos').update({ status }).eq('id', id);
+  if (error) { toast('Erro ao atualizar status.'); console.error(error); return; }
+  const a = agendamentos.find(x => x.id === id);
+  if (a) { a.status = status; renderAgenda(); }
+}
+
+async function deleteAgendamento(id) {
+  if (!confirm('Mover agendamento pra lixeira? Você pode restaurar depois em Configurações.')) return;
+  const { error } = await supabaseClient.from('agendamentos').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  if (error) { toast('Erro ao remover agendamento.'); console.error(error); return; }
+  agendamentos = agendamentos.filter(a => a.id !== id);
+  renderAgenda();
+  toast('Agendamento movido pra lixeira.');
+}
+
+function renderAgenda() {
+  const wrap = document.getElementById('agenda-table');
+  if (!wrap) return;
+  const statusFiltro = document.getElementById('ag-status-filtro').value;
+  let lista = [...agendamentos].sort((a, b) => (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')));
+  if (statusFiltro) lista = lista.filter(a => a.status === statusFiltro);
+
+  document.getElementById('agenda-count').textContent = `(${lista.length} de ${agendamentos.length})`;
+
+  if (!lista.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-calendar-event"></i>Nenhum agendamento encontrado</div>';
+    return;
+  }
+
+  const statusCls = { 'Agendado':'badge-amber', 'Confirmado':'badge-blue', 'Concluído':'badge-green', 'Cancelado':'badge-red' };
+  let h = `<table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Motivo</th><th>Status</th><th>Observações</th><th></th><th></th></tr></thead><tbody>`;
+  lista.forEach(a => {
+    h += `<tr>
+      <td>${a.data.split('-').reverse().join('/')}</td>
+      <td>${a.hora || '—'}</td>
+      <td style="font-weight:600;">${escapeHTML(a.clienteNome)}</td>
+      <td style="font-size:12px;color:var(--text2);">${escapeHTML(a.motivo) || '—'}</td>
+      <td>
+        <select onchange="updateAgendaStatus('${a.id}', this.value)" style="padding:4px 8px;font-size:11px;">
+          ${['Agendado','Confirmado','Concluído','Cancelado'].map(s => `<option ${s===a.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(a.obs) || '—'}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="adicionarAoGoogleAgenda('${a.id}')" title="Adicionar ao Google Agenda"><i class="ti ti-calendar-plus"></i></button></td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteAgendamento('${a.id}')"><i class="ti ti-trash"></i></button></td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  wrap.innerHTML = h;
+}
+
+function adicionarAoGoogleAgenda(id) {
+  const a = agendamentos.find(x => x.id === id);
+  if (!a) return;
+
+  const dataBase = a.data.replace(/-/g, ''); // YYYYMMDD
+  let datesParam;
+
+  if (a.hora) {
+    const [hh, mm] = a.hora.split(':');
+    const inicio = `${dataBase}T${hh}${mm}00`;
+    let hFim = parseInt(hh, 10) + 1;
+    if (hFim >= 24) hFim = 23;
+    const fim = `${dataBase}T${String(hFim).padStart(2, '0')}${mm}00`;
+    datesParam = `${inicio}/${fim}`;
+  } else {
+    // evento de dia inteiro — data final precisa ser o dia seguinte (padrão do Google)
+    const d = new Date(a.data + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    const fimStr = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    datesParam = `${dataBase}/${fimStr}`;
+  }
+
+  const titulo = encodeURIComponent(`${a.clienteNome} — ${a.motivo || 'Agendamento DAAT.'}`);
+  const detalhes = encodeURIComponent(
+    `Agendamento criado no DAAT.\nCliente: ${a.clienteNome}\nMotivo: ${a.motivo || '—'}${a.obs ? '\nObservações: ' + a.obs : ''}`
+  );
+
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${datesParam}&details=${detalhes}&ctz=America/Sao_Paulo`;
+  window.open(url, '_blank');
+}
+
+// ===== CONFIG =====
+async function renderConfig() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  document.getElementById('cfg-email').value = user?.email || '';
+  const { data: org } = await supabaseClient.from('organizacoes').select('nome').eq('id', organizacaoId).single();
+  document.getElementById('cfg-empresa').value = org?.nome || '';
+  document.getElementById('cfg-nova-senha').value = '';
+  document.getElementById('cfg-confirma-senha').value = '';
+  const msg = document.getElementById('cfg-senha-msg');
+  msg.style.display = 'none';
+  document.getElementById('cfg-empresa-msg').style.display = 'none';
+  renderLixeira();
+}
+
+async function salvarEmpresa() {
+  const nome = document.getElementById('cfg-empresa').value.trim();
+  const msg = document.getElementById('cfg-empresa-msg');
+  msg.style.display = 'block';
+  if (!nome) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Preencha o nome da empresa.'; return;
+  }
+  const { error } = await supabaseClient.from('organizacoes').update({ nome }).eq('id', organizacaoId);
+  if (error) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao salvar: ' + error.message; return;
+  }
+  msg.style.color = 'var(--green)'; msg.textContent = 'Empresa atualizada!';
+  toast('Empresa atualizada!');
+}
+
+function toggleSenhaVisivelCfg(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+async function trocarSenha() {
+  const nova = document.getElementById('cfg-nova-senha').value;
+  const confirma = document.getElementById('cfg-confirma-senha').value;
+  const msg = document.getElementById('cfg-senha-msg');
+  msg.style.display = 'block';
+
+  if (!nova || !confirma) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Preencha os dois campos.'; return;
+  }
+  if (nova.length < 8) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return;
+  }
+  if (nova !== confirma) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'As senhas não coincidem.'; return;
+  }
+
+  const { error } = await supabaseClient.auth.updateUser({ password: nova });
+  if (error) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao trocar senha: ' + error.message; return;
+  }
+
+  msg.style.color = 'var(--green)'; msg.textContent = 'Senha atualizada com sucesso!';
+  document.getElementById('cfg-nova-senha').value = '';
+  document.getElementById('cfg-confirma-senha').value = '';
+  toast('Senha atualizada!');
+}
+
+// ===== LEMBRETES DE HOJE =====
+function hojeLocal() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function montarListaLembretes(deHoje) {
+  const hoje = hojeLocal();
+  const dataFormatada = new Date(hoje + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  document.getElementById('lembretes-data').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+
+  const statusCls = { 'Agendado': 'badge-amber', 'Confirmado': 'badge-gold' };
+  let html = '';
+  if (!deHoje.length) {
+    html = '<div class="empty" style="padding:1.5rem 0;"><i class="ti ti-calendar-check"></i>Nenhum agendamento pendente pra hoje</div>';
+  } else {
+    deHoje.sort((a,b) => (a.hora||'').localeCompare(b.hora||'')).forEach(a => {
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:600;font-size:13px;color:var(--text);">${escapeHTML(a.clienteNome)}</div>
+          <div style="font-size:12px;color:var(--text2);">${escapeHTML(a.motivo) || 'Sem motivo definido'}${a.hora ? ' · ' + a.hora : ''}</div>
+        </div>
+        <span class="badge ${statusCls[a.status] || 'badge-gray'}">${a.status}</span>
+      </div>`;
+    });
+  }
+  document.getElementById('lembretes-lista').innerHTML = html;
+  document.getElementById('lembretes-overlay').style.display = 'flex';
+}
+
+function agendamentosDeHoje() {
+  const hoje = hojeLocal();
+  return agendamentos.filter(a => a.data === hoje && a.status !== 'Cancelado' && a.status !== 'Concluído');
+}
+
+// chamado automaticamente ao logar — só aparece uma vez por dia nesse navegador, e só se tiver algo
+function verificarLembretesHoje() {
+  // limpeza de uma versão antiga da chave (que marcava o dia inteiro, não cada agendamento)
+  const hoje = hojeLocal();
+  localStorage.removeItem(`daat_lembretes_${organizacaoId}_${hoje}`);
+  const chave = `daat_lembretes_ids_${organizacaoId}_${hoje}`;
+  const idsJaMostrados = JSON.parse(localStorage.getItem(chave) || '[]');
+
+  const deHoje = agendamentosDeHoje();
+  if (!deHoje.length) return;
+
+  const temNovo = deHoje.some(a => !idsJaMostrados.includes(a.id));
+  if (!temNovo) return; // todos os agendamentos de hoje já foram mostrados nesse navegador
+
+  localStorage.setItem(chave, JSON.stringify(deHoje.map(a => a.id)));
+  montarListaLembretes(deHoje);
+}
+
+// chamado pelo sininho no header — sempre mostra, mesmo que já tenha visto hoje ou não tenha nada
+function mostrarLembretesManual() {
+  montarListaLembretes(agendamentosDeHoje());
+}
+
+function fecharLembretes() {
+  document.getElementById('lembretes-overlay').style.display = 'none';
+}
+
+// ===== EXPORTAR (EXCEL) =====
+function nomeArquivoComData(prefixo) {
+  const hoje = new Date().toISOString().split('T')[0];
+  return `${prefixo}-${hoje}.xlsx`;
+}
+
+function exportarProdutos() {
+  if (!produtos.length) { toast('Nenhum produto pra exportar.'); return; }
+  const linhas = produtos.map(p => ({
+    'Nome': p.nome,
+    'Fornecedor': p.fornecedor || '',
+    'Linha/Coleção': p.serie || '',
+    'Categoria': p.categoria || '',
+    'Volume/Variação': p.volume || '',
+    'Unidade': p.unidade || '',
+    'Custo (R$)': p.custo,
+    'Preço (R$)': p.preco,
+    'Estoque': p.estoque,
+    'Estoque mínimo': p.estoqueMin,
+    'Ativo': p.ativo ? 'Sim' : 'Não',
+    'Observações': p.obs || '',
   }));
   const ws = XLSX.utils.json_to_sheet(linhas);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Clientes DAAT');
-  XLSX.writeFile(wb, `daat-acompanhamento-${hojeLocal()}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+  XLSX.writeFile(wb, nomeArquivoComData('produtos'));
+  toast('Exportado!');
 }
 
-async function carregarChamadosAdmin() {
-  const { data, error } = await supabaseClient
-    .from('chamados')
-    .select('id, organizacao_id, usuario_email, assunto, mensagem, status, resposta, criado_em')
-    .order('criado_em', { ascending: false });
-
-  if (error || !data) { chamadosAdmin = []; return; }
-
-  const nomesPorOrg = {};
-  clientes.forEach(c => { nomesPorOrg[c.id] = c.nome; });
-  chamadosAdmin = data.map(c => ({ ...c, empresaNome: nomesPorOrg[c.organizacao_id] || '—' }));
-  renderChamadosAdmin();
+function exportarVendas() {
+  if (!vendas.length) { toast('Nenhuma venda pra exportar.'); return; }
+  const linhas = [...vendas].reverse().map(v => ({
+    'Data': v.data.split('-').reverse().join('/'),
+    'Vendedor': v.vendedor || '',
+    'Canal': v.canal || '',
+    'Cliente': v.cliente || '',
+    'Itens': (v.itens || []).map(i => {
+      const p = produtos.find(x => x.id === i.prodId);
+      return `${p ? p.nome : '?'} x${i.qty}`;
+    }).join('; '),
+    'Total (R$)': v.total,
+    'Comissão (R$)': v.comissao || 0,
+  }));
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
+  XLSX.writeFile(wb, nomeArquivoComData('vendas'));
+  toast('Exportado!');
 }
 
-function renderChamadosAdmin() {
-  const wrap = document.getElementById('chamados-admin-lista');
+function exportarClientes() {
+  if (!clientes.length) { toast('Nenhum cliente pra exportar.'); return; }
+  const linhas = clientes.map(c => ({
+    'Nome': c.nome,
+    'Telefone': c.tel || '',
+    'E-mail': c.email || '',
+    'CPF': c.cpf || '',
+    'CNPJ': c.cnpj || '',
+    'Observações': c.obs || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+  XLSX.writeFile(wb, nomeArquivoComData('clientes'));
+  toast('Exportado!');
+}
+
+function exportarAgendamentos() {
+  if (!agendamentos.length) { toast('Nenhum agendamento pra exportar.'); return; }
+  const linhas = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
+    'Data': a.data.split('-').reverse().join('/'),
+    'Hora': a.hora || '',
+    'Cliente': a.clienteNome || '',
+    'Motivo': a.motivo || '',
+    'Status': a.status || '',
+    'Observações': a.obs || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Agendamentos');
+  XLSX.writeFile(wb, nomeArquivoComData('agendamentos'));
+  toast('Exportado!');
+}
+
+function exportarTudo() {
+  if (!produtos.length && !vendas.length && !clientes.length && !agendamentos.length) {
+    toast('Nenhum dado pra exportar ainda.'); return;
+  }
+  const wb = XLSX.utils.book_new();
+
+  if (produtos.length) {
+    const shProdutos = produtos.map(p => ({
+      'Nome': p.nome, 'Fornecedor': p.fornecedor || '', 'Linha/Coleção': p.serie || '',
+      'Categoria': p.categoria || '', 'Volume/Variação': p.volume || '', 'Unidade': p.unidade || '',
+      'Custo (R$)': p.custo, 'Preço (R$)': p.preco, 'Estoque': p.estoque, 'Estoque mínimo': p.estoqueMin,
+      'Ativo': p.ativo ? 'Sim' : 'Não', 'Observações': p.obs || '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shProdutos), 'Produtos');
+  }
+
+  if (vendas.length) {
+    const shVendas = [...vendas].reverse().map(v => ({
+      'Data': v.data.split('-').reverse().join('/'), 'Vendedor': v.vendedor || '', 'Canal': v.canal || '',
+      'Cliente': v.cliente || '',
+      'Itens': (v.itens || []).map(i => { const p = produtos.find(x => x.id === i.prodId); return `${p ? p.nome : '?'} x${i.qty}`; }).join('; '),
+      'Total (R$)': v.total, 'Comissão (R$)': v.comissao || 0,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shVendas), 'Vendas');
+  }
+
+  if (clientes.length) {
+    const shClientes = clientes.map(c => ({
+      'Nome': c.nome, 'Telefone': c.tel || '', 'E-mail': c.email || '', 'CPF': c.cpf || '', 'CNPJ': c.cnpj || '', 'Observações': c.obs || '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shClientes), 'Clientes');
+  }
+
+  if (agendamentos.length) {
+    const shAgenda = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
+      'Data': a.data.split('-').reverse().join('/'), 'Hora': a.hora || '', 'Cliente': a.clienteNome || '',
+      'Motivo': a.motivo || '', 'Status': a.status || '', 'Observações': a.obs || '',
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shAgenda), 'Agendamentos');
+  }
+
+  XLSX.writeFile(wb, nomeArquivoComData('daat-dados-completos'));
+  toast('Exportado!');
+}
+
+// ===== AJUDA: FAQ =====
+const FAQ_ITEMS = [
+  { pergunta: 'Esqueci minha senha, e agora?', resposta: 'Na tela de login, clique em "Esqueci minha senha", digite seu e-mail e você vai receber um link pra criar uma senha nova. Confira também a caixa de spam.' },
+  { pergunta: 'Como cadastro um cliente novo?', resposta: 'Vá na aba CRM e preencha o formulário "Novo cliente" com nome, telefone, e-mail e o que mais fizer sentido. Clique em "Adicionar cliente".' },
+  { pergunta: 'Como registro uma venda?', resposta: 'Vá na aba "Registrar venda", escolha o produto, a quantidade e o cliente. O sistema calcula o total sozinho.' },
+  { pergunta: 'Como exporto meus dados pra Excel?', resposta: 'Em cada tabela (Produtos, Vendas, Clientes, Agenda) tem um botão "Exportar". Ou, se quiser tudo de uma vez, vá em Configurações e clique em "Exportar tudo (Excel)".' },
+  { pergunta: 'Como adiciono um agendamento na minha Google Agenda?', resposta: 'Na aba CRM, na tabela de Agenda, clique no ícone de calendário ao lado do agendamento — ele abre o Google Agenda já preenchido, é só confirmar.' },
+  { pergunta: 'Como funciona o teste grátis de 7 dias?', resposta: 'Todo cadastro novo começa com 7 dias de acesso completo, sem custo. Depois desse prazo, é preciso assinar pra continuar usando — a gente entra em contato pra combinar.' },
+  { pergunta: 'O sistema bloqueou meu acesso, o que houve?', resposta: 'Isso acontece se o teste grátis expirou ou se há alguma pendência. A tela de bloqueio mostra nossos contatos — é só chamar a gente que resolvemos rápido.' },
+  { pergunta: 'Posso trocar o nome da minha empresa no sistema?', resposta: 'Sim, vá em Configurações, campo "Empresa", digite o nome novo e clique em "Salvar".' },
+];
+
+function renderFAQ() {
+  const wrap = document.getElementById('faq-lista');
   if (!wrap) return;
-  const filtro = document.getElementById('f-chamado-status').value;
-  let lista = [...chamadosAdmin];
-  if (filtro) lista = lista.filter(c => c.status === filtro);
+  wrap.innerHTML = FAQ_ITEMS.map((item, i) => `
+    <div style="border-bottom:1px solid var(--border);">
+      <button onclick="toggleFAQ(${i})" style="width:100%;text-align:left;background:none;border:none;padding:12px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--text);">
+        <span>${item.pergunta}</span>
+        <i class="ti ti-chevron-down" id="faq-icon-${i}" style="transition:transform .2s;flex-shrink:0;"></i>
+      </button>
+      <div id="faq-resposta-${i}" style="display:none;padding:0 0 14px 0;font-size:12.5px;color:var(--text2);line-height:1.6;">${item.resposta}</div>
+    </div>
+  `).join('');
+}
 
-  if (!lista.length) {
-    wrap.innerHTML = '<div style="text-align:center;color:var(--text3);padding:2rem;">Nenhum chamado encontrado</div>';
+function toggleFAQ(i) {
+  const resp = document.getElementById(`faq-resposta-${i}`);
+  const icon = document.getElementById(`faq-icon-${i}`);
+  const aberto = resp.style.display === 'block';
+  resp.style.display = aberto ? 'none' : 'block';
+  icon.style.transform = aberto ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+// ===== AJUDA: CHAMADOS =====
+async function renderAjuda() {
+  renderFAQ();
+  await renderChamados();
+}
+
+async function abrirChamado() {
+  const assunto = document.getElementById('ch-assunto').value.trim();
+  const mensagem = document.getElementById('ch-mensagem').value.trim();
+  const msgEl = document.getElementById('ch-msg');
+  msgEl.style.display = 'block';
+
+  if (!assunto || !mensagem) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Preencha assunto e mensagem.'; return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  const { error } = await supabaseClient.from('chamados').insert({
+    organizacao_id: organizacaoId,
+    usuario_email: user?.email || '',
+    assunto,
+    mensagem,
+  });
+
+  if (error) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Erro ao enviar: ' + error.message; return;
+  }
+
+  msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Chamado enviado! A resposta aparece aqui embaixo assim que a gente responder.';
+  document.getElementById('ch-assunto').value = '';
+  document.getElementById('ch-mensagem').value = '';
+  toast('Chamado enviado!');
+  await renderChamados();
+}
+
+async function renderChamados() {
+  const wrap = document.getElementById('chamados-lista');
+  if (!wrap) return;
+
+  const { data, error } = await supabaseClient
+    .from('chamados').select('*').eq('organizacao_id', organizacaoId).order('criado_em', { ascending: false });
+
+  if (error || !data) { wrap.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i>Erro ao carregar chamados</div>'; return; }
+
+  document.getElementById('chamados-count').textContent = `(${data.length})`;
+
+  if (!data.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-message-2"></i>Nenhum chamado enviado ainda</div>';
     return;
   }
 
   const statusCls = { 'aberto': 'badge-amber', 'respondido': 'badge-green', 'fechado': 'badge-gray' };
+  const statusLabel = { 'aberto': 'Aberto', 'respondido': 'Respondido', 'fechado': 'Fechado' };
   let h = '';
-  lista.forEach(c => {
+  data.forEach(c => {
     h += `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:6px;">
-        <div>
-          <div style="font-weight:700;font-size:13px;">${escapeHTML(c.assunto)}</div>
-          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px;">${escapeHTML(c.empresaNome)} · ${escapeHTML(c.usuario_email) || ''} · ${new Date(c.criado_em).toLocaleDateString('pt-BR')}</div>
-        </div>
-        <span class="badge ${statusCls[c.status] || 'badge-gray'}">${c.status}</span>
+        <div style="font-weight:600;font-size:13px;">${escapeHTML(c.assunto)}</div>
+        <span class="badge ${statusCls[c.status] || 'badge-gray'}">${statusLabel[c.status] || c.status}</span>
       </div>
-      <div style="font-size:12.5px;color:var(--text2);margin-bottom:10px;">${escapeHTML(c.mensagem)}</div>
-      <textarea id="resp-${c.id}" placeholder="Escreva a resposta..." style="width:100%;min-height:60px;margin-bottom:8px;">${escapeHTML(c.resposta) || ''}</textarea>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <select id="status-${c.id}" class="mini" style="width:130px;">
-          <option value="aberto" ${c.status==='aberto'?'selected':''}>Aberto</option>
-          <option value="respondido" ${c.status==='respondido'?'selected':''}>Respondido</option>
-          <option value="fechado" ${c.status==='fechado'?'selected':''}>Fechado</option>
-        </select>
-        <button class="btn btn-gold btn-sm" onclick="salvarRespostaChamado('${c.id}')"><i class="ti ti-check"></i> Salvar</button>
-      </div>
+      <div style="font-size:12.5px;color:var(--text2);margin-bottom:8px;">${escapeHTML(c.mensagem)}</div>
+      ${c.resposta ? `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;font-size:12.5px;color:var(--text);"><strong>Resposta da DAAT:</strong><br>${escapeHTML(c.resposta)}</div>` : ''}
+      <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:8px;">${new Date(c.criado_em).toLocaleDateString('pt-BR')}</div>
     </div>`;
   });
   wrap.innerHTML = h;
 }
 
-async function salvarRespostaChamado(id) {
-  const resposta = document.getElementById(`resp-${id}`).value.trim();
-  const status = document.getElementById(`status-${id}`).value;
+// ===== LIXEIRA (itens excluídos, recuperáveis) =====
+async function renderLixeira() {
+  const wrap = document.getElementById('lixeira-lista');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="text-align:center;color:var(--text3);padding:1rem;font-size:12px;">Carregando...</div>';
 
-  const { error } = await supabaseClient.from('chamados')
-    .update({ resposta, status, respondido_em: new Date().toISOString() })
-    .eq('id', id);
+  const [p, v, c, a] = await Promise.all([
+    supabaseClient.from('produtos').select('id, nome, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+    supabaseClient.from('vendas').select('id, cliente, data, total, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+    supabaseClient.from('clientes').select('id, nome, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+    supabaseClient.from('agendamentos').select('id, cliente_nome, data, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+  ]);
 
-  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+  const itens = [
+    ...(p.data || []).map(x => ({ tipo: 'Produto', tabela: 'produtos', id: x.id, label: x.nome, deletadoEm: x.deletado_em })),
+    ...(v.data || []).map(x => ({ tipo: 'Venda', tabela: 'vendas', id: x.id, label: `${x.cliente || 'Sem cliente'} — R$ ${Number(x.total).toFixed(2)}`, deletadoEm: x.deletado_em })),
+    ...(c.data || []).map(x => ({ tipo: 'Cliente', tabela: 'clientes', id: x.id, label: x.nome, deletadoEm: x.deletado_em })),
+    ...(a.data || []).map(x => ({ tipo: 'Agendamento', tabela: 'agendamentos', id: x.id, label: `${x.cliente_nome || 'Sem cliente'} — ${(x.data||'').split('-').reverse().join('/')}`, deletadoEm: x.deletado_em })),
+  ].sort((x, y) => new Date(y.deletadoEm) - new Date(x.deletadoEm));
 
-  const c = chamadosAdmin.find(x => x.id === id);
-  if (c) { c.resposta = resposta; c.status = status; }
-  renderChamadosAdmin();
+  if (!itens.length) {
+    wrap.innerHTML = '<div class="empty" style="padding:1.5rem 0;"><i class="ti ti-trash-off"></i>Lixeira vazia</div>';
+    return;
+  }
+
+  let h = '';
+  itens.forEach(it => {
+    h += `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <span class="badge badge-gray" style="margin-right:8px;">${it.tipo}</span>
+        <span style="font-size:13px;color:var(--text);">${escapeHTML(it.label)}</span>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px;">excluído em ${new Date(it.deletadoEm).toLocaleDateString('pt-BR')}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="restaurarItem('${it.tabela}','${it.id}')"><i class="ti ti-arrow-back-up"></i> Restaurar</button>
+    </div>`;
+  });
+  wrap.innerHTML = h;
 }
 
-(async function checkSession() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) await iniciar();
-})();
+async function restaurarItem(tabela, id) {
+  const { error } = await supabaseClient.from(tabela).update({ deletado_em: null }).eq('id', id);
+  if (error) { toast('Erro ao restaurar.'); console.error(error); return; }
+  await carregarTudo();
+  renderLixeira();
+  toast('Item restaurado!');
+}
+
+// ===== INIT =====
+// (a inicialização acontece em iniciarApp(), chamada após login ou sessão existente)
 </script>
 </body>
 </html>
