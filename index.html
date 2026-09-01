@@ -309,6 +309,7 @@
   <button class="tab" onclick="switchTab('historico')"><i class="ti ti-history"></i> Histórico</button>
   <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-chart-bar"></i> Dashboard</button>
   <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings"></i> Configurações</button>
+  <button class="tab" onclick="switchTab('ajuda')"><i class="ti ti-lifebuoy"></i> Ajuda</button>
 </div>
 
 <!-- ===== PRODUTOS ===== -->
@@ -580,6 +581,36 @@
       <button class="btn btn-gold" onclick="trocarSenha()"><i class="ti ti-check"></i> Salvar nova senha</button>
     </div>
     <div id="cfg-senha-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== AJUDA ===== -->
+<div id="tab-ajuda" class="section">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-help-circle"></i> Perguntas frequentes</div>
+    <div id="faq-lista"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-message-2"></i> Não encontrou o que precisava?</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Manda sua dúvida ou problema pra gente. Você vê a resposta aqui mesmo, assim que respondermos.</p>
+    <div class="form-grid">
+      <div class="form-group full"><label>Assunto</label><input id="ch-assunto" placeholder="" /></div>
+      <div class="form-group full"><label>Mensagem</label><textarea id="ch-mensagem" placeholder=""></textarea></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="abrirChamado()"><i class="ti ti-send"></i> Enviar</button>
+    </div>
+    <div id="ch-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-list-details"></i> Meus chamados <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="chamados-count"></span></div>
+    <div class="table-wrap" id="chamados-lista"></div>
   </div>
 
 </div>
@@ -945,7 +976,7 @@ supabaseClient.auth.onAuthStateChange((event) => {
 
 // ===== TABS =====
 function switchTab(tab) {
-  const names = ['crm','produtos','vendas','historico','dashboard','config'];
+  const names = ['crm','produtos','vendas','historico','dashboard','config','ajuda'];
   document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', names[i] === tab));
   document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
@@ -955,6 +986,7 @@ function switchTab(tab) {
   if (tab === 'historico')  renderHistorico();
   if (tab === 'dashboard')  renderDashboard();
   if (tab === 'config')     renderConfig();
+  if (tab === 'ajuda')      renderAjuda();
 }
 
 // ===== HEADER DATE =====
@@ -1806,6 +1838,108 @@ function exportarTudo() {
 
   XLSX.writeFile(wb, nomeArquivoComData('daat-dados-completos'));
   toast('Exportado!');
+}
+
+// ===== AJUDA: FAQ =====
+const FAQ_ITEMS = [
+  { pergunta: 'Esqueci minha senha, e agora?', resposta: 'Na tela de login, clique em "Esqueci minha senha", digite seu e-mail e você vai receber um link pra criar uma senha nova. Confira também a caixa de spam.' },
+  { pergunta: 'Como cadastro um cliente novo?', resposta: 'Vá na aba CRM e preencha o formulário "Novo cliente" com nome, telefone, e-mail e o que mais fizer sentido. Clique em "Adicionar cliente".' },
+  { pergunta: 'Como registro uma venda?', resposta: 'Vá na aba "Registrar venda", escolha o produto, a quantidade e o cliente. O sistema calcula o total sozinho.' },
+  { pergunta: 'Como exporto meus dados pra Excel?', resposta: 'Em cada tabela (Produtos, Vendas, Clientes, Agenda) tem um botão "Exportar". Ou, se quiser tudo de uma vez, vá em Configurações e clique em "Exportar tudo (Excel)".' },
+  { pergunta: 'Como adiciono um agendamento na minha Google Agenda?', resposta: 'Na aba CRM, na tabela de Agenda, clique no ícone de calendário ao lado do agendamento — ele abre o Google Agenda já preenchido, é só confirmar.' },
+  { pergunta: 'Como funciona o teste grátis de 7 dias?', resposta: 'Todo cadastro novo começa com 7 dias de acesso completo, sem custo. Depois desse prazo, é preciso assinar pra continuar usando — a gente entra em contato pra combinar.' },
+  { pergunta: 'O sistema bloqueou meu acesso, o que houve?', resposta: 'Isso acontece se o teste grátis expirou ou se há alguma pendência. A tela de bloqueio mostra nossos contatos — é só chamar a gente que resolvemos rápido.' },
+  { pergunta: 'Posso trocar o nome da minha empresa no sistema?', resposta: 'Sim, vá em Configurações, campo "Empresa", digite o nome novo e clique em "Salvar".' },
+];
+
+function renderFAQ() {
+  const wrap = document.getElementById('faq-lista');
+  if (!wrap) return;
+  wrap.innerHTML = FAQ_ITEMS.map((item, i) => `
+    <div style="border-bottom:1px solid var(--border);">
+      <button onclick="toggleFAQ(${i})" style="width:100%;text-align:left;background:none;border:none;padding:12px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--text);">
+        <span>${item.pergunta}</span>
+        <i class="ti ti-chevron-down" id="faq-icon-${i}" style="transition:transform .2s;flex-shrink:0;"></i>
+      </button>
+      <div id="faq-resposta-${i}" style="display:none;padding:0 0 14px 0;font-size:12.5px;color:var(--text2);line-height:1.6;">${item.resposta}</div>
+    </div>
+  `).join('');
+}
+
+function toggleFAQ(i) {
+  const resp = document.getElementById(`faq-resposta-${i}`);
+  const icon = document.getElementById(`faq-icon-${i}`);
+  const aberto = resp.style.display === 'block';
+  resp.style.display = aberto ? 'none' : 'block';
+  icon.style.transform = aberto ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+// ===== AJUDA: CHAMADOS =====
+async function renderAjuda() {
+  renderFAQ();
+  await renderChamados();
+}
+
+async function abrirChamado() {
+  const assunto = document.getElementById('ch-assunto').value.trim();
+  const mensagem = document.getElementById('ch-mensagem').value.trim();
+  const msgEl = document.getElementById('ch-msg');
+  msgEl.style.display = 'block';
+
+  if (!assunto || !mensagem) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Preencha assunto e mensagem.'; return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  const { error } = await supabaseClient.from('chamados').insert({
+    organizacao_id: organizacaoId,
+    usuario_email: user?.email || '',
+    assunto,
+    mensagem,
+  });
+
+  if (error) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Erro ao enviar: ' + error.message; return;
+  }
+
+  msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Chamado enviado! A resposta aparece aqui embaixo assim que a gente responder.';
+  document.getElementById('ch-assunto').value = '';
+  document.getElementById('ch-mensagem').value = '';
+  toast('Chamado enviado!');
+  await renderChamados();
+}
+
+async function renderChamados() {
+  const wrap = document.getElementById('chamados-lista');
+  if (!wrap) return;
+
+  const { data, error } = await supabaseClient
+    .from('chamados').select('*').eq('organizacao_id', organizacaoId).order('criado_em', { ascending: false });
+
+  if (error || !data) { wrap.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i>Erro ao carregar chamados</div>'; return; }
+
+  document.getElementById('chamados-count').textContent = `(${data.length})`;
+
+  if (!data.length) {
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-message-2"></i>Nenhum chamado enviado ainda</div>';
+    return;
+  }
+
+  const statusCls = { 'aberto': 'badge-amber', 'respondido': 'badge-green', 'fechado': 'badge-gray' };
+  const statusLabel = { 'aberto': 'Aberto', 'respondido': 'Respondido', 'fechado': 'Fechado' };
+  let h = '';
+  data.forEach(c => {
+    h += `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:6px;">
+        <div style="font-weight:600;font-size:13px;">${c.assunto}</div>
+        <span class="badge ${statusCls[c.status] || 'badge-gray'}">${statusLabel[c.status] || c.status}</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--text2);margin-bottom:8px;">${c.mensagem}</div>
+      ${c.resposta ? `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;font-size:12.5px;color:var(--text);"><strong>Resposta da DAAT:</strong><br>${c.resposta}</div>` : ''}
+      <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:8px;">${new Date(c.criado_em).toLocaleDateString('pt-BR')}</div>
+    </div>`;
+  });
+  wrap.innerHTML = h;
 }
 
 // ===== INIT =====
