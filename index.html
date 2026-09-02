@@ -321,10 +321,17 @@
 <div class="container">
 
   <div class="card">
-    <div class="card-title"><i class="ti ti-plus"></i> Adicionar produto</div>
+    <div class="card-title"><i class="ti ti-plus"></i> Adicionar item</div>
     <div class="form-grid cols3">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="f-tipo" onchange="toggleCamposEstoque()">
+          <option value="Produto">Produto</option>
+          <option value="Serviço">Serviço</option>
+        </select>
+      </div>
       <div class="form-group"><label>Fornecedor</label><input id="f-forn" placeholder="" /></div>
-      <div class="form-group"><label>Nome do produto</label><input id="f-nome" placeholder="" /></div>
+      <div class="form-group"><label id="f-nome-label">Nome do produto</label><input id="f-nome" placeholder="" /></div>
       <div class="form-group">
         <label>Linha / Coleção</label>
         <input id="f-serie" placeholder="" />
@@ -333,8 +340,8 @@
         <label>Categoria</label>
         <input id="f-cat" placeholder="" />
       </div>
-      <div class="form-group"><label>Volume / Variação</label><input id="f-vol" placeholder="" /></div>
-      <div class="form-group">
+      <div class="form-group" id="f-vol-group"><label>Volume / Variação</label><input id="f-vol" placeholder="" /></div>
+      <div class="form-group" id="f-un-group">
         <label>Unidade</label>
         <select id="f-un">
           <option value="un">Unidade (un)</option>
@@ -342,13 +349,13 @@
         </select>
       </div>
       <div class="form-group"><label>Custo (R$)</label><input id="f-custo" type="number" step="0.01" min="0" placeholder="" /></div>
-      <div class="form-group"><label>Preço de venda (R$)</label><input id="f-preco" type="number" step="0.01" min="0" placeholder="" /></div>
-      <div class="form-group"><label>Estoque atual</label><input id="f-est" type="number" min="0" placeholder="" /></div>
-      <div class="form-group"><label>Alerta estoque mínimo</label><input id="f-estmin" type="number" min="0" placeholder="" /></div>
+      <div class="form-group"><label id="f-preco-label">Preço de venda (R$)</label><input id="f-preco" type="number" step="0.01" min="0" placeholder="" /></div>
+      <div class="form-group" id="f-est-group"><label>Estoque atual</label><input id="f-est" type="number" min="0" placeholder="" /></div>
+      <div class="form-group" id="f-estmin-group"><label>Alerta estoque mínimo</label><input id="f-estmin" type="number" min="0" placeholder="" /></div>
       <div class="form-group full"><label>Observações</label><textarea id="f-obs" placeholder=""></textarea></div>
     </div>
     <div class="actions">
-      <button class="btn btn-gold" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar produto</button>
+      <button class="btn btn-gold" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar item</button>
     </div>
   </div>
 
@@ -359,6 +366,11 @@
     </div>
     <div class="filter-row">
       <input id="busca" placeholder="Buscar..." oninput="renderProdutos()" style="flex:1;min-width:100px;" />
+      <select id="f-tipo-filtro" onchange="renderProdutos()">
+        <option value="">Produtos e serviços</option>
+        <option value="Produto">Só produtos</option>
+        <option value="Serviço">Só serviços</option>
+      </select>
       <select id="f-serie-filtro" onchange="renderProdutos()">
         <option value="">Todas as linhas</option>
       </select>
@@ -949,7 +961,7 @@ async function carregarTudo() {
 
 // mapeia nomes de coluna do banco (snake_case) pros nomes usados no front (camelCase)
 function mapProdutoDb(p) {
-  return { id: p.id, nome: p.nome, fornecedor: p.fornecedor, serie: p.serie, categoria: p.categoria,
+  return { id: p.id, nome: p.nome, tipo: p.tipo || 'Produto', fornecedor: p.fornecedor, serie: p.serie, categoria: p.categoria,
     volume: p.volume, unidade: p.unidade, custo: Number(p.custo), preco: Number(p.preco),
     estoque: p.estoque, estoqueMin: p.estoque_min, obs: p.obs, ativo: p.ativo };
 }
@@ -1032,27 +1044,41 @@ function serieBadge(s) {
 // ===== ADD PRODUTO =====
 async function addProduto() {
   const nome = document.getElementById('f-nome').value.trim();
-  if (!nome) { toast('Preencha o nome do produto.'); return; }
+  const tipo = document.getElementById('f-tipo').value;
+  if (!nome) { toast(`Preencha o nome d${tipo === 'Serviço' ? 'o' : 'o'} ${tipo.toLowerCase()}.`); return; }
   const novo = {
     organizacao_id: organizacaoId,
     nome,
+    tipo,
     fornecedor: document.getElementById('f-forn').value.trim(),
     serie: document.getElementById('f-serie').value.trim(),
     categoria: document.getElementById('f-cat').value.trim(),
-    volume: document.getElementById('f-vol').value.trim(),
-    unidade: document.getElementById('f-un').value,
+    volume: tipo === 'Serviço' ? '' : document.getElementById('f-vol').value.trim(),
+    unidade: tipo === 'Serviço' ? 'un' : document.getElementById('f-un').value,
     custo: parseFloat(document.getElementById('f-custo').value) || 0,
     preco: parseFloat(document.getElementById('f-preco').value) || 0,
-    estoque: parseInt(document.getElementById('f-est').value) || 0,
-    estoque_min: parseInt(document.getElementById('f-estmin').value) || 3,
+    estoque: tipo === 'Serviço' ? 0 : (parseInt(document.getElementById('f-est').value) || 0),
+    estoque_min: tipo === 'Serviço' ? 0 : (parseInt(document.getElementById('f-estmin').value) || 3),
     obs: document.getElementById('f-obs').value.trim(),
     ativo: true,
   };
   const { data, error } = await supabaseClient.from('produtos').insert(novo).select().single();
-  if (error) { toast('Erro ao salvar produto.'); console.error(error); return; }
+  if (error) { toast('Erro ao salvar item.'); console.error(error); return; }
   produtos.push(mapProdutoDb(data));
   ['f-forn','f-nome','f-serie','f-cat','f-vol','f-custo','f-preco','f-est','f-estmin','f-obs'].forEach(id => document.getElementById(id).value = '');
-  renderProdutos(); toast('Produto adicionado!');
+  document.getElementById('f-tipo').value = 'Produto';
+  toggleCamposEstoque();
+  renderProdutos(); toast(`${tipo} adicionado!`);
+}
+
+function toggleCamposEstoque() {
+  const tipo = document.getElementById('f-tipo').value;
+  const ehServico = tipo === 'Serviço';
+  ['f-vol-group', 'f-un-group', 'f-est-group', 'f-estmin-group'].forEach(id => {
+    document.getElementById(id).style.display = ehServico ? 'none' : 'flex';
+  });
+  document.getElementById('f-nome-label').textContent = ehServico ? 'Nome do serviço' : 'Nome do produto';
+  document.getElementById('f-preco-label').textContent = ehServico ? 'Preço do serviço (R$)' : 'Preço de venda (R$)';
 }
 
 function popularFiltrosProduto() {
@@ -1069,57 +1095,63 @@ function popularFiltrosProduto() {
 function renderProdutos() {
   popularFiltrosProduto();
   const busca  = (document.getElementById('busca').value || '').toLowerCase();
+  const tipoF  = document.getElementById('f-tipo-filtro').value;
   const serie  = document.getElementById('f-serie-filtro').value;
   const cat    = document.getElementById('f-cat-filtro').value;
   const status = document.getElementById('f-status-filtro').value;
 
   let lista = produtos.filter(p => {
     if (busca && !p.nome.toLowerCase().includes(busca) && !(p.obs||'').toLowerCase().includes(busca)) return false;
+    if (tipoF && p.tipo !== tipoF) return false;
     if (serie && p.serie !== serie) return false;
     if (cat   && p.categoria !== cat) return false;
     if (status === 'ativo'   && !p.ativo) return false;
     if (status === 'inativo' &&  p.ativo) return false;
-    if (status === 'baixo'   && !(p.ativo && p.estoque <= p.estoqueMin)) return false;
+    if (status === 'baixo'   && !(p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin)) return false;
     return true;
   });
 
   document.getElementById('prod-count').textContent = `(${lista.length} de ${produtos.length})`;
 
   if (!lista.length) {
-    document.getElementById('prod-table').innerHTML = '<div class="empty"><i class="ti ti-package"></i>Nenhum produto encontrado</div>';
+    document.getElementById('prod-table').innerHTML = '<div class="empty"><i class="ti ti-package"></i>Nenhum item encontrado</div>';
     return;
   }
 
   let h = `<table><thead><tr>
-    <th>Produto</th><th>Série</th><th>Categoria</th><th>Volume</th>
+    <th>Item</th><th>Tipo</th><th>Série</th><th>Categoria</th><th>Volume</th>
     <th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th>Status</th><th></th>
   </tr></thead><tbody>`;
 
   lista.forEach(p => {
+    const ehServico = p.tipo === 'Serviço';
     const margem = p.preco > 0 && p.custo > 0 ? ((p.preco - p.custo) / p.preco * 100).toFixed(0) + '%' : '—';
-    const baixo  = p.ativo && p.estoque <= p.estoqueMin;
-    const estBadge = p.estoque === 0 ? `<span class="badge badge-red">${p.estoque} un</span>`
+    const baixo  = !ehServico && p.ativo && p.estoque <= p.estoqueMin;
+    const estBadge = ehServico ? '<span style="color:var(--text3)">—</span>'
+                   : p.estoque === 0 ? `<span class="badge badge-red">${p.estoque} un</span>`
                    : baixo ? `<span class="badge badge-amber">${p.estoque} un</span>`
                    : `${p.estoque} un`;
     const statusBadge = !p.ativo ? `<span class="badge badge-gray">Inativo</span>`
                       : baixo   ? `<span class="badge badge-amber"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> Baixo</span>`
                       : `<span class="badge badge-green">Ativo</span>`;
+    const tipoBadge = ehServico ? `<span class="badge badge-teal">Serviço</span>` : `<span class="badge badge-gray">Produto</span>`;
 
     h += `<tr>
       <td>
         <div style="font-weight:600;color:var(--text);">${escapeHTML(p.nome)}</div>
         ${p.obs ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${escapeHTML(p.obs.length > 50 ? p.obs.slice(0,50)+'…' : p.obs)}</div>` : ''}
       </td>
+      <td>${tipoBadge}</td>
       <td>${serieBadge(p.serie)}</td>
       <td style="font-size:12px;color:var(--text2);">${escapeHTML(p.categoria) || '—'}</td>
-      <td style="font-size:12px;color:var(--text2);">${escapeHTML(p.volume) || '—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${ehServico ? '<span style="color:var(--text3)">—</span>' : (escapeHTML(p.volume) || '—')}</td>
       <td>${p.custo > 0 ? 'R$ ' + p.custo.toFixed(2) : '<span style="color:var(--text3)">—</span>'}</td>
       <td>${p.preco > 0 ? '<span style="color:var(--accent);font-weight:600;">R$ ' + p.preco.toFixed(2) + '</span>' : '<span style="color:var(--text3)">—</span>'}</td>
       <td style="font-size:12px;">${margem}</td>
       <td>${estBadge}</td>
       <td>${statusBadge}</td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-outline btn-sm" onclick="editEstoque('${p.id}')" title="Editar estoque/preço"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-outline btn-sm" onclick="editEstoque('${p.id}')" title="Editar preço/estoque"><i class="ti ti-edit"></i></button>
         <button class="btn btn-outline btn-sm" onclick="toggleAtivo('${p.id}')" style="margin-left:4px;">${p.ativo ? 'Desativar' : 'Ativar'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteProduto('${p.id}')" style="margin-left:4px;"><i class="ti ti-trash"></i></button>
       </td>
@@ -1150,19 +1182,24 @@ async function deleteProduto(id) {
 async function editEstoque(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
-  const novoEst  = prompt(`Estoque atual de "${p.nome}":`, p.estoque);
-  if (novoEst === null) return;
+  const ehServico = p.tipo === 'Serviço';
+
+  let estoque = p.estoque;
+  if (!ehServico) {
+    const novoEst = prompt(`Estoque atual de "${p.nome}":`, p.estoque);
+    if (novoEst === null) return;
+    estoque = parseInt(novoEst) || 0;
+  }
   const novoCusto = prompt('Custo (R$):', p.custo);
   if (novoCusto === null) return;
-  const novoPreco = prompt('Preço de venda (R$):', p.preco);
+  const novoPreco = prompt(ehServico ? 'Preço do serviço (R$):' : 'Preço de venda (R$):', p.preco);
   if (novoPreco === null) return;
-  const estoque = parseInt(novoEst) || 0;
   const custo   = parseFloat(novoCusto) || 0;
   const preco   = parseFloat(novoPreco) || 0;
   const { error } = await supabaseClient.from('produtos').update({ estoque, custo, preco }).eq('id', id);
-  if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
+  if (error) { toast('Erro ao atualizar item.'); console.error(error); return; }
   p.estoque = estoque; p.custo = custo; p.preco = preco;
-  renderProdutos(); toast('Produto atualizado!');
+  renderProdutos(); toast(`${p.tipo} atualizado!`);
 }
 
 // ===== VENDAS =====
@@ -1310,7 +1347,7 @@ function renderDashboard() {
   const nVendas   = vendas.length;
   const ticket    = nVendas > 0 ? totalRec / nVendas : 0;
   const ativos    = produtos.filter(p => p.ativo).length;
-  const baixo     = produtos.filter(p => p.ativo && p.estoque <= p.estoqueMin).length;
+  const baixo     = produtos.filter(p => p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin).length;
 
   const comissaoTotal = vendas.reduce((s,v) => s + (v.comissao||0), 0);
 
@@ -1430,7 +1467,7 @@ function renderDashboard() {
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-users"></i>Nenhuma venda registrada ainda</div>';
 
   // alertas
-  const alertas = produtos.filter(p => p.ativo && p.estoque <= p.estoqueMin);
+  const alertas = produtos.filter(p => p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin);
   if (!alertas.length) {
     document.getElementById('alerta-estoque').innerHTML = '<div class="empty" style="padding:1.5rem"><i class="ti ti-circle-check" style="color:var(--green);"></i>Todos os produtos com estoque adequado</div>';
     return;
@@ -1751,9 +1788,10 @@ function nomeArquivoComData(prefixo) {
 }
 
 function exportarProdutos() {
-  if (!produtos.length) { toast('Nenhum produto pra exportar.'); return; }
+  if (!produtos.length) { toast('Nenhum item pra exportar.'); return; }
   const linhas = produtos.map(p => ({
     'Nome': p.nome,
+    'Tipo': p.tipo || 'Produto',
     'Fornecedor': p.fornecedor || '',
     'Linha/Coleção': p.serie || '',
     'Categoria': p.categoria || '',
@@ -1836,7 +1874,7 @@ function exportarTudo() {
 
   if (produtos.length) {
     const shProdutos = produtos.map(p => ({
-      'Nome': p.nome, 'Fornecedor': p.fornecedor || '', 'Linha/Coleção': p.serie || '',
+      'Nome': p.nome, 'Tipo': p.tipo || 'Produto', 'Fornecedor': p.fornecedor || '', 'Linha/Coleção': p.serie || '',
       'Categoria': p.categoria || '', 'Volume/Variação': p.volume || '', 'Unidade': p.unidade || '',
       'Custo (R$)': p.custo, 'Preço (R$)': p.preco, 'Estoque': p.estoque, 'Estoque mínimo': p.estoqueMin,
       'Ativo': p.ativo ? 'Sim' : 'Não', 'Observações': p.obs || '',
