@@ -948,10 +948,10 @@ async function fazerLogoutBloqueado() {
 
 async function carregarTudo() {
   const [p, v, c, a] = await Promise.all([
-    supabaseClient.from('produtos').select('*').is('deletado_em', null).order('nome'),
-    supabaseClient.from('vendas').select('*').is('deletado_em', null).order('data', { ascending: false }),
-    supabaseClient.from('clientes').select('*').is('deletado_em', null).order('nome'),
-    supabaseClient.from('agendamentos').select('*').is('deletado_em', null).order('data'),
+    supabaseClient.from('produtos').select('*').eq('organizacao_id', organizacaoId).is('deletado_em', null).order('nome'),
+    supabaseClient.from('vendas').select('*').eq('organizacao_id', organizacaoId).is('deletado_em', null).order('data', { ascending: false }),
+    supabaseClient.from('clientes').select('*').eq('organizacao_id', organizacaoId).is('deletado_em', null).order('nome'),
+    supabaseClient.from('agendamentos').select('*').eq('organizacao_id', organizacaoId).is('deletado_em', null).order('data'),
   ]);
   produtos = (p.data || []).map(mapProdutoDb);
   vendas = (v.data || []).map(mapVendaDb);
@@ -1165,14 +1165,14 @@ function renderProdutos() {
 async function toggleAtivo(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
-  const { error } = await supabaseClient.from('produtos').update({ ativo: !p.ativo }).eq('id', id);
+  const { error } = await supabaseClient.from('produtos').update({ ativo: !p.ativo }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
   p.ativo = !p.ativo; renderProdutos();
 }
 
 async function deleteProduto(id) {
   if (!confirm('Mover produto pra lixeira? Você pode restaurar depois em Configurações.')) return;
-  const { error } = await supabaseClient.from('produtos').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  const { error } = await supabaseClient.from('produtos').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao remover produto.'); console.error(error); return; }
   produtos = produtos.filter(x => x.id !== id);
   renderProdutos();
@@ -1196,7 +1196,7 @@ async function editEstoque(id) {
   if (novoPreco === null) return;
   const custo   = parseFloat(novoCusto) || 0;
   const preco   = parseFloat(novoPreco) || 0;
-  const { error } = await supabaseClient.from('produtos').update({ estoque, custo, preco }).eq('id', id);
+  const { error } = await supabaseClient.from('produtos').update({ estoque, custo, preco }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao atualizar item.'); console.error(error); return; }
   p.estoque = estoque; p.custo = custo; p.preco = preco;
   renderProdutos(); toast(`${p.tipo} atualizado!`);
@@ -1278,7 +1278,7 @@ async function salvarVenda() {
     const p = produtos.find(x => x.id === item.prodId);
     if (!p) continue;
     const novoEstoque = Math.max(0, p.estoque - item.qty);
-    const { error: errEst } = await supabaseClient.from('produtos').update({ estoque: novoEstoque }).eq('id', p.id);
+    const { error: errEst } = await supabaseClient.from('produtos').update({ estoque: novoEstoque }).eq('id', p.id).eq('organizacao_id', organizacaoId);
     if (!errEst) p.estoque = novoEstoque;
   }
 
@@ -1334,7 +1334,7 @@ function renderHistorico() {
 
 async function deleteVenda(id) {
   if (!confirm('Mover venda pra lixeira? Você pode restaurar depois em Configurações.')) return;
-  const { error } = await supabaseClient.from('vendas').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  const { error } = await supabaseClient.from('vendas').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao remover venda.'); console.error(error); return; }
   vendas = vendas.filter(v => v.id !== id);
   renderHistorico();
@@ -1507,7 +1507,7 @@ async function addCliente() {
 
 async function deleteCliente(id) {
   if (!confirm('Mover cliente pra lixeira? Agendamentos ligados a ele continuam na agenda. Você pode restaurar depois em Configurações.')) return;
-  const { error } = await supabaseClient.from('clientes').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  const { error } = await supabaseClient.from('clientes').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao remover cliente.'); console.error(error); return; }
   clientes = clientes.filter(c => c.id !== id);
   renderClientes(); renderClienteSelect();
@@ -1572,7 +1572,7 @@ async function addAgendamento() {
 }
 
 async function updateAgendaStatus(id, status) {
-  const { error } = await supabaseClient.from('agendamentos').update({ status }).eq('id', id);
+  const { error } = await supabaseClient.from('agendamentos').update({ status }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao atualizar status.'); console.error(error); return; }
   const a = agendamentos.find(x => x.id === id);
   if (a) { a.status = status; renderAgenda(); }
@@ -1580,7 +1580,7 @@ async function updateAgendaStatus(id, status) {
 
 async function deleteAgendamento(id) {
   if (!confirm('Mover agendamento pra lixeira? Você pode restaurar depois em Configurações.')) return;
-  const { error } = await supabaseClient.from('agendamentos').update({ deletado_em: new Date().toISOString() }).eq('id', id);
+  const { error } = await supabaseClient.from('agendamentos').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao remover agendamento.'); console.error(error); return; }
   agendamentos = agendamentos.filter(a => a.id !== id);
   renderAgenda();
@@ -2020,10 +2020,10 @@ async function renderLixeira() {
   wrap.innerHTML = '<div style="text-align:center;color:var(--text3);padding:1rem;font-size:12px;">Carregando...</div>';
 
   const [p, v, c, a] = await Promise.all([
-    supabaseClient.from('produtos').select('id, nome, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
-    supabaseClient.from('vendas').select('id, cliente, data, total, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
-    supabaseClient.from('clientes').select('id, nome, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
-    supabaseClient.from('agendamentos').select('id, cliente_nome, data, deletado_em').not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+    supabaseClient.from('produtos').select('id, nome, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+    supabaseClient.from('vendas').select('id, cliente, data, total, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+    supabaseClient.from('clientes').select('id, nome, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
+    supabaseClient.from('agendamentos').select('id, cliente_nome, data, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
   ]);
 
   const itens = [
@@ -2053,7 +2053,7 @@ async function renderLixeira() {
 }
 
 async function restaurarItem(tabela, id) {
-  const { error } = await supabaseClient.from(tabela).update({ deletado_em: null }).eq('id', id);
+  const { error } = await supabaseClient.from(tabela).update({ deletado_em: null }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao restaurar.'); console.error(error); return; }
   await carregarTudo();
   renderLixeira();
