@@ -109,6 +109,26 @@
   .metric-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; font-family: var(--font-mono); }
   .metric-value { font-size: 26px; font-weight: 400; color: var(--text); line-height: 1; font-family: var(--font-title); }
   .metric-sub { font-size: 11px; color: var(--text3); margin-top: 8px; }
+
+  /* DASHBOARD — visual mais coeso */
+  .card-title-lg { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 1.5rem; padding-bottom: .85rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--font-body); }
+  .card-title-lg .tag { font-size: 10px; font-family: var(--font-mono); font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+
+  .dash-hero-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.75rem; margin-bottom: 1.5rem; }
+  .dash-hero-item .label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-family: var(--font-mono); margin-bottom: 8px; }
+  .dash-hero-item .value { font-size: 32px; font-family: var(--font-title); line-height: 1; }
+  .dash-hero-item .pct { font-size: 12px; color: var(--text3); margin-top: 6px; font-family: var(--font-mono); }
+  .dash-hero-bar { height: 14px; border-radius: 999px; overflow: hidden; display: flex; background: var(--bg); border: 1px solid var(--border); }
+  .dash-hero-bar > div { height: 100%; }
+
+  .dash-metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+  .dash-metric-sm { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem 1.15rem; box-shadow: var(--shadow-sm); }
+  .dash-metric-sm .label { font-size: 11.5px; font-weight: 700; color: var(--text2); margin-bottom: 6px; font-family: var(--font-body); }
+  .dash-metric-sm .value { font-size: 21px; font-family: var(--font-title); color: var(--text); line-height: 1; }
+  .dash-metric-sm .flag { font-size: 10.5px; color: var(--amber); font-weight: 600; margin-top: 5px; }
+
+  .chart-tempo-wrap { width: 100%; overflow-x: auto; }
+  .chart-tempo-tip { font-size: 10px; color: var(--text3); font-family: var(--font-mono); text-align: right; margin-top: 4px; }
   .metric-accent { background: linear-gradient(135deg, var(--bg2), rgba(245,196,0,.12)); border-color: rgba(245,196,0,.35); }
 
   /* TABLE */
@@ -529,23 +549,36 @@
 <!-- ===== DASHBOARD ===== -->
 <div id="tab-dashboard" class="section">
 <div class="container">
-  <div class="metrics" id="metricas"></div>
+
+  <div class="card">
+    <div class="card-title-lg">Resumo do período <span class="tag" id="dash-periodo-tag"></span></div>
+    <div class="dash-hero-grid" id="dash-hero"></div>
+    <div class="dash-hero-bar" id="dash-hero-bar"></div>
+  </div>
+
+  <div class="dash-metrics-row" id="dash-metrics-sec"></div>
+
+  <div class="card">
+    <div class="card-title-lg">Receita ao longo do tempo</div>
+    <div class="chart-tempo-wrap" id="dash-chart-tempo"></div>
+  </div>
+
   <div class="two-col">
     <div class="card">
-      <div class="card-title"><i class="ti ti-trending-up"></i> Top produtos por receita</div>
+      <div class="card-title-lg">Top produtos e serviços</div>
       <div id="rank-prod"></div>
     </div>
     <div class="card">
-      <div class="card-title"><i class="ti ti-tag"></i> Receita por categoria</div>
+      <div class="card-title-lg">Receita por categoria</div>
       <div id="rank-cat"></div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title"><i class="ti ti-users"></i> Desempenho por vendedor</div>
+    <div class="card-title-lg">Desempenho por vendedor</div>
     <div id="rank-vendedor"></div>
   </div>
   <div class="card">
-    <div class="card-title"><i class="ti ti-alert-triangle"></i> Alertas de estoque</div>
+    <div class="card-title-lg" style="color:var(--amber);">Alertas de estoque</div>
     <div id="alerta-estoque"></div>
   </div>
 </div>
@@ -1342,13 +1375,66 @@ async function deleteVenda(id) {
 }
 
 // ===== DASHBOARD =====
+// ===== GRÁFICO: receita ao longo do tempo (SVG, sem biblioteca externa) =====
+function gerarGraficoTempo(vendasList) {
+  if (!vendasList.length) {
+    return '<div class="empty" style="padding:2rem 1rem;"><i class="ti ti-chart-line"></i>Sem vendas registradas ainda</div>';
+  }
+
+  const porData = {};
+  vendasList.forEach(v => { porData[v.data] = (porData[v.data] || 0) + v.total; });
+  let pontos = Object.entries(porData).sort((a, b) => a[0].localeCompare(b[0]));
+  if (pontos.length > 14) pontos = pontos.slice(-14);
+
+  const w = 700, h = 200, padL = 56, padR = 20, padT = 20, padB = 34;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const maxVal = Math.max(...pontos.map(p => p[1]), 1);
+  const n = pontos.length;
+
+  const xFor = i => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
+  const yFor = val => padT + plotH - (val / maxVal) * plotH;
+
+  const linePath = pontos.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(p[1]).toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${xFor(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${xFor(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
+
+  let gridLines = '';
+  for (let g = 0; g <= 2; g++) {
+    const gy = padT + (plotH / 2) * g;
+    gridLines += `<line x1="${padL}" y1="${gy}" x2="${w - padR}" y2="${gy}" stroke="var(--border)" stroke-width="1" />`;
+  }
+
+  const yLabels = `
+    <text x="${padL - 8}" y="${padT + 4}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$${maxVal.toFixed(0)}</text>
+    <text x="${padL - 8}" y="${padT + plotH + 4}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$0</text>
+  `;
+
+  const fmtData = d => d.split('-').slice(1).reverse().join('/');
+  let xLabels = '';
+  const idxsParaLabel = n <= 5 ? pontos.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
+  idxsParaLabel.forEach(i => {
+    xLabels += `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="monospace">${fmtData(pontos[i][0])}</text>`;
+  });
+
+  const dots = pontos.map((p, i) => `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(p[1]).toFixed(1)}" r="3.5" fill="#f5c400" stroke="#14120c" stroke-width="1.2" />`).join('');
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;min-width:420px;display:block;">
+      ${gridLines}
+      <path d="${areaPath}" fill="#f5c400" opacity="0.14" />
+      <path d="${linePath}" fill="none" stroke="#f5c400" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+      ${dots}
+      ${yLabels}
+      ${xLabels}
+    </svg>
+  `;
+}
+
 function renderDashboard() {
   const totalRec  = vendas.reduce((s, v) => s + v.total, 0);
   const nVendas   = vendas.length;
   const ticket    = nVendas > 0 ? totalRec / nVendas : 0;
   const ativos    = produtos.filter(p => p.ativo).length;
   const baixo     = produtos.filter(p => p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin).length;
-
   const comissaoTotal = vendas.reduce((s,v) => s + (v.comissao||0), 0);
 
   // custo total (usa o custo ATUAL de cada produto — não é um custo "congelado" no momento da venda)
@@ -1357,45 +1443,46 @@ function renderDashboard() {
     return si + (p ? p.custo * i.qty : 0);
   }, 0), 0);
   const lucroBruto = totalRec - custoTotal;
-  const margem = totalRec > 0 ? (lucroBruto / totalRec * 100) : 0;
+  const pctCusto  = totalRec > 0 ? (custoTotal / totalRec * 100) : 0;
+  const pctLucro  = totalRec > 0 ? (lucroBruto / totalRec * 100) : 0;
 
-  document.getElementById('metricas').innerHTML = `
-    <div class="metric metric-accent">
-      <div class="metric-label">Receita total</div>
-      <div class="metric-value">R$ ${totalRec.toFixed(2)}</div>
-      <div class="metric-sub">todas as vendas</div>
+  document.getElementById('dash-periodo-tag').textContent = nVendas ? `${nVendas} venda${nVendas!==1?'s':''} no total` : 'sem vendas ainda';
+
+  // ===== HERO: Receita / Custo / Lucro, coeso, com barra de proporção =====
+  document.getElementById('dash-hero').innerHTML = `
+    <div class="dash-hero-item">
+      <div class="label">Receita total</div>
+      <div class="value">R$ ${totalRec.toFixed(2)}</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">Custo total</div>
-      <div class="metric-value" style="color:var(--terracota);">R$ ${custoTotal.toFixed(2)}</div>
-      <div class="metric-sub">estimado, custo atual dos produtos</div>
+    <div class="dash-hero-item">
+      <div class="label">Custo total</div>
+      <div class="value" style="color:var(--terracota);">R$ ${custoTotal.toFixed(2)}</div>
+      <div class="pct">${pctCusto.toFixed(0)}% da receita</div>
     </div>
-    <div class="metric">
-      <div class="metric-label">Lucro bruto</div>
-      <div class="metric-value" style="color:var(--sage);">R$ ${lucroBruto.toFixed(2)}</div>
-      <div class="metric-sub">margem de ${margem.toFixed(0)}%</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Nº de vendas</div>
-      <div class="metric-value">${nVendas}</div>
-      <div class="metric-sub">registradas</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Ticket médio</div>
-      <div class="metric-value">R$ ${ticket.toFixed(2)}</div>
-      <div class="metric-sub">por venda</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Comissões</div>
-      <div class="metric-value" style="color:var(--terracota);">R$ ${comissaoTotal.toFixed(2)}</div>
-      <div class="metric-sub">total no período</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Produtos ativos</div>
-      <div class="metric-value">${ativos}</div>
-      <div class="metric-sub">${baixo > 0 ? `<span style="color:var(--amber)">${baixo} com estoque baixo</span>` : 'estoque ok'}</div>
+    <div class="dash-hero-item">
+      <div class="label">Lucro bruto</div>
+      <div class="value" style="color:var(--sage);">R$ ${lucroBruto.toFixed(2)}</div>
+      <div class="pct">margem de ${pctLucro.toFixed(0)}%</div>
     </div>
   `;
+  document.getElementById('dash-hero-bar').innerHTML = totalRec > 0
+    ? `<div style="width:${pctCusto}%;background:var(--terracota);"></div><div style="width:${pctLucro}%;background:var(--sage);"></div>`
+    : `<div style="width:100%;background:var(--border);"></div>`;
+
+  // ===== métricas secundárias, compactas =====
+  document.getElementById('dash-metrics-sec').innerHTML = `
+    <div class="dash-metric-sm"><div class="label">Nº de vendas</div><div class="value">${nVendas}</div></div>
+    <div class="dash-metric-sm"><div class="label">Ticket médio</div><div class="value">R$ ${ticket.toFixed(2)}</div></div>
+    <div class="dash-metric-sm"><div class="label">Comissões</div><div class="value" style="color:var(--terracota);">R$ ${comissaoTotal.toFixed(2)}</div></div>
+    <div class="dash-metric-sm">
+      <div class="label">Itens ativos</div>
+      <div class="value">${ativos}</div>
+      ${baixo > 0 ? `<div class="flag"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> ${baixo} com estoque baixo</div>` : ''}
+    </div>
+  `;
+
+  // ===== gráfico: receita ao longo do tempo =====
+  document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas);
 
   // top produtos
   const porProd = {};
