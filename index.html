@@ -1381,15 +1381,37 @@ function gerarGraficoTempo(vendasList) {
     return '<div class="empty" style="padding:2rem 1rem;"><i class="ti ti-chart-line"></i>Sem vendas registradas ainda</div>';
   }
 
+  // soma o total vendido por dia
   const porData = {};
   vendasList.forEach(v => { porData[v.data] = (porData[v.data] || 0) + v.total; });
-  let pontos = Object.entries(porData).sort((a, b) => a[0].localeCompare(b[0]));
-  if (pontos.length > 14) pontos = pontos.slice(-14);
 
-  const w = 700, h = 200, padL = 56, padR = 20, padT = 20, padB = 34;
+  const datas = Object.keys(porData).sort();
+  const minData = datas[0];
+  const maxData = datas[datas.length - 1];
+
+  const addDias = (dataStr, n) => {
+    const d = new Date(dataStr + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const diffDias = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+
+  // limita a janela aos últimos 30 dias corridos (evita grafico gigante se o historico for longo)
+  const totalDias = diffDias(minData, maxData);
+  const dataInicio = totalDias > 29 ? addDias(maxData, -29) : minData;
+  const nDias = diffDias(dataInicio, maxData) + 1;
+
+  // preenche TODOS os dias do periodo, mesmo os sem venda (isso é o que torna a série temporal de verdade)
+  const pontos = [];
+  for (let i = 0; i < nDias; i++) {
+    const data = addDias(dataInicio, i);
+    pontos.push([data, porData[data] || 0]);
+  }
+
+  const n = pontos.length;
+  const w = Math.max(640, Math.min(1200, n * 26)), h = 210, padL = 56, padR = 20, padT = 20, padB = 34;
   const plotW = w - padL - padR, plotH = h - padT - padB;
   const maxVal = Math.max(...pontos.map(p => p[1]), 1);
-  const n = pontos.length;
 
   const xFor = i => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
   const yFor = val => padT + plotH - (val / maxVal) * plotH;
@@ -1397,32 +1419,37 @@ function gerarGraficoTempo(vendasList) {
   const linePath = pontos.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(p[1]).toFixed(1)}`).join(' ');
   const areaPath = `${linePath} L${xFor(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${xFor(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
 
-  let gridLines = '';
-  for (let g = 0; g <= 2; g++) {
-    const gy = padT + (plotH / 2) * g;
-    gridLines += `<line x1="${padL}" y1="${gy}" x2="${w - padR}" y2="${gy}" stroke="var(--border)" stroke-width="1" />`;
+  // grid horizontal com 4 níveis (0, 1/3, 2/3, máximo) e valor em cada um
+  let gridLines = '', yLabels = '';
+  for (let g = 0; g <= 3; g++) {
+    const frac = g / 3;
+    const gy = padT + plotH * (1 - frac);
+    const val = maxVal * frac;
+    gridLines += `<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${w - padR}" y2="${gy.toFixed(1)}" stroke="var(--border)" stroke-width="1" />`;
+    yLabels += `<text x="${padL - 8}" y="${(gy + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$${val.toFixed(0)}</text>`;
   }
 
-  const yLabels = `
-    <text x="${padL - 8}" y="${padT + 4}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$${maxVal.toFixed(0)}</text>
-    <text x="${padL - 8}" y="${padT + plotH + 4}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$0</text>
-  `;
-
+  // rótulos do eixo X — mostra todos se poucos dias, senão distribui uns 7 igualmente
   const fmtData = d => d.split('-').slice(1).reverse().join('/');
   let xLabels = '';
-  const idxsParaLabel = n <= 5 ? pontos.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
-  idxsParaLabel.forEach(i => {
+  const qtdLabels = Math.min(n, 7);
+  const idxsParaLabel = new Set();
+  for (let k = 0; k < qtdLabels; k++) {
+    idxsParaLabel.add(Math.round((k / (qtdLabels - 1 || 1)) * (n - 1)));
+  }
+  [...idxsParaLabel].sort((a,b)=>a-b).forEach(i => {
     xLabels += `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="monospace">${fmtData(pontos[i][0])}</text>`;
   });
 
-  const dots = pontos.map((p, i) => `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(p[1]).toFixed(1)}" r="3.5" fill="#f5c400" stroke="#14120c" stroke-width="1.2" />`).join('');
+  // só marca o último ponto (dia mais recente), pra dar uma referência sem poluir a linha com um ponto por dia
+  const ultimoPonto = `<circle cx="${xFor(n-1).toFixed(1)}" cy="${yFor(pontos[n-1][1]).toFixed(1)}" r="4" fill="#f5c400" stroke="#14120c" stroke-width="1.4" />`;
 
   return `
     <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;min-width:420px;display:block;">
       ${gridLines}
       <path d="${areaPath}" fill="#f5c400" opacity="0.14" />
       <path d="${linePath}" fill="none" stroke="#f5c400" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
-      ${dots}
+      ${ultimoPonto}
       ${yLabels}
       ${xLabels}
     </svg>
