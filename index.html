@@ -556,6 +556,11 @@
     <div class="dash-hero-bar" id="dash-hero-bar"></div>
   </div>
 
+  <div class="card">
+    <div class="card-title-lg"><i class="ti ti-bulb" style="color:var(--accent);margin-right:6px;"></i>Insights automáticos</div>
+    <div id="dash-insights"></div>
+  </div>
+
   <div class="dash-metrics-row" id="dash-metrics-sec"></div>
 
   <div class="card">
@@ -1375,6 +1380,92 @@ async function deleteVenda(id) {
 }
 
 // ===== DASHBOARD =====
+// ===== INSIGHTS AUTOMÁTICOS (regras estatísticas, sem IA) =====
+function gerarInsights() {
+  const insights = [];
+  const hoje = new Date(hojeLocal() + 'T00:00:00');
+  const addDiasD = (date, n) => { const d = new Date(date); d.setDate(d.getDate() + n); return d; };
+  const paraStr = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  // 1) tendência: últimos 7 dias vs 7 dias anteriores
+  const iniUlt7 = paraStr(addDiasD(hoje, -6));
+  const iniAnt7 = paraStr(addDiasD(hoje, -13));
+  const fimAnt7 = paraStr(addDiasD(hoje, -7));
+  const somaUlt7 = vendas.filter(v => v.data >= iniUlt7).reduce((s, v) => s + v.total, 0);
+  const somaAnt7 = vendas.filter(v => v.data >= iniAnt7 && v.data <= fimAnt7).reduce((s, v) => s + v.total, 0);
+  if (somaAnt7 > 0) {
+    const variacao = (somaUlt7 - somaAnt7) / somaAnt7 * 100;
+    if (Math.abs(variacao) >= 5) {
+      const subiu = variacao > 0;
+      insights.push({
+        tipo: subiu ? 'positivo' : 'atencao',
+        icone: subiu ? 'ti-trending-up' : 'ti-trending-down',
+        texto: `Suas vendas ${subiu ? 'subiram' : 'caíram'} <strong>${Math.abs(variacao).toFixed(0)}%</strong> nos últimos 7 dias, comparado aos 7 dias anteriores.`,
+      });
+    }
+  } else if (somaUlt7 > 0) {
+    insights.push({ tipo: 'positivo', icone: 'ti-sparkles', texto: `Você teve vendas nos últimos 7 dias — continue por aí!` });
+  }
+
+  // 2) item mais lucrativo (por margem, não só receita)
+  const lucroPorItem = {};
+  vendas.forEach(v => v.itens.forEach(i => {
+    const p = produtos.find(x => x.id === i.prodId);
+    if (!p) return;
+    const lucro = (i.preco - p.custo) * i.qty;
+    lucroPorItem[p.nome] = (lucroPorItem[p.nome] || 0) + lucro;
+  }));
+  const topLucro = Object.entries(lucroPorItem).sort((a, b) => b[1] - a[1])[0];
+  if (topLucro && topLucro[1] > 0) {
+    insights.push({ tipo: 'neutro', icone: 'ti-crown', texto: `<strong>${escapeHTML(topLucro[0])}</strong> é seu item mais lucrativo no período, com R$ ${topLucro[1].toFixed(2)} de lucro.` });
+  }
+
+  // 3) cliente que sumiu (maior tempo sem comprar, acima de 45 dias)
+  let piorCliente = null, piorDias = 0;
+  clientes.forEach(c => {
+    const comprasDoCliente = vendas.filter(v => v.cliente && v.cliente.trim().toLowerCase() === c.nome.trim().toLowerCase());
+    if (!comprasDoCliente.length) return;
+    const ultimaData = comprasDoCliente.map(v => v.data).sort().slice(-1)[0];
+    const dias = Math.round((hoje - new Date(ultimaData + 'T00:00:00')) / 86400000);
+    if (dias > piorDias) { piorDias = dias; piorCliente = c.nome; }
+  });
+  if (piorCliente && piorDias > 45) {
+    insights.push({ tipo: 'atencao', icone: 'ti-user-x', texto: `<strong>${escapeHTML(piorCliente)}</strong> não compra há ${piorDias} dias — pode valer um contato.` });
+  }
+
+  // 4) dia da semana mais forte (só com uma base mínima de vendas)
+  if (vendas.length >= 5) {
+    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const porDiaSemana = [0, 0, 0, 0, 0, 0, 0];
+    vendas.forEach(v => { porDiaSemana[new Date(v.data + 'T00:00:00').getDay()] += v.total; });
+    const maxIdx = porDiaSemana.indexOf(Math.max(...porDiaSemana));
+    if (porDiaSemana[maxIdx] > 0) {
+      insights.push({ tipo: 'neutro', icone: 'ti-calendar-stats', texto: `<strong>${diasSemana[maxIdx]}</strong> costuma ser seu melhor dia de vendas.` });
+    }
+  }
+
+  return insights;
+}
+
+function renderInsights() {
+  const wrap = document.getElementById('dash-insights');
+  if (!wrap) return;
+  const insights = gerarInsights();
+
+  if (!insights.length) {
+    wrap.innerHTML = '<div class="empty" style="padding:1.5rem;"><i class="ti ti-bulb"></i>Ainda não há dados suficientes pra gerar recomendações — continue registrando vendas.</div>';
+    return;
+  }
+
+  const cor = { positivo: 'var(--sage)', atencao: 'var(--terracota)', neutro: 'var(--amber)' };
+  wrap.innerHTML = insights.map((ins, i) => `
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;${i < insights.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
+      <i class="ti ${ins.icone}" style="font-size:19px;color:${cor[ins.tipo]};flex-shrink:0;margin-top:1px;"></i>
+      <div style="font-size:13px;color:var(--text);line-height:1.5;">${ins.texto}</div>
+    </div>
+  `).join('');
+}
+
 // ===== GRÁFICO: receita ao longo do tempo (SVG, sem biblioteca externa) =====
 function gerarGraficoTempo(vendasList) {
   if (!vendasList.length) {
@@ -1495,6 +1586,8 @@ function renderDashboard() {
   document.getElementById('dash-hero-bar').innerHTML = totalRec > 0
     ? `<div style="width:${pctCusto}%;background:var(--terracota);"></div><div style="width:${pctLucro}%;background:var(--sage);"></div>`
     : `<div style="width:100%;background:var(--border);"></div>`;
+
+  renderInsights();
 
   // ===== métricas secundárias, compactas =====
   document.getElementById('dash-metrics-sec').innerHTML = `
