@@ -564,7 +564,14 @@
   <div class="dash-metrics-row" id="dash-metrics-sec"></div>
 
   <div class="card">
-    <div class="card-title-lg">Receita ao longo do tempo</div>
+    <div class="card-title-lg" style="justify-content:space-between;">
+      <span>Receita ao longo do tempo</span>
+      <div style="display:flex;gap:6px;" id="periodo-botoes">
+        <button class="btn btn-gold btn-sm" id="btn-periodo-dia" onclick="mudarPeriodoGrafico('dia')">Dia</button>
+        <button class="btn btn-outline btn-sm" id="btn-periodo-semana" onclick="mudarPeriodoGrafico('semana')">Semana</button>
+        <button class="btn btn-outline btn-sm" id="btn-periodo-mes" onclick="mudarPeriodoGrafico('mes')">Mês</button>
+      </div>
+    </div>
     <div class="chart-tempo-wrap" id="dash-chart-tempo"></div>
   </div>
 
@@ -772,6 +779,7 @@ let agendamentos = [];
 let itens = [{ prodId:'', qty:1, preco:0 }];
 let organizacaoId = null;
 let meuRole = 'owner';
+let dashPeriodoGrafico = 'dia';
 
 // ===== AUTH =====
 function toggleSenhaVisivel() {
@@ -1508,40 +1516,86 @@ function renderInsights() {
 }
 
 // ===== GRÁFICO: receita ao longo do tempo (SVG, sem biblioteca externa) =====
-function gerarGraficoTempo(vendasList) {
+// ===== controle do seletor de período do gráfico =====
+function mudarPeriodoGrafico(periodo) {
+  dashPeriodoGrafico = periodo;
+  document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas, dashPeriodoGrafico);
+  atualizarBotoesPeriodo();
+}
+
+function atualizarBotoesPeriodo() {
+  ['dia', 'semana', 'mes'].forEach(p => {
+    const btn = document.getElementById(`btn-periodo-${p}`);
+    if (!btn) return;
+    btn.className = p === dashPeriodoGrafico ? 'btn btn-gold btn-sm' : 'btn btn-outline btn-sm';
+  });
+}
+
+function gerarGraficoTempo(vendasList, periodo) {
   if (!vendasList.length) {
     return '<div class="empty" style="padding:2rem 1rem;"><i class="ti ti-chart-line"></i>Sem vendas registradas ainda</div>';
   }
-
-  // soma o total vendido por dia
-  const porData = {};
-  vendasList.forEach(v => { porData[v.data] = (porData[v.data] || 0) + v.total; });
-
-  const datas = Object.keys(porData).sort();
-  const minData = datas[0];
-  const maxData = datas[datas.length - 1];
 
   const addDias = (dataStr, n) => {
     const d = new Date(dataStr + 'T00:00:00');
     d.setDate(d.getDate() + n);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
-  const diffDias = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+  const addMeses = (dataStr, n) => {
+    const d = new Date(dataStr + 'T00:00:00');
+    d.setMonth(d.getMonth() + n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  };
+  const inicioSemana = (dataStr) => {
+    const d = new Date(dataStr + 'T00:00:00');
+    const diaSemana = d.getDay(); // 0=domingo
+    const diff = diaSemana === 0 ? -6 : 1 - diaSemana; // volta pra segunda-feira
+    d.setDate(d.getDate() + diff);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const mesAbrev = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const fmtDia = d => d.split('-').slice(1).reverse().join('/');
+  const fmtMes = d => `${mesAbrev[parseInt(d.slice(5,7),10)-1]}/${d.slice(2,4)}`;
 
-  // limita a janela aos últimos 30 dias corridos (evita grafico gigante se o historico for longo)
-  const totalDias = diffDias(minData, maxData);
-  const dataInicio = totalDias > 29 ? addDias(maxData, -29) : minData;
-  const nDias = diffDias(dataInicio, maxData) + 1;
-
-  // preenche TODOS os dias do periodo, mesmo os sem venda (isso é o que torna a série temporal de verdade)
-  const pontos = [];
-  for (let i = 0; i < nDias; i++) {
-    const data = addDias(dataInicio, i);
-    pontos.push([data, porData[data] || 0]);
+  // define, por período: como agrupar a data da venda, como avançar pro próximo intervalo,
+  // como formatar o rótulo, e o tamanho máximo da janela mostrada
+  let chaveFn, proximoFn, labelFn, janelaMax;
+  if (periodo === 'semana') {
+    chaveFn = data => inicioSemana(data);
+    proximoFn = data => addDias(data, 7);
+    labelFn = fmtDia;
+    janelaMax = 16; // ~4 meses
+  } else if (periodo === 'mes') {
+    chaveFn = data => data.slice(0, 7) + '-01';
+    proximoFn = data => addMeses(data, 1);
+    labelFn = fmtMes;
+    janelaMax = 12;
+  } else {
+    chaveFn = data => data;
+    proximoFn = data => addDias(data, 1);
+    labelFn = fmtDia;
+    janelaMax = 30;
   }
 
+  const porBucket = {};
+  vendasList.forEach(v => { const k = chaveFn(v.data); porBucket[k] = (porBucket[k] || 0) + v.total; });
+
+  const chaves = Object.keys(porBucket).sort();
+  let atual = chaves[0];
+  const max = chaves[chaves.length - 1];
+  let todasChaves = [];
+  let guard = 0;
+  while (atual <= max && guard < 500) {
+    todasChaves.push(atual);
+    atual = proximoFn(atual);
+    guard++;
+  }
+  if (todasChaves.length > janelaMax) todasChaves = todasChaves.slice(-janelaMax);
+
+  const pontos = todasChaves.map(k => [k, porBucket[k] || 0]);
+
   const n = pontos.length;
-  const w = Math.max(640, Math.min(1200, n * 26)), h = 210, padL = 56, padR = 20, padT = 20, padB = 34;
+  const w = Math.max(640, Math.min(1200, n * 30)), h = 210, padL = 56, padR = 20, padT = 20, padB = 34;
   const plotW = w - padL - padR, plotH = h - padT - padB;
   const maxVal = Math.max(...pontos.map(p => p[1]), 1);
 
@@ -1561,8 +1615,7 @@ function gerarGraficoTempo(vendasList) {
     yLabels += `<text x="${padL - 8}" y="${(gy + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$${val.toFixed(0)}</text>`;
   }
 
-  // rótulos do eixo X — mostra todos se poucos dias, senão distribui uns 7 igualmente
-  const fmtData = d => d.split('-').slice(1).reverse().join('/');
+  // rótulos do eixo X — mostra todos se poucos pontos, senão distribui uns 7 igualmente
   let xLabels = '';
   const qtdLabels = Math.min(n, 7);
   const idxsParaLabel = new Set();
@@ -1570,10 +1623,10 @@ function gerarGraficoTempo(vendasList) {
     idxsParaLabel.add(Math.round((k / (qtdLabels - 1 || 1)) * (n - 1)));
   }
   [...idxsParaLabel].sort((a,b)=>a-b).forEach(i => {
-    xLabels += `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="monospace">${fmtData(pontos[i][0])}</text>`;
+    xLabels += `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="monospace">${labelFn(pontos[i][0])}</text>`;
   });
 
-  // só marca o último ponto (dia mais recente), pra dar uma referência sem poluir a linha com um ponto por dia
+  // só marca o último ponto (mais recente), pra dar uma referência sem poluir a linha
   const ultimoPonto = `<circle cx="${xFor(n-1).toFixed(1)}" cy="${yFor(pontos[n-1][1]).toFixed(1)}" r="4" fill="#f5c400" stroke="#14120c" stroke-width="1.4" />`;
 
   return `
@@ -1643,7 +1696,8 @@ function renderDashboard() {
   `;
 
   // ===== gráfico: receita ao longo do tempo =====
-  document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas);
+  document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas, dashPeriodoGrafico);
+  atualizarBotoesPeriodo();
 
   // top produtos
   const porProd = {};
