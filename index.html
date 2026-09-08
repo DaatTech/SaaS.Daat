@@ -557,7 +557,7 @@
   </div>
 
   <div class="card">
-    <div class="card-title-lg"><i class="ti ti-bulb" style="color:var(--accent);margin-right:6px;"></i>Insights automáticos</div>
+    <div class="card-title-lg"><i class="ti ti-bulb" style="color:var(--accent);margin-right:6px;"></i>Insights Acionáveis</div>
     <div id="dash-insights"></div>
   </div>
 
@@ -620,6 +620,34 @@
     </div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Produtos, clientes, vendas e agendamentos excluídos ficam aqui, recuperáveis a qualquer momento.</p>
     <div id="lixeira-lista"></div>
+  </div>
+
+  <div class="card" id="equipe-card">
+    <div class="card-title"><i class="ti ti-users-group"></i> Equipe</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Crie um acesso pra um funcionário que só precisa registrar vendas e mexer no CRM — ele não vê Produtos, Histórico, Dashboard nem Configurações.</p>
+    <div class="form-grid">
+      <div class="form-group"><label>Nome do funcionário</label><input id="eq-nome" placeholder="" /></div>
+      <div class="form-group"><label>E-mail de acesso</label><input id="eq-email" type="email" placeholder="" /></div>
+      <div class="form-group">
+        <label>Senha</label>
+        <div style="position:relative;">
+          <input id="eq-senha" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+          <button type="button" onclick="toggleSenhaVisivelEq('eq-senha', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirmar senha</label>
+        <div style="position:relative;">
+          <input id="eq-senha-confirma" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+          <button type="button" onclick="toggleSenhaVisivelEq('eq-senha-confirma', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" onclick="convidarFuncionario()"><i class="ti ti-user-plus"></i> Criar acesso do funcionário</button>
+    </div>
+    <div id="eq-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+    <div id="equipe-lista" style="margin-top:1.5rem;"></div>
   </div>
 
   <div class="card">
@@ -743,6 +771,7 @@ let clientes = [];
 let agendamentos = [];
 let itens = [{ prodId:'', qty:1, preco:0 }];
 let organizacaoId = null;
+let meuRole = 'owner';
 
 // ===== AUTH =====
 function toggleSenhaVisivel() {
@@ -932,7 +961,7 @@ async function iniciarApp() {
   if (!user) return;
 
   const { data: perfil, error: perfilErr } = await supabaseClient
-    .from('perfis').select('organizacao_id').eq('id', user.id).single();
+    .from('perfis').select('organizacao_id, role').eq('id', user.id).single();
 
   if (perfilErr || !perfil) {
     document.getElementById('login-error').textContent = 'Usuário sem organização vinculada. Fale com a DAAT.';
@@ -942,6 +971,7 @@ async function iniciarApp() {
   }
 
   organizacaoId = perfil.organizacao_id;
+  meuRole = perfil.role || 'owner';
 
   // checa status de pagamento e teste grátis antes de liberar o app
   const { data: org, error: orgErr } = await supabaseClient
@@ -976,6 +1006,17 @@ async function iniciarApp() {
   renderAgenda();
   renderClientes();
   verificarLembretesHoje();
+  aplicarRestricaoPapel();
+}
+
+function aplicarRestricaoPapel() {
+  if (meuRole !== 'funcionario') return;
+  // funcionário só mexe em CRM, Registrar Venda e Ajuda — o resto some do menu
+  const abasEscondidas = ['produtos', 'historico', 'dashboard', 'config'];
+  const nomesAbas = ['crm', 'produtos', 'vendas', 'historico', 'dashboard', 'config', 'ajuda'];
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    if (abasEscondidas.includes(nomesAbas[i])) el.style.display = 'none';
+  });
 }
 
 async function fazerLogoutBloqueado() {
@@ -1873,6 +1914,7 @@ async function renderConfig() {
   msg.style.display = 'none';
   document.getElementById('cfg-empresa-msg').style.display = 'none';
   renderLixeira();
+  renderEquipe();
 }
 
 async function salvarEmpresa() {
@@ -2265,6 +2307,79 @@ async function restaurarItem(tabela, id) {
   await carregarTudo();
   renderLixeira();
   toast('Item restaurado!');
+}
+
+// ===== EQUIPE (funcionários) =====
+function toggleSenhaVisivelEq(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
+  else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
+}
+
+async function convidarFuncionario() {
+  const nome = document.getElementById('eq-nome').value.trim();
+  const email = document.getElementById('eq-email').value.trim();
+  const senha = document.getElementById('eq-senha').value;
+  const senhaConfirma = document.getElementById('eq-senha-confirma').value;
+  const msgEl = document.getElementById('eq-msg');
+  msgEl.style.display = 'block';
+
+  if (!nome || !email || !senha || !senhaConfirma) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Preencha todos os campos.'; return;
+  }
+  if (senha.length < 8) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return;
+  }
+  if (senha !== senhaConfirma) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'As senhas não coincidem.'; return;
+  }
+
+  // usa um client temporário (sessão própria, não persistida) pra criar o login do
+  // funcionário sem derrubar a sua sessão de dono aqui no navegador
+  const clientTemp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: signUpData, error: signUpErr } = await clientTemp.auth.signUp({ email, password: senha });
+  if (signUpErr) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Erro ao criar acesso: ' + signUpErr.message; return;
+  }
+  const novoId = signUpData.user?.id;
+  if (!novoId) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Não foi possível criar o usuário. Confira se a confirmação de e-mail está desativada no Supabase.'; return;
+  }
+
+  const { error: rpcErr } = await supabaseClient.rpc('convidar_funcionario', { p_novo_user_id: novoId, p_nome: nome });
+  if (rpcErr) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Usuário criado, mas houve erro ao vincular: ' + rpcErr.message; return;
+  }
+
+  msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Acesso do funcionário criado!';
+  ['eq-nome','eq-email','eq-senha','eq-senha-confirma'].forEach(id => document.getElementById(id).value = '');
+  toast('Funcionário adicionado!');
+  renderEquipe();
+}
+
+async function renderEquipe() {
+  const card = document.getElementById('equipe-card');
+  if (!card) return;
+  if (meuRole === 'funcionario') { card.style.display = 'none'; return; }
+
+  const wrap = document.getElementById('equipe-lista');
+  const { data, error } = await supabaseClient.from('perfis').select('id, nome, role').eq('organizacao_id', organizacaoId).order('role');
+  if (error || !data) { wrap.innerHTML = ''; return; }
+
+  if (data.length <= 1) {
+    wrap.innerHTML = '<div class="empty" style="padding:1rem 0;"><i class="ti ti-users-group"></i>Só você tem acesso até agora</div>';
+    return;
+  }
+
+  wrap.innerHTML = data.map(p => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;color:var(--text);">${escapeHTML(p.nome) || '—'}</span>
+      <span class="badge ${p.role === 'owner' ? 'badge-gold' : 'badge-gray'}">${p.role === 'owner' ? 'Dono' : 'Funcionário'}</span>
+    </div>
+  `).join('');
 }
 
 // ===== INIT =====
