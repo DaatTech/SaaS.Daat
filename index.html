@@ -364,7 +364,11 @@
       </div>
       <div class="form-group">
         <label>Categoria</label>
-        <input id="f-cat" placeholder="" />
+        <select id="f-cat-select" onchange="toggleNovaCategoria()">
+          <option value="">Selecionar...</option>
+          <option value="__nova__">+ Criar nova categoria</option>
+        </select>
+        <input id="f-cat-nova" placeholder="Nome da nova categoria" style="display:none;margin-top:8px;" />
       </div>
       <div class="form-group" id="f-vol-group"><label>Volume / Variação</label><input id="f-vol" placeholder="" /></div>
       <div class="form-group" id="f-un-group">
@@ -670,6 +674,13 @@
   <div class="card">
     <div class="card-title"><i class="ti ti-lock"></i> Trocar senha</div>
     <div class="form-grid">
+      <div class="form-group full">
+        <label>Senha atual</label>
+        <div style="position:relative;">
+          <input id="cfg-senha-atual" type="password" placeholder="" style="width:100%;padding-right:70px;" />
+          <button type="button" onclick="toggleSenhaVisivelCfg('cfg-senha-atual', this)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:11px;font-family:var(--font-mono);color:var(--text3);cursor:pointer;padding:4px 6px;">MOSTRAR</button>
+        </div>
+      </div>
       <div class="form-group">
         <label>Nova senha</label>
         <div style="position:relative;">
@@ -1143,13 +1154,22 @@ async function addProduto() {
   const nome = document.getElementById('f-nome').value.trim();
   const tipo = document.getElementById('f-tipo').value;
   if (!nome) { toast(`Preencha o nome d${tipo === 'Serviço' ? 'o' : 'o'} ${tipo.toLowerCase()}.`); return; }
+
+  const catSelecionada = document.getElementById('f-cat-select').value;
+  if (catSelecionada === '__nova__' && !document.getElementById('f-cat-nova').value.trim()) {
+    toast('Digite o nome da nova categoria.'); return;
+  }
+  const categoria = catSelecionada === '__nova__'
+    ? document.getElementById('f-cat-nova').value.trim()
+    : catSelecionada;
+
   const novo = {
     organizacao_id: organizacaoId,
     nome,
     tipo,
     fornecedor: document.getElementById('f-forn').value.trim(),
     serie: document.getElementById('f-serie').value.trim(),
-    categoria: document.getElementById('f-cat').value.trim(),
+    categoria,
     volume: tipo === 'Serviço' ? '' : document.getElementById('f-vol').value.trim(),
     unidade: tipo === 'Serviço' ? 'un' : document.getElementById('f-un').value,
     custo: parseFloat(document.getElementById('f-custo').value) || 0,
@@ -1162,7 +1182,10 @@ async function addProduto() {
   const { data, error } = await supabaseClient.from('produtos').insert(novo).select().single();
   if (error) { toast('Erro ao salvar item.'); console.error(error); return; }
   produtos.push(mapProdutoDb(data));
-  ['f-forn','f-nome','f-serie','f-cat','f-vol','f-custo','f-preco','f-est','f-estmin','f-obs'].forEach(id => document.getElementById(id).value = '');
+  ['f-forn','f-nome','f-serie','f-vol','f-custo','f-preco','f-est','f-estmin','f-obs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-cat-select').value = '';
+  document.getElementById('f-cat-nova').value = '';
+  document.getElementById('f-cat-nova').style.display = 'none';
   document.getElementById('f-tipo').value = 'Produto';
   toggleCamposEstoque();
   renderProdutos(); toast(`${tipo} adicionado!`);
@@ -1184,8 +1207,29 @@ function popularFiltrosProduto() {
   const serieAtual = serieSel.value, catAtual = catSel.value;
   const series = [...new Set(produtos.map(p => p.serie).filter(Boolean))].sort();
   const cats   = [...new Set(produtos.map(p => p.categoria).filter(Boolean))].sort();
-  serieSel.innerHTML = '<option value="">Todas as linhas</option>' + series.map(s => `<option ${s===serieAtual?'selected':''}>${s}</option>`).join('');
-  catSel.innerHTML   = '<option value="">Todas categorias</option>' + cats.map(c => `<option ${c===catAtual?'selected':''}>${c}</option>`).join('');
+  serieSel.innerHTML = '<option value="">Todas as linhas</option>' + series.map(s => `<option ${s===serieAtual?'selected':''}>${escapeHTML(s)}</option>`).join('');
+  catSel.innerHTML   = '<option value="">Todas categorias</option>' + cats.map(c => `<option ${c===catAtual?'selected':''}>${escapeHTML(c)}</option>`).join('');
+
+  // select de categoria do formulario de cadastro (com opção de criar nova)
+  const formSel = document.getElementById('f-cat-select');
+  if (formSel) {
+    const formAtual = formSel.value;
+    formSel.innerHTML = '<option value="">Selecionar...</option>' +
+      cats.map(c => `<option value="${escapeHTML(c)}" ${c===formAtual?'selected':''}>${escapeHTML(c)}</option>`).join('') +
+      '<option value="__nova__">+ Criar nova categoria</option>';
+  }
+}
+
+function toggleNovaCategoria() {
+  const sel = document.getElementById('f-cat-select');
+  const novaInput = document.getElementById('f-cat-nova');
+  if (sel.value === '__nova__') {
+    novaInput.style.display = 'block';
+    novaInput.focus();
+  } else {
+    novaInput.style.display = 'none';
+    novaInput.value = '';
+  }
 }
 
 // ===== RENDER PRODUTOS =====
@@ -1972,6 +2016,7 @@ async function renderConfig() {
   document.getElementById('cfg-email').value = user?.email || '';
   const { data: org } = await supabaseClient.from('organizacoes').select('nome').eq('id', organizacaoId).single();
   document.getElementById('cfg-empresa').value = org?.nome || '';
+  document.getElementById('cfg-senha-atual').value = '';
   document.getElementById('cfg-nova-senha').value = '';
   document.getElementById('cfg-confirma-senha').value = '';
   const msg = document.getElementById('cfg-senha-msg');
@@ -2003,13 +2048,14 @@ function toggleSenhaVisivelCfg(inputId, btn) {
 }
 
 async function trocarSenha() {
+  const senhaAtual = document.getElementById('cfg-senha-atual').value;
   const nova = document.getElementById('cfg-nova-senha').value;
   const confirma = document.getElementById('cfg-confirma-senha').value;
   const msg = document.getElementById('cfg-senha-msg');
   msg.style.display = 'block';
 
-  if (!nova || !confirma) {
-    msg.style.color = 'var(--red)'; msg.textContent = 'Preencha os dois campos.'; return;
+  if (!senhaAtual || !nova || !confirma) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Preencha os três campos.'; return;
   }
   if (nova.length < 8) {
     msg.style.color = 'var(--red)'; msg.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return;
@@ -2018,12 +2064,22 @@ async function trocarSenha() {
     msg.style.color = 'var(--red)'; msg.textContent = 'As senhas não coincidem.'; return;
   }
 
+  // confirma que quem está na frente da tela sabe a senha atual, antes de trocar —
+  // protege contra alguém mexendo numa sessão que ficou aberta/desbloqueada
+  msg.style.color = 'var(--text2)'; msg.textContent = 'Confirmando sua senha atual...';
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  const { error: erroAuth } = await supabaseClient.auth.signInWithPassword({ email: user.email, password: senhaAtual });
+  if (erroAuth) {
+    msg.style.color = 'var(--red)'; msg.textContent = 'Senha atual incorreta.'; return;
+  }
+
   const { error } = await supabaseClient.auth.updateUser({ password: nova });
   if (error) {
     msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao trocar senha: ' + error.message; return;
   }
 
   msg.style.color = 'var(--green)'; msg.textContent = 'Senha atualizada com sucesso!';
+  document.getElementById('cfg-senha-atual').value = '';
   document.getElementById('cfg-nova-senha').value = '';
   document.getElementById('cfg-confirma-senha').value = '';
   toast('Senha atualizada!');
