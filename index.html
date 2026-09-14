@@ -1017,6 +1017,11 @@ async function iniciarApp() {
   if (!orgErr && org && org.em_teste && org.trial_fim) {
     const hoje = hojeLocal();
     if (org.trial_fim < hoje) {
+      // marca automaticamente como inadimplente no banco (não só bloqueia na tela),
+      // assim o painel administrativo já reflete a situação real sem precisar de ação manual
+      if (org.status !== 'inadimplente') {
+        supabaseClient.from('organizacoes').update({ status: 'inadimplente' }).eq('id', organizacaoId);
+      }
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('bloqueado-titulo').textContent = 'Seu teste grátis terminou';
       document.getElementById('bloqueado-msg').innerHTML = `O período de 7 dias de teste da <strong>${org.nome || 'sua empresa'}</strong> chegou ao fim. Fala com a gente pra continuar usando o DAAT. sem interrupção.`;
