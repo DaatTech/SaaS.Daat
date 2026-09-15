@@ -395,19 +395,19 @@
       <button class="btn btn-outline btn-sm" onclick="exportarProdutos()"><i class="ti ti-download"></i> Exportar</button>
     </div>
     <div class="filter-row">
-      <input id="busca" placeholder="Buscar..." oninput="renderProdutos()" style="flex:1;min-width:100px;" />
-      <select id="f-tipo-filtro" onchange="renderProdutos()">
+      <input id="busca" placeholder="Buscar..." oninput="paginaProdutos=1;renderProdutos()" style="flex:1;min-width:100px;" />
+      <select id="f-tipo-filtro" onchange="paginaProdutos=1;renderProdutos()">
         <option value="">Produtos e serviços</option>
         <option value="Produto">Só produtos</option>
         <option value="Serviço">Só serviços</option>
       </select>
-      <select id="f-serie-filtro" onchange="renderProdutos()">
+      <select id="f-serie-filtro" onchange="paginaProdutos=1;renderProdutos()">
         <option value="">Todas as linhas</option>
       </select>
-      <select id="f-cat-filtro" onchange="renderProdutos()">
+      <select id="f-cat-filtro" onchange="paginaProdutos=1;renderProdutos()">
         <option value="">Todas categorias</option>
       </select>
-      <select id="f-status-filtro" onchange="renderProdutos()">
+      <select id="f-status-filtro" onchange="paginaProdutos=1;renderProdutos()">
         <option value="">Todos</option>
         <option value="ativo">Ativo</option>
         <option value="inativo">Inativo</option>
@@ -517,7 +517,7 @@
       <button class="btn btn-outline btn-sm" onclick="exportarAgendamentos()"><i class="ti ti-download"></i> Exportar</button>
     </div>
     <div class="filter-row">
-      <select id="ag-status-filtro" onchange="renderAgenda()">
+      <select id="ag-status-filtro" onchange="paginaAgenda=1;renderAgenda()">
         <option value="">Todos os status</option>
         <option>Agendado</option>
         <option>Confirmado</option>
@@ -550,9 +550,9 @@
       <button class="btn btn-outline btn-sm" onclick="exportarVendas()"><i class="ti ti-download"></i> Exportar</button>
     </div>
     <div class="filter-row">
-      <input id="h-busca" placeholder="Buscar cliente, vendedor, canal..." oninput="renderHistorico()" style="flex:1;" />
-      <input id="h-de" type="date" onchange="renderHistorico()" />
-      <input id="h-ate" type="date" onchange="renderHistorico()" />
+      <input id="h-busca" placeholder="Buscar cliente, vendedor, canal..." oninput="paginaHistorico=1;renderHistorico()" style="flex:1;" />
+      <input id="h-de" type="date" onchange="paginaHistorico=1;renderHistorico()" />
+      <input id="h-ate" type="date" onchange="paginaHistorico=1;renderHistorico()" />
     </div>
     <div class="scroll-hint-mobile"><i class="ti ti-arrow-right" style="font-size:11px;"></i> arraste pro lado pra ver mais</div>
     <div class="table-wrap" id="hist-table"></div>
@@ -801,6 +801,25 @@ let itens = [{ prodId:'', qty:1, preco:0 }];
 let organizacaoId = null;
 let meuRole = 'owner';
 let dashPeriodoGrafico = 'dia';
+const ITENS_POR_PAGINA = 20;
+let paginaProdutos = 1, paginaHistorico = 1, paginaClientes = 1, paginaAgenda = 1;
+
+// gera os botões de "anterior/próxima página" — reaproveitado nas 4 tabelas
+function gerarControlePaginacao(pagina, totalItens, nomeFuncaoMudar) {
+  const totalPaginas = Math.max(1, Math.ceil(totalItens / ITENS_POR_PAGINA));
+  if (totalPaginas <= 1) return '';
+  return `
+    <div style="display:flex;justify-content:center;align-items:center;gap:14px;padding:16px 0 4px 0;">
+      <button class="btn btn-outline btn-sm" ${pagina <= 1 ? 'disabled style="opacity:.4;"' : ''} onclick="${nomeFuncaoMudar}(${pagina - 1})"><i class="ti ti-chevron-left"></i></button>
+      <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono);">Página ${pagina} de ${totalPaginas}</span>
+      <button class="btn btn-outline btn-sm" ${pagina >= totalPaginas ? 'disabled style="opacity:.4;"' : ''} onclick="${nomeFuncaoMudar}(${pagina + 1})"><i class="ti ti-chevron-right"></i></button>
+    </div>
+  `;
+}
+function mudarPaginaProdutos(p) { paginaProdutos = p; renderProdutos(); }
+function mudarPaginaHistorico(p) { paginaHistorico = p; renderHistorico(); }
+function mudarPaginaClientes(p) { paginaClientes = p; renderClientes(); }
+function mudarPaginaAgenda(p) { paginaAgenda = p; renderAgenda(); }
 
 // ===== AUTH =====
 function toggleSenhaVisivel() {
@@ -1264,6 +1283,11 @@ function renderProdutos() {
     return;
   }
 
+  const totalFiltrado = lista.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
+  if (paginaProdutos > totalPaginas) paginaProdutos = totalPaginas;
+  lista = lista.slice((paginaProdutos - 1) * ITENS_POR_PAGINA, paginaProdutos * ITENS_POR_PAGINA);
+
   let h = `<table><thead><tr>
     <th>Item</th><th>Tipo</th><th>Série</th><th>Categoria</th><th>Volume</th>
     <th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th>Status</th><th></th>
@@ -1305,6 +1329,7 @@ function renderProdutos() {
   });
 
   h += '</tbody></table>';
+  h += gerarControlePaginacao(paginaProdutos, totalFiltrado, 'mudarPaginaProdutos');
   document.getElementById('prod-table').innerHTML = h;
 }
 
@@ -1454,6 +1479,11 @@ function renderHistorico() {
     return;
   }
 
+  const totalFiltrado = lista.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
+  if (paginaHistorico > totalPaginas) paginaHistorico = totalPaginas;
+  lista = lista.slice((paginaHistorico - 1) * ITENS_POR_PAGINA, paginaHistorico * ITENS_POR_PAGINA);
+
   let h = `<table><thead><tr><th>Data</th><th>Vendedor</th><th>Canal</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Comissão</th><th></th></tr></thead><tbody>`;
   lista.forEach(v => {
     const nomes = v.itens.map(i => {
@@ -1475,6 +1505,7 @@ function renderHistorico() {
     </tr>`;
   });
   h += '</tbody></table>';
+  h += gerarControlePaginacao(paginaHistorico, totalFiltrado, 'mudarPaginaHistorico');
   document.getElementById('hist-table').innerHTML = h;
 }
 
@@ -1891,8 +1922,14 @@ function renderClientes() {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-address-book"></i>Nenhum cliente cadastrado ainda</div>';
     return;
   }
+
+  const totalFiltrado = clientes.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
+  if (paginaClientes > totalPaginas) paginaClientes = totalPaginas;
+  const listaPagina = clientes.slice((paginaClientes - 1) * ITENS_POR_PAGINA, paginaClientes * ITENS_POR_PAGINA);
+
   let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>CPF</th><th>CNPJ</th><th>Observações</th><th></th></tr></thead><tbody>`;
-  clientes.forEach(c => {
+  listaPagina.forEach(c => {
     h += `<tr>
       <td style="font-weight:600;">${escapeHTML(c.nome)}</td>
       <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.tel) || '—'}</td>
@@ -1904,6 +1941,7 @@ function renderClientes() {
     </tr>`;
   });
   h += '</tbody></table>';
+  h += gerarControlePaginacao(paginaClientes, totalFiltrado, 'mudarPaginaClientes');
   wrap.innerHTML = h;
 }
 
@@ -1962,6 +2000,11 @@ function renderAgenda() {
     return;
   }
 
+  const totalFiltrado = lista.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
+  if (paginaAgenda > totalPaginas) paginaAgenda = totalPaginas;
+  lista = lista.slice((paginaAgenda - 1) * ITENS_POR_PAGINA, paginaAgenda * ITENS_POR_PAGINA);
+
   const statusCls = { 'Agendado':'badge-amber', 'Confirmado':'badge-blue', 'Concluído':'badge-green', 'Cancelado':'badge-red' };
   let h = `<table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Motivo</th><th>Status</th><th>Observações</th><th></th><th></th></tr></thead><tbody>`;
   lista.forEach(a => {
@@ -1981,6 +2024,7 @@ function renderAgenda() {
     </tr>`;
   });
   h += '</tbody></table>';
+  h += gerarControlePaginacao(paginaAgenda, totalFiltrado, 'mudarPaginaAgenda');
   wrap.innerHTML = h;
 }
 
