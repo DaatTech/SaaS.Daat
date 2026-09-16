@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
   :root {
     --bg: #f3ecdd;
@@ -624,6 +625,24 @@
       <button class="btn btn-gold" onclick="salvarEmpresa()"><i class="ti ti-check"></i> Salvar</button>
     </div>
     <div id="cfg-empresa-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-qrcode"></i> Pagamento via Pix</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Escaneie o QR Code ou copie o código Pix abaixo pra pagar sua mensalidade.</p>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center;">
+      <div id="pix-qr-wrap" style="flex-shrink:0;background:#fff;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border);"></div>
+      <div style="flex:1;min-width:220px;">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Valor da mensalidade</div>
+        <div id="pix-valor" style="font-family:var(--font-title);font-size:26px;margin-bottom:16px;"></div>
+        <div class="form-group">
+          <label>Pix Copia e Cola</label>
+          <textarea id="pix-copia-cola" readonly style="font-family:var(--font-mono);font-size:11px;height:70px;"></textarea>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="copiarPix()"><i class="ti ti-copy"></i> Copiar código Pix</button>
+        <div id="pix-copiado-msg" style="font-size:11px;color:var(--green);margin-top:8px;display:none;font-family:var(--font-mono);">Copiado!</div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -2063,7 +2082,7 @@ function adicionarAoGoogleAgenda(id) {
 async function renderConfig() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   document.getElementById('cfg-email').value = user?.email || '';
-  const { data: org } = await supabaseClient.from('organizacoes').select('nome').eq('id', organizacaoId).single();
+  const { data: org } = await supabaseClient.from('organizacoes').select('nome, valor_mensal').eq('id', organizacaoId).single();
   document.getElementById('cfg-empresa').value = org?.nome || '';
   document.getElementById('cfg-senha-atual').value = '';
   document.getElementById('cfg-nova-senha').value = '';
@@ -2073,6 +2092,7 @@ async function renderConfig() {
   document.getElementById('cfg-empresa-msg').style.display = 'none';
   renderLixeira();
   renderEquipe();
+  renderPix(Number(org?.valor_mensal) || 69.90);
 }
 
 async function salvarEmpresa() {
@@ -2549,6 +2569,76 @@ async function renderEquipe() {
       <span class="badge ${p.role === 'owner' ? 'badge-gold' : 'badge-gray'}">${p.role === 'owner' ? 'Dono' : 'Funcionário'}</span>
     </div>
   `).join('');
+}
+
+// ===== PIX (QR code estático, gerado no navegador, sem gateway nem custo) =====
+const PIX_CHAVE = '6b6a5dfa-401e-4f92-bf4d-b00f8fb64848';
+const PIX_NOME = 'DAAT-TECH';
+const PIX_CIDADE = 'SAO JOSE CAMPOS';
+let pixPayloadAtual = '';
+
+function crc16ccitt(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= (str.charCodeAt(i) << 8);
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+      crc &= 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+function campoEMV(id, valor) {
+  const tamanho = String(valor.length).padStart(2, '0');
+  return `${id}${tamanho}${valor}`;
+}
+
+function gerarPayloadPix(valor) {
+  const merchantAccountInfo = campoEMV('26', campoEMV('00', 'br.gov.bcb.pix') + campoEMV('01', PIX_CHAVE));
+  const valorFormatado = valor.toFixed(2);
+
+  const payload = ''
+    + campoEMV('00', '01')
+    + merchantAccountInfo
+    + campoEMV('52', '0000')
+    + campoEMV('53', '986')
+    + campoEMV('54', valorFormatado)
+    + campoEMV('58', 'BR')
+    + campoEMV('59', PIX_NOME.substring(0, 25))
+    + campoEMV('60', PIX_CIDADE.substring(0, 15))
+    + campoEMV('62', campoEMV('05', '***'))
+    + '6304';
+
+  return payload + crc16ccitt(payload);
+}
+
+function renderPix(valor) {
+  pixPayloadAtual = gerarPayloadPix(valor);
+  document.getElementById('pix-valor').textContent = `R$ ${valor.toFixed(2)}`;
+  document.getElementById('pix-copia-cola').value = pixPayloadAtual;
+
+  const wrap = document.getElementById('pix-qr-wrap');
+  wrap.innerHTML = '';
+  const canvas = document.createElement('canvas');
+  wrap.appendChild(canvas);
+  if (window.QRCode) {
+    QRCode.toCanvas(canvas, pixPayloadAtual, { width: 180, margin: 1 }, (err) => {
+      if (err) console.error('Erro ao gerar QR do Pix:', err);
+    });
+  }
+}
+
+function copiarPix() {
+  navigator.clipboard.writeText(pixPayloadAtual).then(() => {
+    const msg = document.getElementById('pix-copiado-msg');
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  }).catch(() => {
+    const txt = document.getElementById('pix-copia-cola');
+    txt.select();
+    document.execCommand('copy');
+  });
 }
 
 // ===== INIT =====
