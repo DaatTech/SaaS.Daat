@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -12,7 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/2.0.4/qrcode.min.js"></script>
 <style>
   :root {
     --bg: #f3ecdd;
@@ -47,7 +46,7 @@
       linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);
     background-size: 24px 24px;
   }
-
+ 
   /* HEADER */
   header { background: rgba(255,253,246,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 72px; position: sticky; top: 0; z-index: 100; }
   .logo { display: flex; align-items: center; gap: 12px; }
@@ -58,31 +57,31 @@
   .by-daat b { color: var(--text); font-weight: 700; }
   .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
   #header-date { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
-
+ 
   /* TABS */
   .tabs { display: flex; gap: 4px; padding: 10px 2rem; background: transparent; overflow-x: auto; }
   .tab { padding: 10px 16px; font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; background: transparent; border: none; border-radius: 999px; cursor: pointer; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: all .18s; white-space: nowrap; }
   .tab:hover { color: var(--text); background: rgba(20,18,12,.04); }
   .tab.active { color: var(--text); background: var(--accent); font-weight: 700; box-shadow: var(--shadow-sm); }
   .tab i { font-size: 16px; }
-
+ 
   /* LAYOUT */
   .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
   .section { display: none; }
   .section.active { display: block; }
-
+ 
   /* CARDS */
   .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
   .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; font-family: var(--font-body); }
   .card-title i { color: var(--text); background: var(--accent); border-radius: 8px; padding: 6px; font-size: 15px; }
-
+ 
   /* GRID */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
   .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .form-group.full { grid-column: 1 / -1; }
   label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-family: var(--font-mono); }
-
+ 
   /* INPUTS */
   input, select, textarea {
     background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
@@ -92,7 +91,7 @@
   input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,196,0,.2); }
   select option { background: var(--bg2); }
   textarea { resize: vertical; min-height: 68px; }
-
+ 
   /* BUTTONS */
   .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-body); border: none; transition: opacity .15s, transform .1s, box-shadow .15s; }
   .btn:active { transform: scale(.98); }
@@ -104,35 +103,35 @@
   .btn-danger:hover { background: rgba(201,138,122,.12); }
   .btn-sm { padding: 6px 14px; font-size: 12px; }
   .actions { display: flex; gap: 10px; margin-top: 1.25rem; align-items: center; }
-
+ 
   /* METRICS */
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
   .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; box-shadow: var(--shadow); }
   .metric-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; font-family: var(--font-mono); }
   .metric-value { font-size: 26px; font-weight: 400; color: var(--text); line-height: 1; font-family: var(--font-title); }
   .metric-sub { font-size: 11px; color: var(--text3); margin-top: 8px; }
-
+ 
   /* DASHBOARD — visual mais coeso */
   .card-title-lg { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 1.5rem; padding-bottom: .85rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--font-body); }
   .card-title-lg .tag { font-size: 10px; font-family: var(--font-mono); font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
-
+ 
   .dash-hero-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.75rem; margin-bottom: 1.5rem; }
   .dash-hero-item .label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-family: var(--font-mono); margin-bottom: 8px; }
   .dash-hero-item .value { font-size: 32px; font-family: var(--font-title); line-height: 1; }
   .dash-hero-item .pct { font-size: 12px; color: var(--text3); margin-top: 6px; font-family: var(--font-mono); }
   .dash-hero-bar { height: 14px; border-radius: 999px; overflow: hidden; display: flex; background: var(--bg); border: 1px solid var(--border); }
   .dash-hero-bar > div { height: 100%; }
-
+ 
   .dash-metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
   .dash-metric-sm { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem 1.15rem; box-shadow: var(--shadow-sm); }
   .dash-metric-sm .label { font-size: 11.5px; font-weight: 700; color: var(--text2); margin-bottom: 6px; font-family: var(--font-body); }
   .dash-metric-sm .value { font-size: 21px; font-family: var(--font-title); color: var(--text); line-height: 1; }
   .dash-metric-sm .flag { font-size: 10.5px; color: var(--amber); font-weight: 600; margin-top: 5px; }
-
+ 
   .chart-tempo-wrap { width: 100%; overflow-x: auto; }
   .chart-tempo-tip { font-size: 10px; color: var(--text3); font-family: var(--font-mono); text-align: right; margin-top: 4px; }
   .metric-accent { background: linear-gradient(135deg, var(--bg2), rgba(245,196,0,.12)); border-color: rgba(245,196,0,.35); }
-
+ 
   /* TABLE */
   .table-wrap { overflow-x: auto; max-width: 100%; }
   .scroll-hint-mobile { display: none; }
@@ -141,7 +140,7 @@
   td { padding: 12px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: rgba(20,18,12,.02); }
-
+ 
   /* BADGES */
   .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .badge-green { background: rgba(122,155,110,.16); color: var(--green); }
@@ -152,19 +151,19 @@
   .badge-teal { background: rgba(147,168,132,.18); color: var(--sage); }
   .badge-blue { background: rgba(211,161,132,.18); color: var(--terracota); }
   .badge-gold { background: rgba(245,196,0,.18); color: var(--amber); }
-
+ 
   /* SERIE colors */
   .serie-premium { color: var(--accent); font-size: 11px; font-weight: 600; }
   .serie-menstyle { color: var(--sage); font-size: 11px; font-weight: 600; }
   .serie-intense { color: var(--terracota); font-size: 11px; font-weight: 600; }
-
+ 
   /* FILTER ROW */
   .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
   .filter-row input, .filter-row select { font-size: 12px; padding: 7px 11px; }
-
+ 
   /* VENDA ITEM */
   .item-line { display: grid; grid-template-columns: 2fr 90px 90px 32px; gap: 8px; align-items: end; margin-bottom: 8px; }
-
+ 
   /* CHART BAR */
   .bar-row { margin-bottom: 10px; }
   .bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
@@ -172,18 +171,18 @@
   .bar-label span:last-child { font-weight: 600; color: var(--text); }
   .bar-track { background: var(--bg3); border-radius: 999px; height: 7px; }
   .bar-fill { height: 7px; border-radius: 999px; background: var(--accent); }
-
+ 
   /* TOAST */
   #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: var(--bg2); padding: 12px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; box-shadow: var(--shadow); }
   #toast.show { opacity: 1; }
-
+ 
   /* EMPTY */
   .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); }
   .empty i { font-size: 32px; display: block; margin-bottom: 10px; }
-
+ 
   /* TWO COL */
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-
+ 
   @media (max-width: 700px) {
     .form-grid, .form-grid.cols3, .two-col { grid-template-columns: 1fr; }
     .form-group.full { grid-column: 1; }
@@ -197,7 +196,7 @@
     .dash-hero-item .value { font-size: 26px; }
     .scroll-hint-mobile { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--text3); font-family: var(--font-mono); margin-bottom: 8px; }
   }
-
+ 
   /* LOGIN */
   #login-screen { position: fixed; inset: 0; background: var(--bg); background-image: linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px); background-size: 24px 24px; display: flex; align-items: center; justify-content: center; z-index: 999; }
   #login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.75rem; width: 100%; max-width: 380px; box-shadow: var(--shadow); }
@@ -210,7 +209,7 @@
 </style>
 </head>
 <body>
-
+ 
 <!-- ===== LOGIN ===== -->
 <div id="login-screen">
   <div id="login-box">
@@ -233,7 +232,7 @@
     </div>
     <button class="btn btn-outline btn-sm" onclick="mostrarCadastro();return false;" style="width:100%;justify-content:center;margin-top:12px;">Não tenho cadastro</button>
   </div>
-
+ 
   <div id="recuperar-box" style="display:none;">
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Recuperar senha</div>
@@ -247,7 +246,7 @@
     <div id="recuperar-sucesso" style="color:var(--green);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
     <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
   </div>
-
+ 
   <div id="nova-senha-box" style="display:none;">
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Criar nova senha</div>
@@ -268,7 +267,7 @@
     <button class="btn btn-gold" onclick="salvarNovaSenhaRecuperacao()">Salvar nova senha</button>
     <div id="ns-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
   </div>
-
+ 
   <div id="cadastro-box" style="display:none;">
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Novo cliente</div>
@@ -303,7 +302,7 @@
     <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
   </div>
 </div>
-
+ 
 <!-- ===== ACESSO BLOQUEADO ===== -->
 <div id="bloqueado-screen" style="display:none;position:fixed;inset:0;background:var(--bg);background-image:linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);background-size:24px 24px;align-items:center;justify-content:center;z-index:999;padding:1rem;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2.75rem;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;">
@@ -317,7 +316,7 @@
     <button class="btn btn-outline btn-sm" onclick="fazerLogoutBloqueado()" style="width:100%;justify-content:center;">Sair</button>
   </div>
 </div>
-
+ 
 <div id="app-wrap">
 <header>
   <div class="logo">
@@ -333,7 +332,7 @@
     </div>
   </div>
 </header>
-
+ 
 <div class="tabs">
   <button class="tab active" onclick="switchTab('crm')"><i class="ti ti-calendar-event"></i> CRM</button>
   <button class="tab" onclick="switchTab('produtos')"><i class="ti ti-package"></i> Produtos</button>
@@ -343,11 +342,11 @@
   <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings"></i> Configurações</button>
   <button class="tab" onclick="switchTab('ajuda')"><i class="ti ti-lifebuoy"></i> Ajuda</button>
 </div>
-
+ 
 <!-- ===== PRODUTOS ===== -->
 <div id="tab-produtos" class="section">
 <div class="container">
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-plus"></i> Adicionar item</div>
     <div class="form-grid cols3">
@@ -390,7 +389,7 @@
       <button class="btn btn-gold" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar item</button>
     </div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-list"></i> Catálogo <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="prod-count"></span></span>
@@ -419,14 +418,14 @@
     <div class="scroll-hint-mobile"><i class="ti ti-arrow-right" style="font-size:11px;"></i> arraste pro lado pra ver mais</div>
     <div class="table-wrap" id="prod-table"></div>
   </div>
-
+ 
 </div>
 </div>
-
+ 
 <!-- ===== VENDAS ===== -->
 <div id="tab-vendas" class="section">
 <div class="container">
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-receipt"></i> Nova venda</div>
     <div class="form-grid cols3">
@@ -442,13 +441,13 @@
       <div class="form-group"><label>Cliente / referência</label><input id="v-cliente" placeholder="" /></div>
       <div class="form-group"><label>Comissão do vendedor (%)</label><input id="v-comissao-pct" type="number" step="0.1" min="0" placeholder="" oninput="calcTotal()" /></div>
     </div>
-
+ 
     <div style="margin-top:1.25rem;">
       <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Itens</div>
       <div id="itens-wrap"></div>
       <button class="btn btn-outline btn-sm" onclick="addItem()" style="margin-top:4px;"><i class="ti ti-plus"></i> Item</button>
     </div>
-
+ 
     <div id="v-total-wrap" style="display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);">
       <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
         <span style="color:var(--text2);">Total:</span>
@@ -456,19 +455,19 @@
       </div>
       <div id="v-comissao" style="margin-top:6px;display:none;"></div>
     </div>
-
+ 
     <div class="actions">
       <button class="btn btn-gold" onclick="salvarVenda()"><i class="ti ti-check"></i> Salvar venda</button>
     </div>
   </div>
-
+ 
 </div>
 </div>
-
+ 
 <!-- ===== CRM ===== -->
 <div id="tab-crm" class="section active">
 <div class="container">
-
+ 
   <div class="two-col">
     <div class="card">
       <div class="card-title"><i class="ti ti-user-plus"></i> Novo cliente</div>
@@ -484,7 +483,7 @@
         <button class="btn btn-gold" onclick="addCliente()"><i class="ti ti-plus"></i> Adicionar cliente</button>
       </div>
     </div>
-
+ 
     <div class="card">
       <div class="card-title"><i class="ti ti-calendar-plus"></i> Novo agendamento</div>
       <div class="form-grid">
@@ -512,7 +511,7 @@
       </div>
     </div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-calendar-event"></i> Agenda <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="agenda-count"></span></span>
@@ -530,7 +529,7 @@
     <div class="scroll-hint-mobile"><i class="ti ti-arrow-right" style="font-size:11px;"></i> arraste pro lado pra ver mais</div>
     <div class="table-wrap" id="agenda-table"></div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-address-book"></i> Clientes <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="cliente-count"></span></span>
@@ -539,10 +538,10 @@
     <div class="scroll-hint-mobile"><i class="ti ti-arrow-right" style="font-size:11px;"></i> arraste pro lado pra ver mais</div>
     <div class="table-wrap" id="cliente-table"></div>
   </div>
-
+ 
 </div>
 </div>
-
+ 
 <!-- ===== HISTÓRICO ===== -->
 <div id="tab-historico" class="section">
 <div class="container">
@@ -561,24 +560,24 @@
   </div>
 </div>
 </div>
-
+ 
 <!-- ===== DASHBOARD ===== -->
 <div id="tab-dashboard" class="section">
 <div class="container">
-
+ 
   <div class="card">
     <div class="card-title-lg">Resumo do período <span class="tag" id="dash-periodo-tag"></span></div>
     <div class="dash-hero-grid" id="dash-hero"></div>
     <div class="dash-hero-bar" id="dash-hero-bar"></div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title-lg"><i class="ti ti-bulb" style="color:var(--accent);margin-right:6px;"></i>Insights Acionáveis</div>
     <div id="dash-insights"></div>
   </div>
-
+ 
   <div class="dash-metrics-row" id="dash-metrics-sec"></div>
-
+ 
   <div class="card">
     <div class="card-title-lg" style="justify-content:space-between;">
       <span>Receita ao longo do tempo</span>
@@ -590,7 +589,7 @@
     </div>
     <div class="chart-tempo-wrap" id="dash-chart-tempo"></div>
   </div>
-
+ 
   <div class="two-col">
     <div class="card">
       <div class="card-title-lg">Top produtos e serviços</div>
@@ -611,11 +610,11 @@
   </div>
 </div>
 </div>
-
+ 
 <!-- ===== CONFIG ===== -->
 <div id="tab-config" class="section">
 <div class="container">
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-building"></i> Conta</div>
     <div class="form-grid">
@@ -627,7 +626,7 @@
     </div>
     <div id="cfg-empresa-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-qrcode"></i> Pagamento via Pix</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Escaneie o QR Code ou copie o código Pix abaixo pra pagar sua mensalidade.</p>
@@ -645,7 +644,7 @@
       </div>
     </div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-file-spreadsheet"></i> Exportar dados</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Baixe todos os seus dados (produtos, vendas, clientes e agenda) num único arquivo Excel — abre normal no Excel, Google Sheets ou qualquer planilha.</p>
@@ -653,7 +652,7 @@
       <button class="btn btn-gold" onclick="exportarTudo()"><i class="ti ti-download"></i> Exportar tudo (Excel)</button>
     </div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-trash"></i> Lixeira</span>
@@ -662,7 +661,7 @@
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Produtos, clientes, vendas e agendamentos excluídos ficam aqui, recuperáveis a qualquer momento.</p>
     <div id="lixeira-lista"></div>
   </div>
-
+ 
   <div class="card" id="equipe-card">
     <div class="card-title"><i class="ti ti-users-group"></i> Equipe</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Crie um acesso pra um funcionário que só precisa registrar vendas e mexer no CRM — ele não vê Produtos, Histórico, Dashboard nem Configurações.</p>
@@ -690,7 +689,7 @@
     <div id="eq-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
     <div id="equipe-lista" style="margin-top:1.5rem;"></div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-lock"></i> Trocar senha</div>
     <div class="form-grid">
@@ -721,19 +720,19 @@
     </div>
     <div id="cfg-senha-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
   </div>
-
+ 
 </div>
 </div>
-
+ 
 <!-- ===== AJUDA ===== -->
 <div id="tab-ajuda" class="section">
 <div class="container">
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-help-circle"></i> Perguntas frequentes</div>
     <div id="faq-lista"></div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-message-2"></i> Não encontrou o que precisava?</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Manda sua dúvida ou problema pra gente. Você vê a resposta aqui mesmo, assim que respondermos.</p>
@@ -746,15 +745,15 @@
     </div>
     <div id="ch-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
   </div>
-
+ 
   <div class="card">
     <div class="card-title"><i class="ti ti-list-details"></i> Meus chamados <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="chamados-count"></span></div>
     <div class="table-wrap" id="chamados-lista"></div>
   </div>
-
+ 
 </div>
 </div>
-
+ 
 <!-- ===== LEMBRETES DE HOJE ===== -->
 <div id="lembretes-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,18,12,.45);z-index:998;align-items:center;justify-content:center;padding:1rem;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-width:420px;width:100%;padding:1.75rem;">
@@ -769,12 +768,12 @@
     </div>
   </div>
 </div>
-
+ 
 <div id="toast"></div>
 </div>
-
-
-
+ 
+ 
+ 
 <script>
 // =========================================================
 // CONFIGURAÇÃO DO SUPABASE — troque pelos dados do seu projeto
@@ -783,7 +782,7 @@
 const SUPABASE_URL = 'https://mdekuwxqqdbokbzsibrh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZWt1d3hxcWRib2tienNpYnJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NjM0NzQsImV4cCI6MjEwMzIzOTQ3NH0.zMkm02EAvDsOw3pCBg9h1QxTZbW_gcYUZXfJl-8WCfo';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+ 
 // =========================================================
 // CONFIGURAÇÃO DO EMAILJS — troque pelos dados da sua conta
 // (emailjs.com > Email Services / API Keys)
@@ -793,7 +792,7 @@ const EMAILJS_TEMPLATE_ID = 'template_zektyll';
 const EMAILJS_PUBLIC_KEY = '0dja_oBx-MN5tkBfv';
 const DAAT_SELL_APP_URL = 'https://app.daat-tech.com.br/';
 if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-
+ 
 async function enviarEmailBoasVindas(empresa, nome, email) {
   if (!window.emailjs || EMAILJS_SERVICE_ID.includes('SEU_')) {
     console.warn('EmailJS não configurado ainda — pulando envio de e-mail de boas-vindas.');
@@ -811,7 +810,7 @@ async function enviarEmailBoasVindas(empresa, nome, email) {
     // não bloqueia o cadastro — o cliente já foi criado com sucesso de qualquer forma
   }
 }
-
+ 
 // ===== STATE (cache local, alimentado pelo Supabase) =====
 let produtos = [];
 let vendas = [];
@@ -823,7 +822,7 @@ let meuRole = 'owner';
 let dashPeriodoGrafico = 'dia';
 const ITENS_POR_PAGINA = 20;
 let paginaProdutos = 1, paginaHistorico = 1, paginaClientes = 1, paginaAgenda = 1;
-
+ 
 // gera os botões de "anterior/próxima página" — reaproveitado nas 4 tabelas
 function gerarControlePaginacao(pagina, totalItens, nomeFuncaoMudar) {
   const totalPaginas = Math.max(1, Math.ceil(totalItens / ITENS_POR_PAGINA));
@@ -840,7 +839,7 @@ function mudarPaginaProdutos(p) { paginaProdutos = p; renderProdutos(); }
 function mudarPaginaHistorico(p) { paginaHistorico = p; renderHistorico(); }
 function mudarPaginaClientes(p) { paginaClientes = p; renderClientes(); }
 function mudarPaginaAgenda(p) { paginaAgenda = p; renderAgenda(); }
-
+ 
 // ===== AUTH =====
 function toggleSenhaVisivel() {
   const input = document.getElementById('login-senha');
@@ -848,59 +847,59 @@ function toggleSenhaVisivel() {
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
-
+ 
 function toggleSenhaVisivelCadastro() {
   const input = document.getElementById('cad-senha');
   const btn = event.target;
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
-
+ 
 function toggleSenhaVisivelCadastroConfirma() {
   const input = document.getElementById('cad-senha-confirma');
   const btn = event.target;
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
-
+ 
 function mostrarCadastro() {
   document.getElementById('login-box').style.display = 'none';
   document.getElementById('cadastro-box').style.display = 'block';
 }
-
+ 
 function mostrarLogin() {
   document.getElementById('cadastro-box').style.display = 'none';
   document.getElementById('recuperar-box').style.display = 'none';
   document.getElementById('nova-senha-box').style.display = 'none';
   document.getElementById('login-box').style.display = 'block';
 }
-
+ 
 function mostrarRecuperarSenha() {
   document.getElementById('login-box').style.display = 'none';
   document.getElementById('recuperar-box').style.display = 'block';
   document.getElementById('recuperar-error').style.display = 'none';
   document.getElementById('recuperar-sucesso').style.display = 'none';
 }
-
+ 
 function toggleSenhaVisivelNS(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
-
+ 
 async function enviarRecuperacaoSenha() {
   const email = document.getElementById('recuperar-email').value.trim();
   const errEl = document.getElementById('recuperar-error');
   const sucEl = document.getElementById('recuperar-sucesso');
   errEl.style.display = 'none';
   sucEl.style.display = 'none';
-
+ 
   if (!email) { errEl.textContent = 'Preencha seu e-mail.'; errEl.style.display = 'block'; return; }
-
+ 
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: DAAT_SELL_APP_URL,
   });
-
+ 
   if (error) {
     errEl.textContent = 'Erro ao enviar: ' + error.message;
     errEl.style.display = 'block';
@@ -910,25 +909,25 @@ async function enviarRecuperacaoSenha() {
   sucEl.style.display = 'block';
   document.getElementById('recuperar-email').value = '';
 }
-
+ 
 async function salvarNovaSenhaRecuperacao() {
   const senha = document.getElementById('ns-senha').value;
   const confirma = document.getElementById('ns-senha-confirma').value;
   const errEl = document.getElementById('ns-error');
   errEl.style.display = 'none';
-
+ 
   if (!senha || !confirma) { errEl.textContent = 'Preencha os dois campos.'; errEl.style.display = 'block'; return; }
   if (senha.length < 8) { errEl.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; errEl.style.display = 'block'; return; }
   if (senha !== confirma) { errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return; }
-
+ 
   const { error } = await supabaseClient.auth.updateUser({ password: senha });
   if (error) { errEl.textContent = 'Erro ao salvar: ' + error.message; errEl.style.display = 'block'; return; }
-
+ 
   toast('Senha atualizada! Você já está logado.');
   document.getElementById('nova-senha-box').style.display = 'none';
   await iniciarApp();
 }
-
+ 
 async function cadastrarNovoCliente() {
   const email          = document.getElementById('cad-email').value.trim();
   const empresa        = document.getElementById('cad-empresa').value.trim();
@@ -936,7 +935,7 @@ async function cadastrarNovoCliente() {
   const senhaConfirma  = document.getElementById('cad-senha-confirma').value;
   const errEl          = document.getElementById('cadastro-error');
   errEl.style.display = 'none';
-
+ 
   if (!empresa || !email || !senha || !senhaConfirma) {
     errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return;
   }
@@ -949,7 +948,7 @@ async function cadastrarNovoCliente() {
   if (senha !== senhaConfirma) {
     errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return;
   }
-
+ 
   // 1) cria o usuário de login
   const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({ email, password: senha });
   if (signUpErr) {
@@ -963,14 +962,14 @@ async function cadastrarNovoCliente() {
     errEl.style.display = 'block';
     return;
   }
-
+ 
   // força a sessão recém-criada a ficar ativa no client antes de prosseguir
   // (evita problema de timing onde o insert seguinte sai sem o token do usuário novo)
   await supabaseClient.auth.setSession({
     access_token: signUpData.session.access_token,
     refresh_token: signUpData.session.refresh_token,
   });
-
+ 
   // 2) cria a organização + o perfil numa única operação no banco
   // (contorna o paradoxo de RLS: ver a organização recém-criada exige
   // um perfil que só existe depois dela — por isso usamos uma função
@@ -990,7 +989,7 @@ async function cadastrarNovoCliente() {
     errEl.style.display = 'block';
     return;
   }
-
+ 
   toast('Cliente cadastrado! Pode fazer login agora.');
   enviarEmailBoasVindas(empresa, '', email);
   ['cad-empresa','cad-email','cad-senha','cad-senha-confirma'].forEach(id => document.getElementById(id).value = '');
@@ -998,14 +997,14 @@ async function cadastrarNovoCliente() {
   await supabaseClient.auth.signOut(); // sai da sessão do cliente recém-criado, volta pro login
   mostrarLogin();
 }
-
+ 
 async function fazerLogin() {
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
   if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; errEl.style.display = 'block'; return; }
-
+ 
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
   if (error) {
     errEl.textContent = 'Erro: ' + error.message + (error.status ? ' (status ' + error.status + ')' : '');
@@ -1015,7 +1014,7 @@ async function fazerLogin() {
   }
   await iniciarApp();
 }
-
+ 
 async function fazerLogout() {
   await supabaseClient.auth.signOut();
   document.getElementById('app-wrap').style.display = 'none';
@@ -1023,28 +1022,28 @@ async function fazerLogout() {
   document.getElementById('login-email').value = '';
   document.getElementById('login-senha').value = '';
 }
-
+ 
 async function iniciarApp() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
-
+ 
   const { data: perfil, error: perfilErr } = await supabaseClient
     .from('perfis').select('organizacao_id, role').eq('id', user.id).single();
-
+ 
   if (perfilErr || !perfil) {
     document.getElementById('login-error').textContent = 'Usuário sem organização vinculada. Fale com a DAAT.';
     document.getElementById('login-error').style.display = 'block';
     await supabaseClient.auth.signOut();
     return;
   }
-
+ 
   organizacaoId = perfil.organizacao_id;
   meuRole = perfil.role || 'owner';
-
+ 
   // checa status de pagamento e teste grátis antes de liberar o app
   const { data: org, error: orgErr } = await supabaseClient
     .from('organizacoes').select('nome, status, em_teste, trial_fim').eq('id', organizacaoId).single();
-
+ 
   if (!orgErr && org && org.status !== 'ativo') {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('bloqueado-titulo').textContent = 'Acesso temporariamente indisponível';
@@ -1052,7 +1051,7 @@ async function iniciarApp() {
     document.getElementById('bloqueado-screen').style.display = 'flex';
     return;
   }
-
+ 
   if (!orgErr && org && org.em_teste && org.trial_fim) {
     const hoje = hojeLocal();
     if (org.trial_fim < hoje) {
@@ -1068,10 +1067,10 @@ async function iniciarApp() {
       return;
     }
   }
-
+ 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-wrap').style.display = 'block';
-
+ 
   await carregarTudo();
   setDefaultDate();
   renderItens();
@@ -1081,7 +1080,7 @@ async function iniciarApp() {
   verificarLembretesHoje();
   aplicarRestricaoPapel();
 }
-
+ 
 function aplicarRestricaoPapel() {
   if (meuRole !== 'funcionario') return;
   // funcionário só mexe em CRM, Registrar Venda e Ajuda — o resto some do menu
@@ -1091,13 +1090,13 @@ function aplicarRestricaoPapel() {
     if (abasEscondidas.includes(nomesAbas[i])) el.style.display = 'none';
   });
 }
-
+ 
 async function fazerLogoutBloqueado() {
   await supabaseClient.auth.signOut();
   document.getElementById('bloqueado-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
 }
-
+ 
 async function carregarTudo() {
   const [p, v, c, a] = await Promise.all([
     supabaseClient.from('produtos').select('*').eq('organizacao_id', organizacaoId).is('deletado_em', null).order('nome'),
@@ -1110,7 +1109,7 @@ async function carregarTudo() {
   clientes = (c.data || []).map(mapClienteDb);
   agendamentos = (a.data || []).map(mapAgendamentoDb);
 }
-
+ 
 // mapeia nomes de coluna do banco (snake_case) pros nomes usados no front (camelCase)
 function mapProdutoDb(p) {
   return { id: p.id, nome: p.nome, tipo: p.tipo || 'Produto', fornecedor: p.fornecedor, serie: p.serie, categoria: p.categoria,
@@ -1125,7 +1124,7 @@ function mapAgendamentoDb(a) {
   return { id: a.id, clienteId: a.cliente_id, clienteNome: a.cliente_nome, data: a.data,
     hora: a.hora, motivo: a.motivo, obs: a.obs, status: a.status };
 }
-
+ 
 // ===== TOAST =====
 // ===== SEGURANÇA: escapa texto do usuário antes de inserir na página (previne XSS) =====
 function escapeHTML(str) {
@@ -1137,16 +1136,16 @@ function escapeHTML(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-
+ 
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
-
+ 
 // detecta quando o usuário chega pelo link de recuperação de senha do e-mail
 const isRecoveryLink = window.location.hash.includes('type=recovery');
-
+ 
 supabaseClient.auth.onAuthStateChange((event) => {
   if (event === 'PASSWORD_RECOVERY') {
     document.getElementById('login-screen').style.display = 'flex';
@@ -1157,7 +1156,7 @@ supabaseClient.auth.onAuthStateChange((event) => {
     document.getElementById('nova-senha-box').style.display = 'block';
   }
 });
-
+ 
 // checa se já existe sessão ativa ao carregar a página
 // (pula essa checagem se for um link de recuperação — nesse caso o evento acima cuida da tela)
 (async function checkSession() {
@@ -1165,7 +1164,7 @@ supabaseClient.auth.onAuthStateChange((event) => {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) await iniciarApp();
 })();
-
+ 
 // ===== TABS =====
 function switchTab(tab) {
   const names = ['crm','produtos','vendas','historico','dashboard','config','ajuda'];
@@ -1180,25 +1179,25 @@ function switchTab(tab) {
   if (tab === 'config')     renderConfig();
   if (tab === 'ajuda')      renderAjuda();
 }
-
+ 
 // ===== HEADER DATE =====
 function updateDate() {
   document.getElementById('header-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 }
 updateDate();
-
+ 
 // ===== LINHA BADGE =====
 function serieBadge(s) {
   if (!s) return '';
   return `<span class="badge badge-gold">${escapeHTML(s)}</span>`;
 }
-
+ 
 // ===== ADD PRODUTO =====
 async function addProduto() {
   const nome = document.getElementById('f-nome').value.trim();
   const tipo = document.getElementById('f-tipo').value;
   if (!nome) { toast(`Preencha o nome d${tipo === 'Serviço' ? 'o' : 'o'} ${tipo.toLowerCase()}.`); return; }
-
+ 
   const catSelecionada = document.getElementById('f-cat-select').value;
   if (catSelecionada === '__nova__' && !document.getElementById('f-cat-nova').value.trim()) {
     toast('Digite o nome da nova categoria.'); return;
@@ -1206,7 +1205,7 @@ async function addProduto() {
   const categoria = catSelecionada === '__nova__'
     ? document.getElementById('f-cat-nova').value.trim()
     : catSelecionada;
-
+ 
   const novo = {
     organizacao_id: organizacaoId,
     nome,
@@ -1234,7 +1233,7 @@ async function addProduto() {
   toggleCamposEstoque();
   renderProdutos(); toast(`${tipo} adicionado!`);
 }
-
+ 
 function toggleCamposEstoque() {
   const tipo = document.getElementById('f-tipo').value;
   const ehServico = tipo === 'Serviço';
@@ -1244,7 +1243,7 @@ function toggleCamposEstoque() {
   document.getElementById('f-nome-label').textContent = ehServico ? 'Nome do serviço' : 'Nome do produto';
   document.getElementById('f-preco-label').textContent = ehServico ? 'Preço do serviço (R$)' : 'Preço de venda (R$)';
 }
-
+ 
 function popularFiltrosProduto() {
   const serieSel = document.getElementById('f-serie-filtro');
   const catSel   = document.getElementById('f-cat-filtro');
@@ -1253,7 +1252,7 @@ function popularFiltrosProduto() {
   const cats   = [...new Set(produtos.map(p => p.categoria).filter(Boolean))].sort();
   serieSel.innerHTML = '<option value="">Todas as linhas</option>' + series.map(s => `<option ${s===serieAtual?'selected':''}>${escapeHTML(s)}</option>`).join('');
   catSel.innerHTML   = '<option value="">Todas categorias</option>' + cats.map(c => `<option ${c===catAtual?'selected':''}>${escapeHTML(c)}</option>`).join('');
-
+ 
   // select de categoria do formulario de cadastro (com opção de criar nova)
   const formSel = document.getElementById('f-cat-select');
   if (formSel) {
@@ -1263,7 +1262,7 @@ function popularFiltrosProduto() {
       '<option value="__nova__">+ Criar nova categoria</option>';
   }
 }
-
+ 
 function toggleNovaCategoria() {
   const sel = document.getElementById('f-cat-select');
   const novaInput = document.getElementById('f-cat-nova');
@@ -1275,7 +1274,7 @@ function toggleNovaCategoria() {
     novaInput.value = '';
   }
 }
-
+ 
 // ===== RENDER PRODUTOS =====
 function renderProdutos() {
   popularFiltrosProduto();
@@ -1284,7 +1283,7 @@ function renderProdutos() {
   const serie  = document.getElementById('f-serie-filtro').value;
   const cat    = document.getElementById('f-cat-filtro').value;
   const status = document.getElementById('f-status-filtro').value;
-
+ 
   let lista = produtos.filter(p => {
     if (busca && !p.nome.toLowerCase().includes(busca) && !(p.obs||'').toLowerCase().includes(busca)) return false;
     if (tipoF && p.tipo !== tipoF) return false;
@@ -1295,24 +1294,24 @@ function renderProdutos() {
     if (status === 'baixo'   && !(p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin)) return false;
     return true;
   });
-
+ 
   document.getElementById('prod-count').textContent = `(${lista.length} de ${produtos.length})`;
-
+ 
   if (!lista.length) {
     document.getElementById('prod-table').innerHTML = '<div class="empty"><i class="ti ti-package"></i>Nenhum item encontrado</div>';
     return;
   }
-
+ 
   const totalFiltrado = lista.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaProdutos > totalPaginas) paginaProdutos = totalPaginas;
   lista = lista.slice((paginaProdutos - 1) * ITENS_POR_PAGINA, paginaProdutos * ITENS_POR_PAGINA);
-
+ 
   let h = `<table><thead><tr>
     <th>Item</th><th>Tipo</th><th>Série</th><th>Categoria</th><th>Volume</th>
     <th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th>Status</th><th></th>
   </tr></thead><tbody>`;
-
+ 
   lista.forEach(p => {
     const ehServico = p.tipo === 'Serviço';
     const margem = p.preco > 0 && p.custo > 0 ? ((p.preco - p.custo) / p.preco * 100).toFixed(0) + '%' : '—';
@@ -1325,7 +1324,7 @@ function renderProdutos() {
                       : baixo   ? `<span class="badge badge-amber"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> Baixo</span>`
                       : `<span class="badge badge-green">Ativo</span>`;
     const tipoBadge = ehServico ? `<span class="badge badge-teal">Serviço</span>` : `<span class="badge badge-gray">Produto</span>`;
-
+ 
     h += `<tr>
       <td>
         <div style="font-weight:600;color:var(--text);">${escapeHTML(p.nome)}</div>
@@ -1347,12 +1346,12 @@ function renderProdutos() {
       </td>
     </tr>`;
   });
-
+ 
   h += '</tbody></table>';
   h += gerarControlePaginacao(paginaProdutos, totalFiltrado, 'mudarPaginaProdutos');
   document.getElementById('prod-table').innerHTML = h;
 }
-
+ 
 async function toggleAtivo(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
@@ -1360,7 +1359,7 @@ async function toggleAtivo(id) {
   if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
   p.ativo = !p.ativo; renderProdutos();
 }
-
+ 
 async function deleteProduto(id) {
   if (!confirm('Mover produto pra lixeira? Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('produtos').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -1369,12 +1368,12 @@ async function deleteProduto(id) {
   renderProdutos();
   toast('Produto movido pra lixeira.');
 }
-
+ 
 async function editEstoque(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
   const ehServico = p.tipo === 'Serviço';
-
+ 
   let estoque = p.estoque;
   if (!ehServico) {
     const novoEst = prompt(`Estoque atual de "${p.nome}":`, p.estoque);
@@ -1392,13 +1391,13 @@ async function editEstoque(id) {
   p.estoque = estoque; p.custo = custo; p.preco = preco;
   renderProdutos(); toast(`${p.tipo} atualizado!`);
 }
-
+ 
 // ===== VENDAS =====
 function setDefaultDate() {
   const d = document.getElementById('v-data');
   if (!d.value) d.value = new Date().toISOString().split('T')[0];
 }
-
+ 
 function renderItens() {
   const ativos = produtos.filter(p => p.ativo);
   let h = '';
@@ -1416,7 +1415,7 @@ function renderItens() {
   document.getElementById('itens-wrap').innerHTML = h;
   calcTotal();
 }
-
+ 
 function updateItem(i, field, val) {
   if (field === 'prodId') {
     itens[i].prodId = val || '';
@@ -1426,10 +1425,10 @@ function updateItem(i, field, val) {
   else if (field === 'preco')   { itens[i].preco = parseFloat(val) || 0; }
   renderItens();
 }
-
+ 
 function addItem()    { itens.push({ prodId:'', qty:1, preco:0 }); renderItens(); }
 function removeItem(i){ itens.splice(i, 1); if (!itens.length) itens = [{ prodId:'', qty:1, preco:0 }]; renderItens(); }
-
+ 
 function calcTotal() {
   const total    = itens.reduce((s, i) => s + i.qty * i.preco, 0);
   const pct      = parseFloat(document.getElementById('v-comissao-pct').value) || 0;
@@ -1445,7 +1444,7 @@ function calcTotal() {
   }
   wrap.style.display = total > 0 ? 'block' : 'none';
 }
-
+ 
 async function salvarVenda() {
   const data     = document.getElementById('v-data').value;
   const vendedor = document.getElementById('v-vendedor').value.trim();
@@ -1456,14 +1455,14 @@ async function salvarVenda() {
   if (!data || !validos.length) { toast('Preencha data e ao menos um produto.'); return; }
   const total     = validos.reduce((s, i) => s + i.qty * i.preco, 0);
   const comissao  = parseFloat((total * (pct / 100)).toFixed(2));
-
+ 
   const { data: vendaSalva, error } = await supabaseClient.from('vendas').insert({
     organizacao_id: organizacaoId, data, vendedor, canal, cliente,
     itens: validos.map(i => ({ ...i })), total, comissao,
   }).select().single();
   if (error) { toast('Erro ao salvar venda.'); console.error(error); return; }
   vendas.push(mapVendaDb(vendaSalva));
-
+ 
   // atualiza estoque dos produtos vendidos (local + banco)
   for (const item of validos) {
     const p = produtos.find(x => x.id === item.prodId);
@@ -1472,7 +1471,7 @@ async function salvarVenda() {
     const { error: errEst } = await supabaseClient.from('produtos').update({ estoque: novoEstoque }).eq('id', p.id).eq('organizacao_id', organizacaoId);
     if (!errEst) p.estoque = novoEstoque;
   }
-
+ 
   itens = [{ prodId:'', qty:1, preco:0 }];
   document.getElementById('v-cliente').value = '';
   document.getElementById('v-canal').value = '';
@@ -1480,30 +1479,30 @@ async function salvarVenda() {
   document.getElementById('v-comissao-pct').value = '';
   renderItens(); toast('Venda salva! Estoque atualizado.');
 }
-
+ 
 // ===== HISTÓRICO =====
 function renderHistorico() {
   const busca = (document.getElementById('h-busca').value || '').toLowerCase();
   const de    = document.getElementById('h-de').value;
   const ate   = document.getElementById('h-ate').value;
-
+ 
   let lista = [...vendas].reverse().filter(v => {
     if (busca && !(v.cliente||'').toLowerCase().includes(busca) && !(v.canal||'').toLowerCase().includes(busca) && !(v.vendedor||'').toLowerCase().includes(busca)) return false;
     if (de  && v.data < de)  return false;
     if (ate && v.data > ate) return false;
     return true;
   });
-
+ 
   if (!lista.length) {
     document.getElementById('hist-table').innerHTML = '<div class="empty"><i class="ti ti-receipt"></i>Nenhuma venda encontrada</div>';
     return;
   }
-
+ 
   const totalFiltrado = lista.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaHistorico > totalPaginas) paginaHistorico = totalPaginas;
   lista = lista.slice((paginaHistorico - 1) * ITENS_POR_PAGINA, paginaHistorico * ITENS_POR_PAGINA);
-
+ 
   let h = `<table><thead><tr><th>Data</th><th>Vendedor</th><th>Canal</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Comissão</th><th></th></tr></thead><tbody>`;
   lista.forEach(v => {
     const nomes = v.itens.map(i => {
@@ -1528,7 +1527,7 @@ function renderHistorico() {
   h += gerarControlePaginacao(paginaHistorico, totalFiltrado, 'mudarPaginaHistorico');
   document.getElementById('hist-table').innerHTML = h;
 }
-
+ 
 async function deleteVenda(id) {
   if (!confirm('Mover venda pra lixeira? Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('vendas').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -1537,7 +1536,7 @@ async function deleteVenda(id) {
   renderHistorico();
   toast('Venda movida pra lixeira.');
 }
-
+ 
 // ===== DASHBOARD =====
 // ===== INSIGHTS AUTOMÁTICOS (regras estatísticas, sem IA) =====
 function gerarInsights() {
@@ -1545,7 +1544,7 @@ function gerarInsights() {
   const hoje = new Date(hojeLocal() + 'T00:00:00');
   const addDiasD = (date, n) => { const d = new Date(date); d.setDate(d.getDate() + n); return d; };
   const paraStr = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
+ 
   // 1) tendência: últimos 7 dias vs 7 dias anteriores
   const iniUlt7 = paraStr(addDiasD(hoje, -6));
   const iniAnt7 = paraStr(addDiasD(hoje, -13));
@@ -1565,7 +1564,7 @@ function gerarInsights() {
   } else if (somaUlt7 > 0) {
     insights.push({ tipo: 'positivo', icone: 'ti-sparkles', texto: `Você teve vendas nos últimos 7 dias — continue por aí!` });
   }
-
+ 
   // 2) item mais lucrativo (por margem, não só receita)
   const lucroPorItem = {};
   vendas.forEach(v => v.itens.forEach(i => {
@@ -1578,7 +1577,7 @@ function gerarInsights() {
   if (topLucro && topLucro[1] > 0) {
     insights.push({ tipo: 'neutro', icone: 'ti-crown', texto: `<strong>${escapeHTML(topLucro[0])}</strong> é seu item mais lucrativo no período, com R$ ${topLucro[1].toFixed(2)} de lucro.` });
   }
-
+ 
   // 3) cliente que sumiu (maior tempo sem comprar, acima de 45 dias)
   let piorCliente = null, piorDias = 0;
   clientes.forEach(c => {
@@ -1591,7 +1590,7 @@ function gerarInsights() {
   if (piorCliente && piorDias > 45) {
     insights.push({ tipo: 'atencao', icone: 'ti-user-x', texto: `<strong>${escapeHTML(piorCliente)}</strong> não compra há ${piorDias} dias — pode valer um contato.` });
   }
-
+ 
   // 4) dia da semana mais forte (só com uma base mínima de vendas)
   if (vendas.length >= 5) {
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -1602,20 +1601,20 @@ function gerarInsights() {
       insights.push({ tipo: 'neutro', icone: 'ti-calendar-stats', texto: `<strong>${diasSemana[maxIdx]}</strong> costuma ser seu melhor dia de vendas.` });
     }
   }
-
+ 
   return insights;
 }
-
+ 
 function renderInsights() {
   const wrap = document.getElementById('dash-insights');
   if (!wrap) return;
   const insights = gerarInsights();
-
+ 
   if (!insights.length) {
     wrap.innerHTML = '<div class="empty" style="padding:1.5rem;"><i class="ti ti-bulb"></i>Ainda não há dados suficientes pra gerar recomendações — continue registrando vendas.</div>';
     return;
   }
-
+ 
   const cor = { positivo: 'var(--sage)', atencao: 'var(--terracota)', neutro: 'var(--amber)' };
   wrap.innerHTML = insights.map((ins, i) => `
     <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;${i < insights.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
@@ -1624,7 +1623,7 @@ function renderInsights() {
     </div>
   `).join('');
 }
-
+ 
 // ===== GRÁFICO: receita ao longo do tempo (SVG, sem biblioteca externa) =====
 // ===== controle do seletor de período do gráfico =====
 function mudarPeriodoGrafico(periodo) {
@@ -1632,7 +1631,7 @@ function mudarPeriodoGrafico(periodo) {
   document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas, dashPeriodoGrafico);
   atualizarBotoesPeriodo();
 }
-
+ 
 function atualizarBotoesPeriodo() {
   ['dia', 'semana', 'mes'].forEach(p => {
     const btn = document.getElementById(`btn-periodo-${p}`);
@@ -1640,12 +1639,12 @@ function atualizarBotoesPeriodo() {
     btn.className = p === dashPeriodoGrafico ? 'btn btn-gold btn-sm' : 'btn btn-outline btn-sm';
   });
 }
-
+ 
 function gerarGraficoTempo(vendasList, periodo) {
   if (!vendasList.length) {
     return '<div class="empty" style="padding:2rem 1rem;"><i class="ti ti-chart-line"></i>Sem vendas registradas ainda</div>';
   }
-
+ 
   const addDias = (dataStr, n) => {
     const d = new Date(dataStr + 'T00:00:00');
     d.setDate(d.getDate() + n);
@@ -1666,7 +1665,7 @@ function gerarGraficoTempo(vendasList, periodo) {
   const mesAbrev = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const fmtDia = d => d.split('-').slice(1).reverse().join('/');
   const fmtMes = d => `${mesAbrev[parseInt(d.slice(5,7),10)-1]}/${d.slice(2,4)}`;
-
+ 
   // define, por período: como agrupar a data da venda, como avançar pro próximo intervalo,
   // como formatar o rótulo, e o tamanho máximo da janela mostrada
   let chaveFn, proximoFn, labelFn, janelaMax;
@@ -1686,10 +1685,10 @@ function gerarGraficoTempo(vendasList, periodo) {
     labelFn = fmtDia;
     janelaMax = 30;
   }
-
+ 
   const porBucket = {};
   vendasList.forEach(v => { const k = chaveFn(v.data); porBucket[k] = (porBucket[k] || 0) + v.total; });
-
+ 
   const chaves = Object.keys(porBucket).sort();
   let atual = chaves[0];
   const max = chaves[chaves.length - 1];
@@ -1701,20 +1700,20 @@ function gerarGraficoTempo(vendasList, periodo) {
     guard++;
   }
   if (todasChaves.length > janelaMax) todasChaves = todasChaves.slice(-janelaMax);
-
+ 
   const pontos = todasChaves.map(k => [k, porBucket[k] || 0]);
-
+ 
   const n = pontos.length;
   const w = Math.max(640, Math.min(1200, n * 30)), h = 210, padL = 56, padR = 20, padT = 20, padB = 34;
   const plotW = w - padL - padR, plotH = h - padT - padB;
   const maxVal = Math.max(...pontos.map(p => p[1]), 1);
-
+ 
   const xFor = i => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
   const yFor = val => padT + plotH - (val / maxVal) * plotH;
-
+ 
   const linePath = pontos.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(p[1]).toFixed(1)}`).join(' ');
   const areaPath = `${linePath} L${xFor(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${xFor(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
-
+ 
   // grid horizontal com 4 níveis (0, 1/3, 2/3, máximo) e valor em cada um
   let gridLines = '', yLabels = '';
   for (let g = 0; g <= 3; g++) {
@@ -1724,7 +1723,7 @@ function gerarGraficoTempo(vendasList, periodo) {
     gridLines += `<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${w - padR}" y2="${gy.toFixed(1)}" stroke="var(--border)" stroke-width="1" />`;
     yLabels += `<text x="${padL - 8}" y="${(gy + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$${val.toFixed(0)}</text>`;
   }
-
+ 
   // rótulos do eixo X — mostra todos se poucos pontos, senão distribui uns 7 igualmente
   let xLabels = '';
   const qtdLabels = Math.min(n, 7);
@@ -1735,10 +1734,10 @@ function gerarGraficoTempo(vendasList, periodo) {
   [...idxsParaLabel].sort((a,b)=>a-b).forEach(i => {
     xLabels += `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="monospace">${labelFn(pontos[i][0])}</text>`;
   });
-
+ 
   // só marca o último ponto (mais recente), pra dar uma referência sem poluir a linha
   const ultimoPonto = `<circle cx="${xFor(n-1).toFixed(1)}" cy="${yFor(pontos[n-1][1]).toFixed(1)}" r="4" fill="#f5c400" stroke="#14120c" stroke-width="1.4" />`;
-
+ 
   return `
     <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;min-width:420px;display:block;">
       ${gridLines}
@@ -1750,7 +1749,7 @@ function gerarGraficoTempo(vendasList, periodo) {
     </svg>
   `;
 }
-
+ 
 function renderDashboard() {
   const totalRec  = vendas.reduce((s, v) => s + v.total, 0);
   const nVendas   = vendas.length;
@@ -1758,7 +1757,7 @@ function renderDashboard() {
   const ativos    = produtos.filter(p => p.ativo).length;
   const baixo     = produtos.filter(p => p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin).length;
   const comissaoTotal = vendas.reduce((s,v) => s + (v.comissao||0), 0);
-
+ 
   // custo total (usa o custo ATUAL de cada produto — não é um custo "congelado" no momento da venda)
   const custoTotal = vendas.reduce((s, v) => s + v.itens.reduce((si, i) => {
     const p = produtos.find(x => x.id === i.prodId);
@@ -1767,9 +1766,9 @@ function renderDashboard() {
   const lucroBruto = totalRec - custoTotal;
   const pctCusto  = totalRec > 0 ? (custoTotal / totalRec * 100) : 0;
   const pctLucro  = totalRec > 0 ? (lucroBruto / totalRec * 100) : 0;
-
+ 
   document.getElementById('dash-periodo-tag').textContent = nVendas ? `${nVendas} venda${nVendas!==1?'s':''} no total` : 'sem vendas ainda';
-
+ 
   // ===== HERO: Receita / Custo / Lucro, coeso, com barra de proporção =====
   document.getElementById('dash-hero').innerHTML = `
     <div class="dash-hero-item">
@@ -1790,9 +1789,9 @@ function renderDashboard() {
   document.getElementById('dash-hero-bar').innerHTML = totalRec > 0
     ? `<div style="width:${pctCusto}%;background:var(--terracota);"></div><div style="width:${pctLucro}%;background:var(--sage);"></div>`
     : `<div style="width:100%;background:var(--border);"></div>`;
-
+ 
   renderInsights();
-
+ 
   // ===== métricas secundárias, compactas =====
   document.getElementById('dash-metrics-sec').innerHTML = `
     <div class="dash-metric-sm"><div class="label">Nº de vendas</div><div class="value">${nVendas}</div></div>
@@ -1804,11 +1803,11 @@ function renderDashboard() {
       ${baixo > 0 ? `<div class="flag"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> ${baixo} com estoque baixo</div>` : ''}
     </div>
   `;
-
+ 
   // ===== gráfico: receita ao longo do tempo =====
   document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas, dashPeriodoGrafico);
   atualizarBotoesPeriodo();
-
+ 
   // top produtos
   const porProd = {};
   vendas.forEach(v => v.itens.forEach(i => {
@@ -1826,7 +1825,7 @@ function renderDashboard() {
           <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxP*100)}%"></div></div>
         </div>`).join('')
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-chart-bar"></i>Sem dados</div>';
-
+ 
   // top categorias
   const porCat = {};
   vendas.forEach(v => v.itens.forEach(i => {
@@ -1845,7 +1844,7 @@ function renderDashboard() {
           <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxC*100)}%;background:${colors[i%colors.length]}"></div></div>
         </div>`).join('')
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-tag"></i>Sem dados</div>';
-
+ 
   // ranking vendedores
   const vColorPalette = ['var(--accent)','var(--sage)','var(--terracota)','var(--lavanda)','var(--amber)','var(--green)'];
   const porVend = {};
@@ -1877,7 +1876,7 @@ function renderDashboard() {
   document.getElementById('rank-vendedor').innerHTML = rankV.length
     ? vHtml
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-users"></i>Nenhuma venda registrada ainda</div>';
-
+ 
   // alertas
   const alertas = produtos.filter(p => p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin);
   if (!alertas.length) {
@@ -1892,12 +1891,12 @@ function renderDashboard() {
   ah += '</tbody></table>';
   document.getElementById('alerta-estoque').innerHTML = ah;
 }
-
+ 
 // ===== CRM: CLIENTES =====
 function mapClienteDb(c) {
   return { id: c.id, nome: c.nome, tel: c.telefone, email: c.email, cpf: c.cpf, cnpj: c.cnpj, obs: c.obs };
 }
-
+ 
 async function addCliente() {
   const nome = document.getElementById('c-nome').value.trim();
   if (!nome) { toast('Preencha o nome do cliente.'); return; }
@@ -1916,7 +1915,7 @@ async function addCliente() {
   ['c-nome','c-tel','c-email','c-cpf','c-cnpj','c-obs'].forEach(id => document.getElementById(id).value = '');
   renderClientes(); renderClienteSelect(); toast('Cliente adicionado!');
 }
-
+ 
 async function deleteCliente(id) {
   if (!confirm('Mover cliente pra lixeira? Agendamentos ligados a ele continuam na agenda. Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('clientes').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -1925,7 +1924,7 @@ async function deleteCliente(id) {
   renderClientes(); renderClienteSelect();
   toast('Cliente movido pra lixeira.');
 }
-
+ 
 function renderClienteSelect() {
   const sel = document.getElementById('a-cliente');
   if (!sel) return;
@@ -1933,7 +1932,7 @@ function renderClienteSelect() {
   sel.innerHTML = '<option value="">Selecionar...</option>' +
     clientes.map(c => `<option value="${c.id}" ${c.id == atual ? 'selected' : ''}>${escapeHTML(c.nome)}${c.tel ? ' — ' + escapeHTML(c.tel) : ''}</option>`).join('');
 }
-
+ 
 function renderClientes() {
   const wrap = document.getElementById('cliente-table');
   if (!wrap) return;
@@ -1942,12 +1941,12 @@ function renderClientes() {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-address-book"></i>Nenhum cliente cadastrado ainda</div>';
     return;
   }
-
+ 
   const totalFiltrado = clientes.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaClientes > totalPaginas) paginaClientes = totalPaginas;
   const listaPagina = clientes.slice((paginaClientes - 1) * ITENS_POR_PAGINA, paginaClientes * ITENS_POR_PAGINA);
-
+ 
   let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>CPF</th><th>CNPJ</th><th>Observações</th><th></th></tr></thead><tbody>`;
   listaPagina.forEach(c => {
     h += `<tr>
@@ -1964,7 +1963,7 @@ function renderClientes() {
   h += gerarControlePaginacao(paginaClientes, totalFiltrado, 'mudarPaginaClientes');
   wrap.innerHTML = h;
 }
-
+ 
 // ===== CRM: AGENDAMENTOS =====
 async function addAgendamento() {
   const clienteId = document.getElementById('a-cliente').value;
@@ -1989,14 +1988,14 @@ async function addAgendamento() {
   document.getElementById('a-motivo').value = '';
   renderAgenda(); toast('Agendamento criado!');
 }
-
+ 
 async function updateAgendaStatus(id, status) {
   const { error } = await supabaseClient.from('agendamentos').update({ status }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao atualizar status.'); console.error(error); return; }
   const a = agendamentos.find(x => x.id === id);
   if (a) { a.status = status; renderAgenda(); }
 }
-
+ 
 async function deleteAgendamento(id) {
   if (!confirm('Mover agendamento pra lixeira? Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('agendamentos').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -2005,26 +2004,26 @@ async function deleteAgendamento(id) {
   renderAgenda();
   toast('Agendamento movido pra lixeira.');
 }
-
+ 
 function renderAgenda() {
   const wrap = document.getElementById('agenda-table');
   if (!wrap) return;
   const statusFiltro = document.getElementById('ag-status-filtro').value;
   let lista = [...agendamentos].sort((a, b) => (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')));
   if (statusFiltro) lista = lista.filter(a => a.status === statusFiltro);
-
+ 
   document.getElementById('agenda-count').textContent = `(${lista.length} de ${agendamentos.length})`;
-
+ 
   if (!lista.length) {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-calendar-event"></i>Nenhum agendamento encontrado</div>';
     return;
   }
-
+ 
   const totalFiltrado = lista.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaAgenda > totalPaginas) paginaAgenda = totalPaginas;
   lista = lista.slice((paginaAgenda - 1) * ITENS_POR_PAGINA, paginaAgenda * ITENS_POR_PAGINA);
-
+ 
   const statusCls = { 'Agendado':'badge-amber', 'Confirmado':'badge-blue', 'Concluído':'badge-green', 'Cancelado':'badge-red' };
   let h = `<table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Motivo</th><th>Status</th><th>Observações</th><th></th><th></th></tr></thead><tbody>`;
   lista.forEach(a => {
@@ -2047,14 +2046,14 @@ function renderAgenda() {
   h += gerarControlePaginacao(paginaAgenda, totalFiltrado, 'mudarPaginaAgenda');
   wrap.innerHTML = h;
 }
-
+ 
 function adicionarAoGoogleAgenda(id) {
   const a = agendamentos.find(x => x.id === id);
   if (!a) return;
-
+ 
   const dataBase = a.data.replace(/-/g, ''); // YYYYMMDD
   let datesParam;
-
+ 
   if (a.hora) {
     const [hh, mm] = a.hora.split(':');
     const inicio = `${dataBase}T${hh}${mm}00`;
@@ -2069,16 +2068,16 @@ function adicionarAoGoogleAgenda(id) {
     const fimStr = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
     datesParam = `${dataBase}/${fimStr}`;
   }
-
+ 
   const titulo = encodeURIComponent(`${a.clienteNome} — ${a.motivo || 'Agendamento DAAT.'}`);
   const detalhes = encodeURIComponent(
     `Agendamento criado no DAAT.\nCliente: ${a.clienteNome}\nMotivo: ${a.motivo || '—'}${a.obs ? '\nObservações: ' + a.obs : ''}`
   );
-
+ 
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${datesParam}&details=${detalhes}&ctz=America/Sao_Paulo`;
   window.open(url, '_blank');
 }
-
+ 
 // ===== CONFIG =====
 async function renderConfig() {
   const { data: { user } } = await supabaseClient.auth.getUser();
@@ -2095,7 +2094,7 @@ async function renderConfig() {
   renderEquipe();
   renderPix(Number(org?.valor_mensal) || 69.90);
 }
-
+ 
 async function salvarEmpresa() {
   const nome = document.getElementById('cfg-empresa').value.trim();
   const msg = document.getElementById('cfg-empresa-msg');
@@ -2110,20 +2109,20 @@ async function salvarEmpresa() {
   msg.style.color = 'var(--green)'; msg.textContent = 'Empresa atualizada!';
   toast('Empresa atualizada!');
 }
-
+ 
 function toggleSenhaVisivelCfg(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
-
+ 
 async function trocarSenha() {
   const senhaAtual = document.getElementById('cfg-senha-atual').value;
   const nova = document.getElementById('cfg-nova-senha').value;
   const confirma = document.getElementById('cfg-confirma-senha').value;
   const msg = document.getElementById('cfg-senha-msg');
   msg.style.display = 'block';
-
+ 
   if (!senhaAtual || !nova || !confirma) {
     msg.style.color = 'var(--red)'; msg.textContent = 'Preencha os três campos.'; return;
   }
@@ -2133,7 +2132,7 @@ async function trocarSenha() {
   if (nova !== confirma) {
     msg.style.color = 'var(--red)'; msg.textContent = 'As senhas não coincidem.'; return;
   }
-
+ 
   // confirma que quem está na frente da tela sabe a senha atual, antes de trocar —
   // protege contra alguém mexendo numa sessão que ficou aberta/desbloqueada
   msg.style.color = 'var(--text2)'; msg.textContent = 'Confirmando sua senha atual...';
@@ -2142,19 +2141,19 @@ async function trocarSenha() {
   if (erroAuth) {
     msg.style.color = 'var(--red)'; msg.textContent = 'Senha atual incorreta.'; return;
   }
-
+ 
   const { error } = await supabaseClient.auth.updateUser({ password: nova });
   if (error) {
     msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao trocar senha: ' + error.message; return;
   }
-
+ 
   msg.style.color = 'var(--green)'; msg.textContent = 'Senha atualizada com sucesso!';
   document.getElementById('cfg-senha-atual').value = '';
   document.getElementById('cfg-nova-senha').value = '';
   document.getElementById('cfg-confirma-senha').value = '';
   toast('Senha atualizada!');
 }
-
+ 
 // ===== LEMBRETES DE HOJE =====
 function hojeLocal() {
   const d = new Date();
@@ -2163,12 +2162,12 @@ function hojeLocal() {
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
-
+ 
 function montarListaLembretes(deHoje) {
   const hoje = hojeLocal();
   const dataFormatada = new Date(hoje + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
   document.getElementById('lembretes-data').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
-
+ 
   const statusCls = { 'Agendado': 'badge-amber', 'Confirmado': 'badge-gold' };
   let html = '';
   if (!deHoje.length) {
@@ -2187,12 +2186,12 @@ function montarListaLembretes(deHoje) {
   document.getElementById('lembretes-lista').innerHTML = html;
   document.getElementById('lembretes-overlay').style.display = 'flex';
 }
-
+ 
 function agendamentosDeHoje() {
   const hoje = hojeLocal();
   return agendamentos.filter(a => a.data === hoje && a.status !== 'Cancelado' && a.status !== 'Concluído');
 }
-
+ 
 // chamado automaticamente ao logar — só aparece uma vez por dia nesse navegador, e só se tiver algo
 function verificarLembretesHoje() {
   // limpeza de uma versão antiga da chave (que marcava o dia inteiro, não cada agendamento)
@@ -2200,32 +2199,32 @@ function verificarLembretesHoje() {
   localStorage.removeItem(`daat_lembretes_${organizacaoId}_${hoje}`);
   const chave = `daat_lembretes_ids_${organizacaoId}_${hoje}`;
   const idsJaMostrados = JSON.parse(localStorage.getItem(chave) || '[]');
-
+ 
   const deHoje = agendamentosDeHoje();
   if (!deHoje.length) return;
-
+ 
   const temNovo = deHoje.some(a => !idsJaMostrados.includes(a.id));
   if (!temNovo) return; // todos os agendamentos de hoje já foram mostrados nesse navegador
-
+ 
   localStorage.setItem(chave, JSON.stringify(deHoje.map(a => a.id)));
   montarListaLembretes(deHoje);
 }
-
+ 
 // chamado pelo sininho no header — sempre mostra, mesmo que já tenha visto hoje ou não tenha nada
 function mostrarLembretesManual() {
   montarListaLembretes(agendamentosDeHoje());
 }
-
+ 
 function fecharLembretes() {
   document.getElementById('lembretes-overlay').style.display = 'none';
 }
-
+ 
 // ===== EXPORTAR (EXCEL) =====
 function nomeArquivoComData(prefixo) {
   const hoje = new Date().toISOString().split('T')[0];
   return `${prefixo}-${hoje}.xlsx`;
 }
-
+ 
 function exportarProdutos() {
   if (!produtos.length) { toast('Nenhum item pra exportar.'); return; }
   const linhas = produtos.map(p => ({
@@ -2249,7 +2248,7 @@ function exportarProdutos() {
   XLSX.writeFile(wb, nomeArquivoComData('produtos'));
   toast('Exportado!');
 }
-
+ 
 function exportarVendas() {
   if (!vendas.length) { toast('Nenhuma venda pra exportar.'); return; }
   const linhas = [...vendas].reverse().map(v => ({
@@ -2270,7 +2269,7 @@ function exportarVendas() {
   XLSX.writeFile(wb, nomeArquivoComData('vendas'));
   toast('Exportado!');
 }
-
+ 
 function exportarClientes() {
   if (!clientes.length) { toast('Nenhum cliente pra exportar.'); return; }
   const linhas = clientes.map(c => ({
@@ -2287,7 +2286,7 @@ function exportarClientes() {
   XLSX.writeFile(wb, nomeArquivoComData('clientes'));
   toast('Exportado!');
 }
-
+ 
 function exportarAgendamentos() {
   if (!agendamentos.length) { toast('Nenhum agendamento pra exportar.'); return; }
   const linhas = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
@@ -2304,13 +2303,13 @@ function exportarAgendamentos() {
   XLSX.writeFile(wb, nomeArquivoComData('agendamentos'));
   toast('Exportado!');
 }
-
+ 
 function exportarTudo() {
   if (!produtos.length && !vendas.length && !clientes.length && !agendamentos.length) {
     toast('Nenhum dado pra exportar ainda.'); return;
   }
   const wb = XLSX.utils.book_new();
-
+ 
   if (produtos.length) {
     const shProdutos = produtos.map(p => ({
       'Nome': p.nome, 'Tipo': p.tipo || 'Produto', 'Fornecedor': p.fornecedor || '', 'Linha/Coleção': p.serie || '',
@@ -2320,7 +2319,7 @@ function exportarTudo() {
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shProdutos), 'Produtos');
   }
-
+ 
   if (vendas.length) {
     const shVendas = [...vendas].reverse().map(v => ({
       'Data': v.data.split('-').reverse().join('/'), 'Vendedor': v.vendedor || '', 'Canal': v.canal || '',
@@ -2330,14 +2329,14 @@ function exportarTudo() {
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shVendas), 'Vendas');
   }
-
+ 
   if (clientes.length) {
     const shClientes = clientes.map(c => ({
       'Nome': c.nome, 'Telefone': c.tel || '', 'E-mail': c.email || '', 'CPF': c.cpf || '', 'CNPJ': c.cnpj || '', 'Observações': c.obs || '',
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shClientes), 'Clientes');
   }
-
+ 
   if (agendamentos.length) {
     const shAgenda = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
       'Data': a.data.split('-').reverse().join('/'), 'Hora': a.hora || '', 'Cliente': a.clienteNome || '',
@@ -2345,11 +2344,11 @@ function exportarTudo() {
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shAgenda), 'Agendamentos');
   }
-
+ 
   XLSX.writeFile(wb, nomeArquivoComData('daat-dados-completos'));
   toast('Exportado!');
 }
-
+ 
 // ===== AJUDA: FAQ =====
 const FAQ_ITEMS = [
   { pergunta: 'Esqueci minha senha, e agora?', resposta: 'Na tela de login, clique em "Esqueci minha senha", digite seu e-mail e você vai receber um link pra criar uma senha nova. Confira também a caixa de spam.' },
@@ -2361,7 +2360,7 @@ const FAQ_ITEMS = [
   { pergunta: 'O sistema bloqueou meu acesso, o que houve?', resposta: 'Isso acontece se o teste grátis expirou ou se há alguma pendência. A tela de bloqueio mostra nossos contatos — é só chamar a gente que resolvemos rápido.' },
   { pergunta: 'Posso trocar o nome da minha empresa no sistema?', resposta: 'Sim, vá em Configurações, campo "Empresa", digite o nome novo e clique em "Salvar".' },
 ];
-
+ 
 function renderFAQ() {
   const wrap = document.getElementById('faq-lista');
   if (!wrap) return;
@@ -2375,7 +2374,7 @@ function renderFAQ() {
     </div>
   `).join('');
 }
-
+ 
 function toggleFAQ(i) {
   const resp = document.getElementById(`faq-resposta-${i}`);
   const icon = document.getElementById(`faq-icon-${i}`);
@@ -2383,23 +2382,23 @@ function toggleFAQ(i) {
   resp.style.display = aberto ? 'none' : 'block';
   icon.style.transform = aberto ? 'rotate(180deg)' : 'rotate(0deg)';
 }
-
+ 
 // ===== AJUDA: CHAMADOS =====
 async function renderAjuda() {
   renderFAQ();
   await renderChamados();
 }
-
+ 
 async function abrirChamado() {
   const assunto = document.getElementById('ch-assunto').value.trim();
   const mensagem = document.getElementById('ch-mensagem').value.trim();
   const msgEl = document.getElementById('ch-msg');
   msgEl.style.display = 'block';
-
+ 
   if (!assunto || !mensagem) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Preencha assunto e mensagem.'; return;
   }
-
+ 
   const { data: { user } } = await supabaseClient.auth.getUser();
   const { error } = await supabaseClient.from('chamados').insert({
     organizacao_id: organizacaoId,
@@ -2407,34 +2406,34 @@ async function abrirChamado() {
     assunto,
     mensagem,
   });
-
+ 
   if (error) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Erro ao enviar: ' + error.message; return;
   }
-
+ 
   msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Chamado enviado! A resposta aparece aqui embaixo assim que a gente responder.';
   document.getElementById('ch-assunto').value = '';
   document.getElementById('ch-mensagem').value = '';
   toast('Chamado enviado!');
   await renderChamados();
 }
-
+ 
 async function renderChamados() {
   const wrap = document.getElementById('chamados-lista');
   if (!wrap) return;
-
+ 
   const { data, error } = await supabaseClient
     .from('chamados').select('*').eq('organizacao_id', organizacaoId).order('criado_em', { ascending: false });
-
+ 
   if (error || !data) { wrap.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i>Erro ao carregar chamados</div>'; return; }
-
+ 
   document.getElementById('chamados-count').textContent = `(${data.length})`;
-
+ 
   if (!data.length) {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-message-2"></i>Nenhum chamado enviado ainda</div>';
     return;
   }
-
+ 
   const statusCls = { 'aberto': 'badge-amber', 'respondido': 'badge-green', 'fechado': 'badge-gray' };
   const statusLabel = { 'aberto': 'Aberto', 'respondido': 'Respondido', 'fechado': 'Fechado' };
   let h = '';
@@ -2451,32 +2450,32 @@ async function renderChamados() {
   });
   wrap.innerHTML = h;
 }
-
+ 
 // ===== LIXEIRA (itens excluídos, recuperáveis) =====
 async function renderLixeira() {
   const wrap = document.getElementById('lixeira-lista');
   if (!wrap) return;
   wrap.innerHTML = '<div style="text-align:center;color:var(--text3);padding:1rem;font-size:12px;">Carregando...</div>';
-
+ 
   const [p, v, c, a] = await Promise.all([
     supabaseClient.from('produtos').select('id, nome, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
     supabaseClient.from('vendas').select('id, cliente, data, total, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
     supabaseClient.from('clientes').select('id, nome, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
     supabaseClient.from('agendamentos').select('id, cliente_nome, data, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
   ]);
-
+ 
   const itens = [
     ...(p.data || []).map(x => ({ tipo: 'Produto', tabela: 'produtos', id: x.id, label: x.nome, deletadoEm: x.deletado_em })),
     ...(v.data || []).map(x => ({ tipo: 'Venda', tabela: 'vendas', id: x.id, label: `${x.cliente || 'Sem cliente'} — R$ ${Number(x.total).toFixed(2)}`, deletadoEm: x.deletado_em })),
     ...(c.data || []).map(x => ({ tipo: 'Cliente', tabela: 'clientes', id: x.id, label: x.nome, deletadoEm: x.deletado_em })),
     ...(a.data || []).map(x => ({ tipo: 'Agendamento', tabela: 'agendamentos', id: x.id, label: `${x.cliente_nome || 'Sem cliente'} — ${(x.data||'').split('-').reverse().join('/')}`, deletadoEm: x.deletado_em })),
   ].sort((x, y) => new Date(y.deletadoEm) - new Date(x.deletadoEm));
-
+ 
   if (!itens.length) {
     wrap.innerHTML = '<div class="empty" style="padding:1.5rem 0;"><i class="ti ti-trash-off"></i>Lixeira vazia</div>';
     return;
   }
-
+ 
   let h = '';
   itens.forEach(it => {
     h += `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
@@ -2490,7 +2489,7 @@ async function renderLixeira() {
   });
   wrap.innerHTML = h;
 }
-
+ 
 async function restaurarItem(tabela, id) {
   const { error } = await supabaseClient.from(tabela).update({ deletado_em: null }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao restaurar.'); console.error(error); return; }
@@ -2498,14 +2497,14 @@ async function restaurarItem(tabela, id) {
   renderLixeira();
   toast('Item restaurado!');
 }
-
+ 
 // ===== EQUIPE (funcionários) =====
 function toggleSenhaVisivelEq(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
-
+ 
 async function convidarFuncionario() {
   const nome = document.getElementById('eq-nome').value.trim();
   const email = document.getElementById('eq-email').value.trim();
@@ -2513,7 +2512,7 @@ async function convidarFuncionario() {
   const senhaConfirma = document.getElementById('eq-senha-confirma').value;
   const msgEl = document.getElementById('eq-msg');
   msgEl.style.display = 'block';
-
+ 
   if (!nome || !email || !senha || !senhaConfirma) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Preencha todos os campos.'; return;
   }
@@ -2523,13 +2522,13 @@ async function convidarFuncionario() {
   if (senha !== senhaConfirma) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'As senhas não coincidem.'; return;
   }
-
+ 
   // usa um client temporário (sessão própria, não persistida) pra criar o login do
   // funcionário sem derrubar a sua sessão de dono aqui no navegador
   const clientTemp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-
+ 
   const { data: signUpData, error: signUpErr } = await clientTemp.auth.signUp({ email, password: senha });
   if (signUpErr) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Erro ao criar acesso: ' + signUpErr.message; return;
@@ -2538,32 +2537,32 @@ async function convidarFuncionario() {
   if (!novoId) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Não foi possível criar o usuário. Confira se a confirmação de e-mail está desativada no Supabase.'; return;
   }
-
+ 
   const { error: rpcErr } = await supabaseClient.rpc('convidar_funcionario', { p_novo_user_id: novoId, p_nome: nome });
   if (rpcErr) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Usuário criado, mas houve erro ao vincular: ' + rpcErr.message; return;
   }
-
+ 
   msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Acesso do funcionário criado!';
   ['eq-nome','eq-email','eq-senha','eq-senha-confirma'].forEach(id => document.getElementById(id).value = '');
   toast('Funcionário adicionado!');
   renderEquipe();
 }
-
+ 
 async function renderEquipe() {
   const card = document.getElementById('equipe-card');
   if (!card) return;
   if (meuRole === 'funcionario') { card.style.display = 'none'; return; }
-
+ 
   const wrap = document.getElementById('equipe-lista');
   const { data, error } = await supabaseClient.from('perfis').select('id, nome, role').eq('organizacao_id', organizacaoId).order('role');
   if (error || !data) { wrap.innerHTML = ''; return; }
-
+ 
   if (data.length <= 1) {
     wrap.innerHTML = '<div class="empty" style="padding:1rem 0;"><i class="ti ti-users-group"></i>Só você tem acesso até agora</div>';
     return;
   }
-
+ 
   wrap.innerHTML = data.map(p => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
       <span style="font-size:13px;color:var(--text);">${escapeHTML(p.nome) || '—'}</span>
@@ -2571,13 +2570,13 @@ async function renderEquipe() {
     </div>
   `).join('');
 }
-
+ 
 // ===== PIX (QR code estático, gerado no navegador, sem gateway nem custo) =====
 const PIX_CHAVE = '6b6a5dfa-401e-4f92-bf4d-b00f8fb64848';
 const PIX_NOME = 'DAAT-TECH';
 const PIX_CIDADE = 'SAO JOSE CAMPOS';
 let pixPayloadAtual = '';
-
+ 
 function crc16ccitt(str) {
   let crc = 0xFFFF;
   for (let i = 0; i < str.length; i++) {
@@ -2589,16 +2588,16 @@ function crc16ccitt(str) {
   }
   return crc.toString(16).toUpperCase().padStart(4, '0');
 }
-
+ 
 function campoEMV(id, valor) {
   const tamanho = String(valor.length).padStart(2, '0');
   return `${id}${tamanho}${valor}`;
 }
-
+ 
 function gerarPayloadPix(valor) {
   const merchantAccountInfo = campoEMV('26', campoEMV('00', 'br.gov.bcb.pix') + campoEMV('01', PIX_CHAVE));
   const valorFormatado = valor.toFixed(2);
-
+ 
   const payload = ''
     + campoEMV('00', '01')
     + merchantAccountInfo
@@ -2610,26 +2609,29 @@ function gerarPayloadPix(valor) {
     + campoEMV('60', PIX_CIDADE.substring(0, 15))
     + campoEMV('62', campoEMV('05', '***'))
     + '6304';
-
+ 
   return payload + crc16ccitt(payload);
 }
-
+ 
 function renderPix(valor) {
   pixPayloadAtual = gerarPayloadPix(valor);
   document.getElementById('pix-valor').textContent = `R$ ${valor.toFixed(2)}`;
   document.getElementById('pix-copia-cola').value = pixPayloadAtual;
-
+ 
   const wrap = document.getElementById('pix-qr-wrap');
   wrap.innerHTML = '';
-  const canvas = document.createElement('canvas');
-  wrap.appendChild(canvas);
-  if (window.QRCode) {
-    QRCode.toCanvas(canvas, pixPayloadAtual, { width: 180, margin: 1 }, (err) => {
-      if (err) console.error('Erro ao gerar QR do Pix:', err);
-    });
+  try {
+    if (!window.qrcode) throw new Error('biblioteca de QR não carregou');
+    const qr = qrcode(0, 'M');
+    qr.addData(pixPayloadAtual);
+    qr.make();
+    wrap.innerHTML = qr.createImgTag(4, 8);
+  } catch (e) {
+    console.error('Erro ao gerar QR do Pix:', e);
+    wrap.innerHTML = '<div style="font-size:11px;color:var(--text2);padding:10px;max-width:160px;">Não foi possível carregar o QR agora — usa o código "copia e cola" ao lado pra pagar.</div>';
   }
 }
-
+ 
 function copiarPix() {
   navigator.clipboard.writeText(pixPayloadAtual).then(() => {
     const msg = document.getElementById('pix-copiado-msg');
@@ -2641,7 +2643,7 @@ function copiarPix() {
     document.execCommand('copy');
   });
 }
-
+ 
 // ===== INIT =====
 // (a inicialização acontece em iniciarApp(), chamada após login ou sessão existente)
 </script>
