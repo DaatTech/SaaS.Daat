@@ -28,34 +28,34 @@
 //  http://www.denso-wave.com/qrcode/faqpatent-e.html
 //
 //---------------------------------------------------------------------
- 
+
 var qrcode = function() {
- 
+
   //---------------------------------------------------------------------
   // qrcode
   //---------------------------------------------------------------------
- 
+
   /**
    * qrcode
    * @param typeNumber 1 to 40
    * @param errorCorrectionLevel 'L','M','Q','H'
    */
   var qrcode = function(typeNumber, errorCorrectionLevel) {
- 
+
     var PAD0 = 0xEC;
     var PAD1 = 0x11;
- 
+
     var _typeNumber = typeNumber;
     var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
     var _modules = null;
     var _moduleCount = 0;
     var _dataCache = null;
     var _dataList = [];
- 
+
     var _this = {};
- 
+
     var makeImpl = function(test, maskPattern) {
- 
+
       _moduleCount = _typeNumber * 4 + 17;
       _modules = function(moduleCount) {
         var modules = new Array(moduleCount);
@@ -67,35 +67,35 @@ var qrcode = function() {
         }
         return modules;
       }(_moduleCount);
- 
+
       setupPositionProbePattern(0, 0);
       setupPositionProbePattern(_moduleCount - 7, 0);
       setupPositionProbePattern(0, _moduleCount - 7);
       setupPositionAdjustPattern();
       setupTimingPattern();
       setupTypeInfo(test, maskPattern);
- 
+
       if (_typeNumber >= 7) {
         setupTypeNumber(test);
       }
- 
+
       if (_dataCache == null) {
         _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
       }
- 
+
       mapData(_dataCache, maskPattern);
     };
- 
+
     var setupPositionProbePattern = function(row, col) {
- 
+
       for (var r = -1; r <= 7; r += 1) {
- 
+
         if (row + r <= -1 || _moduleCount <= row + r) continue;
- 
+
         for (var c = -1; c <= 7; c += 1) {
- 
+
           if (col + c <= -1 || _moduleCount <= col + c) continue;
- 
+
           if ( (0 <= r && r <= 6 && (c == 0 || c == 6) )
               || (0 <= c && c <= 6 && (r == 0 || r == 6) )
               || (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
@@ -106,36 +106,36 @@ var qrcode = function() {
         }
       }
     };
- 
+
     var getBestMaskPattern = function() {
- 
+
       var minLostPoint = 0;
       var pattern = 0;
- 
+
       for (var i = 0; i < 8; i += 1) {
- 
+
         makeImpl(true, i);
- 
+
         var lostPoint = QRUtil.getLostPoint(_this);
- 
+
         if (i == 0 || minLostPoint > lostPoint) {
           minLostPoint = lostPoint;
           pattern = i;
         }
       }
- 
+
       return pattern;
     };
- 
+
     var setupTimingPattern = function() {
- 
+
       for (var r = 8; r < _moduleCount - 8; r += 1) {
         if (_modules[r][6] != null) {
           continue;
         }
         _modules[r][6] = (r % 2 == 0);
       }
- 
+
       for (var c = 8; c < _moduleCount - 8; c += 1) {
         if (_modules[6][c] != null) {
           continue;
@@ -143,26 +143,26 @@ var qrcode = function() {
         _modules[6][c] = (c % 2 == 0);
       }
     };
- 
+
     var setupPositionAdjustPattern = function() {
- 
+
       var pos = QRUtil.getPatternPosition(_typeNumber);
- 
+
       for (var i = 0; i < pos.length; i += 1) {
- 
+
         for (var j = 0; j < pos.length; j += 1) {
- 
+
           var row = pos[i];
           var col = pos[j];
- 
+
           if (_modules[row][col] != null) {
             continue;
           }
- 
+
           for (var r = -2; r <= 2; r += 1) {
- 
+
             for (var c = -2; c <= 2; c += 1) {
- 
+
               if (r == -2 || r == 2 || c == -2 || c == 2
                   || (r == 0 && c == 0) ) {
                 _modules[row + r][col + c] = true;
@@ -174,32 +174,32 @@ var qrcode = function() {
         }
       }
     };
- 
+
     var setupTypeNumber = function(test) {
- 
+
       var bits = QRUtil.getBCHTypeNumber(_typeNumber);
- 
+
       for (var i = 0; i < 18; i += 1) {
         var mod = (!test && ( (bits >> i) & 1) == 1);
         _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
       }
- 
+
       for (var i = 0; i < 18; i += 1) {
         var mod = (!test && ( (bits >> i) & 1) == 1);
         _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
       }
     };
- 
+
     var setupTypeInfo = function(test, maskPattern) {
- 
+
       var data = (_errorCorrectionLevel << 3) | maskPattern;
       var bits = QRUtil.getBCHTypeInfo(data);
- 
+
       // vertical
       for (var i = 0; i < 15; i += 1) {
- 
+
         var mod = (!test && ( (bits >> i) & 1) == 1);
- 
+
         if (i < 6) {
           _modules[i][8] = mod;
         } else if (i < 8) {
@@ -208,12 +208,12 @@ var qrcode = function() {
           _modules[_moduleCount - 15 + i][8] = mod;
         }
       }
- 
+
       // horizontal
       for (var i = 0; i < 15; i += 1) {
- 
+
         var mod = (!test && ( (bits >> i) & 1) == 1);
- 
+
         if (i < 8) {
           _modules[8][_moduleCount - i - 1] = mod;
         } else if (i < 9) {
@@ -222,53 +222,53 @@ var qrcode = function() {
           _modules[8][15 - i - 1] = mod;
         }
       }
- 
+
       // fixed module
       _modules[_moduleCount - 8][8] = (!test);
     };
- 
+
     var mapData = function(data, maskPattern) {
- 
+
       var inc = -1;
       var row = _moduleCount - 1;
       var bitIndex = 7;
       var byteIndex = 0;
       var maskFunc = QRUtil.getMaskFunction(maskPattern);
- 
+
       for (var col = _moduleCount - 1; col > 0; col -= 2) {
- 
+
         if (col == 6) col -= 1;
- 
+
         while (true) {
- 
+
           for (var c = 0; c < 2; c += 1) {
- 
+
             if (_modules[row][col - c] == null) {
- 
+
               var dark = false;
- 
+
               if (byteIndex < data.length) {
                 dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
               }
- 
+
               var mask = maskFunc(row, col - c);
- 
+
               if (mask) {
                 dark = !dark;
               }
- 
+
               _modules[row][col - c] = dark;
               bitIndex -= 1;
- 
+
               if (bitIndex == -1) {
                 byteIndex += 1;
                 bitIndex = 7;
               }
             }
           }
- 
+
           row += inc;
- 
+
           if (row < 0 || _moduleCount <= row) {
             row -= inc;
             inc = -inc;
@@ -277,35 +277,35 @@ var qrcode = function() {
         }
       }
     };
- 
+
     var createBytes = function(buffer, rsBlocks) {
- 
+
       var offset = 0;
- 
+
       var maxDcCount = 0;
       var maxEcCount = 0;
- 
+
       var dcdata = new Array(rsBlocks.length);
       var ecdata = new Array(rsBlocks.length);
- 
+
       for (var r = 0; r < rsBlocks.length; r += 1) {
- 
+
         var dcCount = rsBlocks[r].dataCount;
         var ecCount = rsBlocks[r].totalCount - dcCount;
- 
+
         maxDcCount = Math.max(maxDcCount, dcCount);
         maxEcCount = Math.max(maxEcCount, ecCount);
- 
+
         dcdata[r] = new Array(dcCount);
- 
+
         for (var i = 0; i < dcdata[r].length; i += 1) {
           dcdata[r][i] = 0xff & buffer.getBuffer()[i + offset];
         }
         offset += dcCount;
- 
+
         var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
         var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
- 
+
         var modPoly = rawPoly.mod(rsPoly);
         ecdata[r] = new Array(rsPoly.getLength() - 1);
         for (var i = 0; i < ecdata[r].length; i += 1) {
@@ -313,15 +313,15 @@ var qrcode = function() {
           ecdata[r][i] = (modIndex >= 0)? modPoly.getAt(modIndex) : 0;
         }
       }
- 
+
       var totalCodeCount = 0;
       for (var i = 0; i < rsBlocks.length; i += 1) {
         totalCodeCount += rsBlocks[i].totalCount;
       }
- 
+
       var data = new Array(totalCodeCount);
       var index = 0;
- 
+
       for (var i = 0; i < maxDcCount; i += 1) {
         for (var r = 0; r < rsBlocks.length; r += 1) {
           if (i < dcdata[r].length) {
@@ -330,7 +330,7 @@ var qrcode = function() {
           }
         }
       }
- 
+
       for (var i = 0; i < maxEcCount; i += 1) {
         for (var r = 0; r < rsBlocks.length; r += 1) {
           if (i < ecdata[r].length) {
@@ -339,29 +339,29 @@ var qrcode = function() {
           }
         }
       }
- 
+
       return data;
     };
- 
+
     var createData = function(typeNumber, errorCorrectionLevel, dataList) {
- 
+
       var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
- 
+
       var buffer = qrBitBuffer();
- 
+
       for (var i = 0; i < dataList.length; i += 1) {
         var data = dataList[i];
         buffer.put(data.getMode(), 4);
         buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
         data.write(buffer);
       }
- 
+
       // calc num max data.
       var totalDataCount = 0;
       for (var i = 0; i < rsBlocks.length; i += 1) {
         totalDataCount += rsBlocks[i].dataCount;
       }
- 
+
       if (buffer.getLengthInBits() > totalDataCount * 8) {
         throw 'code length overflow. ('
           + buffer.getLengthInBits()
@@ -369,40 +369,40 @@ var qrcode = function() {
           + totalDataCount * 8
           + ')';
       }
- 
+
       // end code
       if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
         buffer.put(0, 4);
       }
- 
+
       // padding
       while (buffer.getLengthInBits() % 8 != 0) {
         buffer.putBit(false);
       }
- 
+
       // padding
       while (true) {
- 
+
         if (buffer.getLengthInBits() >= totalDataCount * 8) {
           break;
         }
         buffer.put(PAD0, 8);
- 
+
         if (buffer.getLengthInBits() >= totalDataCount * 8) {
           break;
         }
         buffer.put(PAD1, 8);
       }
- 
+
       return createBytes(buffer, rsBlocks);
     };
- 
+
     _this.addData = function(data, mode) {
- 
+
       mode = mode || 'Byte';
- 
+
       var newData = null;
- 
+
       switch(mode) {
       case 'Numeric' :
         newData = qrNumber(data);
@@ -419,71 +419,71 @@ var qrcode = function() {
       default :
         throw 'mode:' + mode;
       }
- 
+
       _dataList.push(newData);
       _dataCache = null;
     };
- 
+
     _this.isDark = function(row, col) {
       if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
         throw row + ',' + col;
       }
       return _modules[row][col];
     };
- 
+
     _this.getModuleCount = function() {
       return _moduleCount;
     };
- 
+
     _this.make = function() {
       if (_typeNumber < 1) {
         var typeNumber = 1;
- 
+
         for (; typeNumber < 40; typeNumber++) {
           var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
           var buffer = qrBitBuffer();
- 
+
           for (var i = 0; i < _dataList.length; i++) {
             var data = _dataList[i];
             buffer.put(data.getMode(), 4);
             buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
             data.write(buffer);
           }
- 
+
           var totalDataCount = 0;
           for (var i = 0; i < rsBlocks.length; i++) {
             totalDataCount += rsBlocks[i].dataCount;
           }
- 
+
           if (buffer.getLengthInBits() <= totalDataCount * 8) {
             break;
           }
         }
- 
+
         _typeNumber = typeNumber;
       }
- 
+
       makeImpl(false, getBestMaskPattern() );
     };
- 
+
     _this.createTableTag = function(cellSize, margin) {
- 
+
       cellSize = cellSize || 2;
       margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
- 
+
       var qrHtml = '';
- 
+
       qrHtml += '<table style="';
       qrHtml += ' border-width: 0px; border-style: none;';
       qrHtml += ' border-collapse: collapse;';
       qrHtml += ' padding: 0px; margin: ' + margin + 'px;';
       qrHtml += '">';
       qrHtml += '<tbody>';
- 
+
       for (var r = 0; r < _this.getModuleCount(); r += 1) {
- 
+
         qrHtml += '<tr>';
- 
+
         for (var c = 0; c < _this.getModuleCount(); c += 1) {
           qrHtml += '<td style="';
           qrHtml += ' border-width: 0px; border-style: none;';
@@ -496,18 +496,18 @@ var qrcode = function() {
           qrHtml += ';';
           qrHtml += '"/>';
         }
- 
+
         qrHtml += '</tr>';
       }
- 
+
       qrHtml += '</tbody>';
       qrHtml += '</table>';
- 
+
       return qrHtml;
     };
- 
+
     _this.createSvgTag = function(cellSize, margin, alt, title) {
- 
+
       var opts = {};
       if (typeof arguments[0] == 'object') {
         // Called by options.
@@ -518,26 +518,26 @@ var qrcode = function() {
         alt = opts.alt;
         title = opts.title;
       }
- 
+
       cellSize = cellSize || 2;
       margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
- 
+
       // Compose alt property surrogate
       alt = (typeof alt === 'string') ? {text: alt} : alt || {};
       alt.text = alt.text || null;
       alt.id = (alt.text) ? alt.id || 'qrcode-description' : null;
- 
+
       // Compose title property surrogate
       title = (typeof title === 'string') ? {text: title} : title || {};
       title.text = title.text || null;
       title.id = (title.text) ? title.id || 'qrcode-title' : null;
- 
+
       var size = _this.getModuleCount() * cellSize + margin * 2;
       var c, mc, r, mr, qrSvg='', rect;
- 
+
       rect = 'l' + cellSize + ',0 0,' + cellSize +
         ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
- 
+
       qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
       qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
       qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
@@ -551,7 +551,7 @@ var qrcode = function() {
           escapeXml(alt.text) + '</description>' : '';
       qrSvg += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
       qrSvg += '<path d="';
- 
+
       for (r = 0; r < _this.getModuleCount(); r += 1) {
         mr = r * cellSize + margin;
         for (c = 0; c < _this.getModuleCount(); c += 1) {
@@ -561,22 +561,22 @@ var qrcode = function() {
           }
         }
       }
- 
+
       qrSvg += '" stroke="transparent" fill="black"/>';
       qrSvg += '</svg>';
- 
+
       return qrSvg;
     };
- 
+
     _this.createDataURL = function(cellSize, margin) {
- 
+
       cellSize = cellSize || 2;
       margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
- 
+
       var size = _this.getModuleCount() * cellSize + margin * 2;
       var min = margin;
       var max = size - margin;
- 
+
       return createDataURL(size, size, function(x, y) {
         if (min <= x && x < max && min <= y && y < max) {
           var c = Math.floor( (x - min) / cellSize);
@@ -587,14 +587,14 @@ var qrcode = function() {
         }
       } );
     };
- 
+
     _this.createImgTag = function(cellSize, margin, alt) {
- 
+
       cellSize = cellSize || 2;
       margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
- 
+
       var size = _this.getModuleCount() * cellSize + margin * 2;
- 
+
       var img = '';
       img += '<img';
       img += '\u0020src="';
@@ -612,10 +612,10 @@ var qrcode = function() {
         img += '"';
       }
       img += '/>';
- 
+
       return img;
     };
- 
+
     var escapeXml = function(s) {
       var escaped = '';
       for (var i = 0; i < s.length; i += 1) {
@@ -630,82 +630,82 @@ var qrcode = function() {
       }
       return escaped;
     };
- 
+
     var _createHalfASCII = function(margin) {
       var cellSize = 1;
       margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
- 
+
       var size = _this.getModuleCount() * cellSize + margin * 2;
       var min = margin;
       var max = size - margin;
- 
+
       var y, x, r1, r2, p;
- 
+
       var blocks = {
         '██': '█',
         '█ ': '▀',
         ' █': '▄',
         '  ': ' '
       };
- 
+
       var blocksLastLineNoMargin = {
         '██': '▀',
         '█ ': '▀',
         ' █': ' ',
         '  ': ' '
       };
- 
+
       var ascii = '';
       for (y = 0; y < size; y += 2) {
         r1 = Math.floor((y - min) / cellSize);
         r2 = Math.floor((y + 1 - min) / cellSize);
         for (x = 0; x < size; x += 1) {
           p = '█';
- 
+
           if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
             p = ' ';
           }
- 
+
           if (min <= x && x < max && min <= y+1 && y+1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
             p += ' ';
           }
           else {
             p += '█';
           }
- 
+
           // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
           ascii += (margin < 1 && y+1 >= max) ? blocksLastLineNoMargin[p] : blocks[p];
         }
- 
+
         ascii += '\n';
       }
- 
+
       if (size % 2 && margin > 0) {
         return ascii.substring(0, ascii.length - size - 1) + Array(size+1).join('▀');
       }
- 
+
       return ascii.substring(0, ascii.length-1);
     };
- 
+
     _this.createASCII = function(cellSize, margin) {
       cellSize = cellSize || 1;
- 
+
       if (cellSize < 2) {
         return _createHalfASCII(margin);
       }
- 
+
       cellSize -= 1;
       margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
- 
+
       var size = _this.getModuleCount() * cellSize + margin * 2;
       var min = margin;
       var max = size - margin;
- 
+
       var y, x, r, p;
- 
+
       var white = Array(cellSize+1).join('██');
       var black = Array(cellSize+1).join('  ');
- 
+
       var ascii = '';
       var line = '';
       for (y = 0; y < size; y += 1) {
@@ -713,23 +713,23 @@ var qrcode = function() {
         line = '';
         for (x = 0; x < size; x += 1) {
           p = 1;
- 
+
           if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
             p = 0;
           }
- 
+
           // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
           line += p ? white : black;
         }
- 
+
         for (r = 0; r < cellSize; r += 1) {
           ascii += line + '\n';
         }
       }
- 
+
       return ascii.substring(0, ascii.length-1);
     };
- 
+
     _this.renderTo2dContext = function(context, cellSize) {
       cellSize = cellSize || 2;
       var length = _this.getModuleCount();
@@ -740,14 +740,14 @@ var qrcode = function() {
         }
       }
     }
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // qrcode.stringToBytes
   //---------------------------------------------------------------------
- 
+
   qrcode.stringToBytesFuncs = {
     'default' : function(s) {
       var bytes = [];
@@ -758,31 +758,31 @@ var qrcode = function() {
       return bytes;
     }
   };
- 
+
   qrcode.stringToBytes = qrcode.stringToBytesFuncs['default'];
- 
+
   //---------------------------------------------------------------------
   // qrcode.createStringToBytes
   //---------------------------------------------------------------------
- 
+
   /**
    * @param unicodeData base64 string of byte array.
    * [16bit Unicode],[16bit Bytes], ...
    * @param numChars
    */
   qrcode.createStringToBytes = function(unicodeData, numChars) {
- 
+
     // create conversion map.
- 
+
     var unicodeMap = function() {
- 
+
       var bin = base64DecodeInputStream(unicodeData);
       var read = function() {
         var b = bin.read();
         if (b == -1) throw 'eof';
         return b;
       };
- 
+
       var count = 0;
       var unicodeMap = {};
       while (true) {
@@ -799,12 +799,12 @@ var qrcode = function() {
       if (count != numChars) {
         throw count + ' != ' + numChars;
       }
- 
+
       return unicodeMap;
     }();
- 
+
     var unknownChar = '?'.charCodeAt(0);
- 
+
     return function(s) {
       var bytes = [];
       for (var i = 0; i < s.length; i += 1) {
@@ -830,33 +830,33 @@ var qrcode = function() {
       return bytes;
     };
   };
- 
+
   //---------------------------------------------------------------------
   // QRMode
   //---------------------------------------------------------------------
- 
+
   var QRMode = {
     MODE_NUMBER :    1 << 0,
     MODE_ALPHA_NUM : 1 << 1,
     MODE_8BIT_BYTE : 1 << 2,
     MODE_KANJI :     1 << 3
   };
- 
+
   //---------------------------------------------------------------------
   // QRErrorCorrectionLevel
   //---------------------------------------------------------------------
- 
+
   var QRErrorCorrectionLevel = {
     L : 1,
     M : 0,
     Q : 3,
     H : 2
   };
- 
+
   //---------------------------------------------------------------------
   // QRMaskPattern
   //---------------------------------------------------------------------
- 
+
   var QRMaskPattern = {
     PATTERN000 : 0,
     PATTERN001 : 1,
@@ -867,13 +867,13 @@ var qrcode = function() {
     PATTERN110 : 6,
     PATTERN111 : 7
   };
- 
+
   //---------------------------------------------------------------------
   // QRUtil
   //---------------------------------------------------------------------
- 
+
   var QRUtil = function() {
- 
+
     var PATTERN_POSITION_TABLE = [
       [],
       [6, 18],
@@ -919,9 +919,9 @@ var qrcode = function() {
     var G15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
     var G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
     var G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
- 
+
     var _this = {};
- 
+
     var getBCHDigit = function(data) {
       var digit = 0;
       while (data != 0) {
@@ -930,7 +930,7 @@ var qrcode = function() {
       }
       return digit;
     };
- 
+
     _this.getBCHTypeInfo = function(data) {
       var d = data << 10;
       while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
@@ -938,7 +938,7 @@ var qrcode = function() {
       }
       return ( (data << 10) | d) ^ G15_MASK;
     };
- 
+
     _this.getBCHTypeNumber = function(data) {
       var d = data << 12;
       while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
@@ -946,15 +946,15 @@ var qrcode = function() {
       }
       return (data << 12) | d;
     };
- 
+
     _this.getPatternPosition = function(typeNumber) {
       return PATTERN_POSITION_TABLE[typeNumber - 1];
     };
- 
+
     _this.getMaskFunction = function(maskPattern) {
- 
+
       switch (maskPattern) {
- 
+
       case QRMaskPattern.PATTERN000 :
         return function(i, j) { return (i + j) % 2 == 0; };
       case QRMaskPattern.PATTERN001 :
@@ -971,12 +971,12 @@ var qrcode = function() {
         return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
       case QRMaskPattern.PATTERN111 :
         return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
- 
+
       default :
         throw 'bad maskPattern:' + maskPattern;
       }
     };
- 
+
     _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
       var a = qrPolynomial([1], 0);
       for (var i = 0; i < errorCorrectLength; i += 1) {
@@ -984,13 +984,13 @@ var qrcode = function() {
       }
       return a;
     };
- 
+
     _this.getLengthInBits = function(mode, type) {
- 
+
       if (1 <= type && type < 10) {
- 
+
         // 1 - 9
- 
+
         switch(mode) {
         case QRMode.MODE_NUMBER    : return 10;
         case QRMode.MODE_ALPHA_NUM : return 9;
@@ -999,11 +999,11 @@ var qrcode = function() {
         default :
           throw 'mode:' + mode;
         }
- 
+
       } else if (type < 27) {
- 
+
         // 10 - 26
- 
+
         switch(mode) {
         case QRMode.MODE_NUMBER    : return 12;
         case QRMode.MODE_ALPHA_NUM : return 11;
@@ -1012,11 +1012,11 @@ var qrcode = function() {
         default :
           throw 'mode:' + mode;
         }
- 
+
       } else if (type < 41) {
- 
+
         // 27 - 40
- 
+
         switch(mode) {
         case QRMode.MODE_NUMBER    : return 14;
         case QRMode.MODE_ALPHA_NUM : return 13;
@@ -1025,56 +1025,56 @@ var qrcode = function() {
         default :
           throw 'mode:' + mode;
         }
- 
+
       } else {
         throw 'type:' + type;
       }
     };
- 
+
     _this.getLostPoint = function(qrcode) {
- 
+
       var moduleCount = qrcode.getModuleCount();
- 
+
       var lostPoint = 0;
- 
+
       // LEVEL1
- 
+
       for (var row = 0; row < moduleCount; row += 1) {
         for (var col = 0; col < moduleCount; col += 1) {
- 
+
           var sameCount = 0;
           var dark = qrcode.isDark(row, col);
- 
+
           for (var r = -1; r <= 1; r += 1) {
- 
+
             if (row + r < 0 || moduleCount <= row + r) {
               continue;
             }
- 
+
             for (var c = -1; c <= 1; c += 1) {
- 
+
               if (col + c < 0 || moduleCount <= col + c) {
                 continue;
               }
- 
+
               if (r == 0 && c == 0) {
                 continue;
               }
- 
+
               if (dark == qrcode.isDark(row + r, col + c) ) {
                 sameCount += 1;
               }
             }
           }
- 
+
           if (sameCount > 5) {
             lostPoint += (3 + sameCount - 5);
           }
         }
       };
- 
+
       // LEVEL2
- 
+
       for (var row = 0; row < moduleCount - 1; row += 1) {
         for (var col = 0; col < moduleCount - 1; col += 1) {
           var count = 0;
@@ -1087,9 +1087,9 @@ var qrcode = function() {
           }
         }
       }
- 
+
       // LEVEL3
- 
+
       for (var row = 0; row < moduleCount; row += 1) {
         for (var col = 0; col < moduleCount - 6; col += 1) {
           if (qrcode.isDark(row, col)
@@ -1103,7 +1103,7 @@ var qrcode = function() {
           }
         }
       }
- 
+
       for (var col = 0; col < moduleCount; col += 1) {
         for (var row = 0; row < moduleCount - 6; row += 1) {
           if (qrcode.isDark(row, col)
@@ -1117,11 +1117,11 @@ var qrcode = function() {
           }
         }
       }
- 
+
       // LEVEL4
- 
+
       var darkCount = 0;
- 
+
       for (var col = 0; col < moduleCount; col += 1) {
         for (var row = 0; row < moduleCount; row += 1) {
           if (qrcode.isDark(row, col) ) {
@@ -1129,25 +1129,25 @@ var qrcode = function() {
           }
         }
       }
- 
+
       var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
       lostPoint += ratio * 10;
- 
+
       return lostPoint;
     };
- 
+
     return _this;
   }();
- 
+
   //---------------------------------------------------------------------
   // QRMath
   //---------------------------------------------------------------------
- 
+
   var QRMath = function() {
- 
+
     var EXP_TABLE = new Array(256);
     var LOG_TABLE = new Array(256);
- 
+
     // initialize tables
     for (var i = 0; i < 8; i += 1) {
       EXP_TABLE[i] = 1 << i;
@@ -1161,44 +1161,44 @@ var qrcode = function() {
     for (var i = 0; i < 255; i += 1) {
       LOG_TABLE[EXP_TABLE[i] ] = i;
     }
- 
+
     var _this = {};
- 
+
     _this.glog = function(n) {
- 
+
       if (n < 1) {
         throw 'glog(' + n + ')';
       }
- 
+
       return LOG_TABLE[n];
     };
- 
+
     _this.gexp = function(n) {
- 
+
       while (n < 0) {
         n += 255;
       }
- 
+
       while (n >= 256) {
         n -= 255;
       }
- 
+
       return EXP_TABLE[n];
     };
- 
+
     return _this;
   }();
- 
+
   //---------------------------------------------------------------------
   // qrPolynomial
   //---------------------------------------------------------------------
- 
+
   function qrPolynomial(num, shift) {
- 
+
     if (typeof num.length == 'undefined') {
       throw num.length + '/' + shift;
     }
- 
+
     var _num = function() {
       var offset = 0;
       while (offset < num.length && num[offset] == 0) {
@@ -1210,319 +1210,319 @@ var qrcode = function() {
       }
       return _num;
     }();
- 
+
     var _this = {};
- 
+
     _this.getAt = function(index) {
       return _num[index];
     };
- 
+
     _this.getLength = function() {
       return _num.length;
     };
- 
+
     _this.multiply = function(e) {
- 
+
       var num = new Array(_this.getLength() + e.getLength() - 1);
- 
+
       for (var i = 0; i < _this.getLength(); i += 1) {
         for (var j = 0; j < e.getLength(); j += 1) {
           num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i) ) + QRMath.glog(e.getAt(j) ) );
         }
       }
- 
+
       return qrPolynomial(num, 0);
     };
- 
+
     _this.mod = function(e) {
- 
+
       if (_this.getLength() - e.getLength() < 0) {
         return _this;
       }
- 
+
       var ratio = QRMath.glog(_this.getAt(0) ) - QRMath.glog(e.getAt(0) );
- 
+
       var num = new Array(_this.getLength() );
       for (var i = 0; i < _this.getLength(); i += 1) {
         num[i] = _this.getAt(i);
       }
- 
+
       for (var i = 0; i < e.getLength(); i += 1) {
         num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i) ) + ratio);
       }
- 
+
       // recursive call
       return qrPolynomial(num, 0).mod(e);
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // QRRSBlock
   //---------------------------------------------------------------------
- 
+
   var QRRSBlock = function() {
- 
+
     var RS_BLOCK_TABLE = [
- 
+
       // L
       // M
       // Q
       // H
- 
+
       // 1
       [1, 26, 19],
       [1, 26, 16],
       [1, 26, 13],
       [1, 26, 9],
- 
+
       // 2
       [1, 44, 34],
       [1, 44, 28],
       [1, 44, 22],
       [1, 44, 16],
- 
+
       // 3
       [1, 70, 55],
       [1, 70, 44],
       [2, 35, 17],
       [2, 35, 13],
- 
+
       // 4
       [1, 100, 80],
       [2, 50, 32],
       [2, 50, 24],
       [4, 25, 9],
- 
+
       // 5
       [1, 134, 108],
       [2, 67, 43],
       [2, 33, 15, 2, 34, 16],
       [2, 33, 11, 2, 34, 12],
- 
+
       // 6
       [2, 86, 68],
       [4, 43, 27],
       [4, 43, 19],
       [4, 43, 15],
- 
+
       // 7
       [2, 98, 78],
       [4, 49, 31],
       [2, 32, 14, 4, 33, 15],
       [4, 39, 13, 1, 40, 14],
- 
+
       // 8
       [2, 121, 97],
       [2, 60, 38, 2, 61, 39],
       [4, 40, 18, 2, 41, 19],
       [4, 40, 14, 2, 41, 15],
- 
+
       // 9
       [2, 146, 116],
       [3, 58, 36, 2, 59, 37],
       [4, 36, 16, 4, 37, 17],
       [4, 36, 12, 4, 37, 13],
- 
+
       // 10
       [2, 86, 68, 2, 87, 69],
       [4, 69, 43, 1, 70, 44],
       [6, 43, 19, 2, 44, 20],
       [6, 43, 15, 2, 44, 16],
- 
+
       // 11
       [4, 101, 81],
       [1, 80, 50, 4, 81, 51],
       [4, 50, 22, 4, 51, 23],
       [3, 36, 12, 8, 37, 13],
- 
+
       // 12
       [2, 116, 92, 2, 117, 93],
       [6, 58, 36, 2, 59, 37],
       [4, 46, 20, 6, 47, 21],
       [7, 42, 14, 4, 43, 15],
- 
+
       // 13
       [4, 133, 107],
       [8, 59, 37, 1, 60, 38],
       [8, 44, 20, 4, 45, 21],
       [12, 33, 11, 4, 34, 12],
- 
+
       // 14
       [3, 145, 115, 1, 146, 116],
       [4, 64, 40, 5, 65, 41],
       [11, 36, 16, 5, 37, 17],
       [11, 36, 12, 5, 37, 13],
- 
+
       // 15
       [5, 109, 87, 1, 110, 88],
       [5, 65, 41, 5, 66, 42],
       [5, 54, 24, 7, 55, 25],
       [11, 36, 12, 7, 37, 13],
- 
+
       // 16
       [5, 122, 98, 1, 123, 99],
       [7, 73, 45, 3, 74, 46],
       [15, 43, 19, 2, 44, 20],
       [3, 45, 15, 13, 46, 16],
- 
+
       // 17
       [1, 135, 107, 5, 136, 108],
       [10, 74, 46, 1, 75, 47],
       [1, 50, 22, 15, 51, 23],
       [2, 42, 14, 17, 43, 15],
- 
+
       // 18
       [5, 150, 120, 1, 151, 121],
       [9, 69, 43, 4, 70, 44],
       [17, 50, 22, 1, 51, 23],
       [2, 42, 14, 19, 43, 15],
- 
+
       // 19
       [3, 141, 113, 4, 142, 114],
       [3, 70, 44, 11, 71, 45],
       [17, 47, 21, 4, 48, 22],
       [9, 39, 13, 16, 40, 14],
- 
+
       // 20
       [3, 135, 107, 5, 136, 108],
       [3, 67, 41, 13, 68, 42],
       [15, 54, 24, 5, 55, 25],
       [15, 43, 15, 10, 44, 16],
- 
+
       // 21
       [4, 144, 116, 4, 145, 117],
       [17, 68, 42],
       [17, 50, 22, 6, 51, 23],
       [19, 46, 16, 6, 47, 17],
- 
+
       // 22
       [2, 139, 111, 7, 140, 112],
       [17, 74, 46],
       [7, 54, 24, 16, 55, 25],
       [34, 37, 13],
- 
+
       // 23
       [4, 151, 121, 5, 152, 122],
       [4, 75, 47, 14, 76, 48],
       [11, 54, 24, 14, 55, 25],
       [16, 45, 15, 14, 46, 16],
- 
+
       // 24
       [6, 147, 117, 4, 148, 118],
       [6, 73, 45, 14, 74, 46],
       [11, 54, 24, 16, 55, 25],
       [30, 46, 16, 2, 47, 17],
- 
+
       // 25
       [8, 132, 106, 4, 133, 107],
       [8, 75, 47, 13, 76, 48],
       [7, 54, 24, 22, 55, 25],
       [22, 45, 15, 13, 46, 16],
- 
+
       // 26
       [10, 142, 114, 2, 143, 115],
       [19, 74, 46, 4, 75, 47],
       [28, 50, 22, 6, 51, 23],
       [33, 46, 16, 4, 47, 17],
- 
+
       // 27
       [8, 152, 122, 4, 153, 123],
       [22, 73, 45, 3, 74, 46],
       [8, 53, 23, 26, 54, 24],
       [12, 45, 15, 28, 46, 16],
- 
+
       // 28
       [3, 147, 117, 10, 148, 118],
       [3, 73, 45, 23, 74, 46],
       [4, 54, 24, 31, 55, 25],
       [11, 45, 15, 31, 46, 16],
- 
+
       // 29
       [7, 146, 116, 7, 147, 117],
       [21, 73, 45, 7, 74, 46],
       [1, 53, 23, 37, 54, 24],
       [19, 45, 15, 26, 46, 16],
- 
+
       // 30
       [5, 145, 115, 10, 146, 116],
       [19, 75, 47, 10, 76, 48],
       [15, 54, 24, 25, 55, 25],
       [23, 45, 15, 25, 46, 16],
- 
+
       // 31
       [13, 145, 115, 3, 146, 116],
       [2, 74, 46, 29, 75, 47],
       [42, 54, 24, 1, 55, 25],
       [23, 45, 15, 28, 46, 16],
- 
+
       // 32
       [17, 145, 115],
       [10, 74, 46, 23, 75, 47],
       [10, 54, 24, 35, 55, 25],
       [19, 45, 15, 35, 46, 16],
- 
+
       // 33
       [17, 145, 115, 1, 146, 116],
       [14, 74, 46, 21, 75, 47],
       [29, 54, 24, 19, 55, 25],
       [11, 45, 15, 46, 46, 16],
- 
+
       // 34
       [13, 145, 115, 6, 146, 116],
       [14, 74, 46, 23, 75, 47],
       [44, 54, 24, 7, 55, 25],
       [59, 46, 16, 1, 47, 17],
- 
+
       // 35
       [12, 151, 121, 7, 152, 122],
       [12, 75, 47, 26, 76, 48],
       [39, 54, 24, 14, 55, 25],
       [22, 45, 15, 41, 46, 16],
- 
+
       // 36
       [6, 151, 121, 14, 152, 122],
       [6, 75, 47, 34, 76, 48],
       [46, 54, 24, 10, 55, 25],
       [2, 45, 15, 64, 46, 16],
- 
+
       // 37
       [17, 152, 122, 4, 153, 123],
       [29, 74, 46, 14, 75, 47],
       [49, 54, 24, 10, 55, 25],
       [24, 45, 15, 46, 46, 16],
- 
+
       // 38
       [4, 152, 122, 18, 153, 123],
       [13, 74, 46, 32, 75, 47],
       [48, 54, 24, 14, 55, 25],
       [42, 45, 15, 32, 46, 16],
- 
+
       // 39
       [20, 147, 117, 4, 148, 118],
       [40, 75, 47, 7, 76, 48],
       [43, 54, 24, 22, 55, 25],
       [10, 45, 15, 67, 46, 16],
- 
+
       // 40
       [19, 148, 118, 6, 149, 119],
       [18, 75, 47, 31, 76, 48],
       [34, 54, 24, 34, 55, 25],
       [20, 45, 15, 61, 46, 16]
     ];
- 
+
     var qrRSBlock = function(totalCount, dataCount) {
       var _this = {};
       _this.totalCount = totalCount;
       _this.dataCount = dataCount;
       return _this;
     };
- 
+
     var _this = {};
- 
+
     var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
- 
+
       switch(errorCorrectionLevel) {
       case QRErrorCorrectionLevel.L :
         return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
@@ -1536,114 +1536,114 @@ var qrcode = function() {
         return undefined;
       }
     };
- 
+
     _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
- 
+
       var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
- 
+
       if (typeof rsBlock == 'undefined') {
         throw 'bad rs block @ typeNumber:' + typeNumber +
             '/errorCorrectionLevel:' + errorCorrectionLevel;
       }
- 
+
       var length = rsBlock.length / 3;
- 
+
       var list = [];
- 
+
       for (var i = 0; i < length; i += 1) {
- 
+
         var count = rsBlock[i * 3 + 0];
         var totalCount = rsBlock[i * 3 + 1];
         var dataCount = rsBlock[i * 3 + 2];
- 
+
         for (var j = 0; j < count; j += 1) {
           list.push(qrRSBlock(totalCount, dataCount) );
         }
       }
- 
+
       return list;
     };
- 
+
     return _this;
   }();
- 
+
   //---------------------------------------------------------------------
   // qrBitBuffer
   //---------------------------------------------------------------------
- 
+
   var qrBitBuffer = function() {
- 
+
     var _buffer = [];
     var _length = 0;
- 
+
     var _this = {};
- 
+
     _this.getBuffer = function() {
       return _buffer;
     };
- 
+
     _this.getAt = function(index) {
       var bufIndex = Math.floor(index / 8);
       return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
     };
- 
+
     _this.put = function(num, length) {
       for (var i = 0; i < length; i += 1) {
         _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
       }
     };
- 
+
     _this.getLengthInBits = function() {
       return _length;
     };
- 
+
     _this.putBit = function(bit) {
- 
+
       var bufIndex = Math.floor(_length / 8);
       if (_buffer.length <= bufIndex) {
         _buffer.push(0);
       }
- 
+
       if (bit) {
         _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
       }
- 
+
       _length += 1;
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // qrNumber
   //---------------------------------------------------------------------
- 
+
   var qrNumber = function(data) {
- 
+
     var _mode = QRMode.MODE_NUMBER;
     var _data = data;
- 
+
     var _this = {};
- 
+
     _this.getMode = function() {
       return _mode;
     };
- 
+
     _this.getLength = function(buffer) {
       return _data.length;
     };
- 
+
     _this.write = function(buffer) {
- 
+
       var data = _data;
- 
+
       var i = 0;
- 
+
       while (i + 2 < data.length) {
         buffer.put(strToNum(data.substring(i, i + 3) ), 10);
         i += 3;
       }
- 
+
       if (i < data.length) {
         if (data.length - i == 1) {
           buffer.put(strToNum(data.substring(i, i + 1) ), 4);
@@ -1652,7 +1652,7 @@ var qrcode = function() {
         }
       }
     };
- 
+
     var strToNum = function(s) {
       var num = 0;
       for (var i = 0; i < s.length; i += 1) {
@@ -1660,56 +1660,56 @@ var qrcode = function() {
       }
       return num;
     };
- 
+
     var chatToNum = function(c) {
       if ('0' <= c && c <= '9') {
         return c.charCodeAt(0) - '0'.charCodeAt(0);
       }
       throw 'illegal char :' + c;
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // qrAlphaNum
   //---------------------------------------------------------------------
- 
+
   var qrAlphaNum = function(data) {
- 
+
     var _mode = QRMode.MODE_ALPHA_NUM;
     var _data = data;
- 
+
     var _this = {};
- 
+
     _this.getMode = function() {
       return _mode;
     };
- 
+
     _this.getLength = function(buffer) {
       return _data.length;
     };
- 
+
     _this.write = function(buffer) {
- 
+
       var s = _data;
- 
+
       var i = 0;
- 
+
       while (i + 1 < s.length) {
         buffer.put(
           getCode(s.charAt(i) ) * 45 +
           getCode(s.charAt(i + 1) ), 11);
         i += 2;
       }
- 
+
       if (i < s.length) {
         buffer.put(getCode(s.charAt(i) ), 6);
       }
     };
- 
+
     var getCode = function(c) {
- 
+
       if ('0' <= c && c <= '9') {
         return c.charCodeAt(0) - '0'.charCodeAt(0);
       } else if ('A' <= c && c <= 'Z') {
@@ -1730,48 +1730,48 @@ var qrcode = function() {
         }
       }
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // qr8BitByte
   //---------------------------------------------------------------------
- 
+
   var qr8BitByte = function(data) {
- 
+
     var _mode = QRMode.MODE_8BIT_BYTE;
     var _data = data;
     var _bytes = qrcode.stringToBytes(data);
- 
+
     var _this = {};
- 
+
     _this.getMode = function() {
       return _mode;
     };
- 
+
     _this.getLength = function(buffer) {
       return _bytes.length;
     };
- 
+
     _this.write = function(buffer) {
       for (var i = 0; i < _bytes.length; i += 1) {
         buffer.put(_bytes[i], 8);
       }
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // qrKanji
   //---------------------------------------------------------------------
- 
+
   var qrKanji = function(data) {
- 
+
     var _mode = QRMode.MODE_KANJI;
     var _data = data;
- 
+
     var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
     if (!stringToBytes) {
       throw 'sjis not supported.';
@@ -1783,29 +1783,29 @@ var qrcode = function() {
         throw 'sjis not supported.';
       }
     }('\u53cb', 0x9746);
- 
+
     var _bytes = stringToBytes(data);
- 
+
     var _this = {};
- 
+
     _this.getMode = function() {
       return _mode;
     };
- 
+
     _this.getLength = function(buffer) {
       return ~~(_bytes.length / 2);
     };
- 
+
     _this.write = function(buffer) {
- 
+
       var data = _bytes;
- 
+
       var i = 0;
- 
+
       while (i + 1 < data.length) {
- 
+
         var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
- 
+
         if (0x8140 <= c && c <= 0x9FFC) {
           c -= 0x8140;
         } else if (0xE040 <= c && c <= 0xEBBF) {
@@ -1813,45 +1813,45 @@ var qrcode = function() {
         } else {
           throw 'illegal char at ' + (i + 1) + '/' + c;
         }
- 
+
         c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
- 
+
         buffer.put(c, 13);
- 
+
         i += 2;
       }
- 
+
       if (i < data.length) {
         throw 'illegal char at ' + (i + 1);
       }
     };
- 
+
     return _this;
   };
- 
+
   //=====================================================================
   // GIF Support etc.
   //
- 
+
   //---------------------------------------------------------------------
   // byteArrayOutputStream
   //---------------------------------------------------------------------
- 
+
   var byteArrayOutputStream = function() {
- 
+
     var _bytes = [];
- 
+
     var _this = {};
- 
+
     _this.writeByte = function(b) {
       _bytes.push(b & 0xff);
     };
- 
+
     _this.writeShort = function(i) {
       _this.writeByte(i);
       _this.writeByte(i >>> 8);
     };
- 
+
     _this.writeBytes = function(b, off, len) {
       off = off || 0;
       len = len || b.length;
@@ -1859,17 +1859,17 @@ var qrcode = function() {
         _this.writeByte(b[i + off]);
       }
     };
- 
+
     _this.writeString = function(s) {
       for (var i = 0; i < s.length; i += 1) {
         _this.writeByte(s.charCodeAt(i) );
       }
     };
- 
+
     _this.toByteArray = function() {
       return _bytes;
     };
- 
+
     _this.toString = function() {
       var s = '';
       s += '[';
@@ -1882,27 +1882,27 @@ var qrcode = function() {
       s += ']';
       return s;
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // base64EncodeOutputStream
   //---------------------------------------------------------------------
- 
+
   var base64EncodeOutputStream = function() {
- 
+
     var _buffer = 0;
     var _buflen = 0;
     var _length = 0;
     var _base64 = '';
- 
+
     var _this = {};
- 
+
     var writeEncoded = function(b) {
       _base64 += String.fromCharCode(encode(b & 0x3f) );
     };
- 
+
     var encode = function(n) {
       if (n < 0) {
         // error.
@@ -1919,27 +1919,27 @@ var qrcode = function() {
       }
       throw 'n:' + n;
     };
- 
+
     _this.writeByte = function(n) {
- 
+
       _buffer = (_buffer << 8) | (n & 0xff);
       _buflen += 8;
       _length += 1;
- 
+
       while (_buflen >= 6) {
         writeEncoded(_buffer >>> (_buflen - 6) );
         _buflen -= 6;
       }
     };
- 
+
     _this.flush = function() {
- 
+
       if (_buflen > 0) {
         writeEncoded(_buffer << (6 - _buflen) );
         _buffer = 0;
         _buflen = 0;
       }
- 
+
       if (_length % 3 != 0) {
         // padding
         var padlen = 3 - _length % 3;
@@ -1948,41 +1948,41 @@ var qrcode = function() {
         }
       }
     };
- 
+
     _this.toString = function() {
       return _base64;
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // base64DecodeInputStream
   //---------------------------------------------------------------------
- 
+
   var base64DecodeInputStream = function(str) {
- 
+
     var _str = str;
     var _pos = 0;
     var _buffer = 0;
     var _buflen = 0;
- 
+
     var _this = {};
- 
+
     _this.read = function() {
- 
+
       while (_buflen < 8) {
- 
+
         if (_pos >= _str.length) {
           if (_buflen == 0) {
             return -1;
           }
           throw 'unexpected end of file./' + _buflen;
         }
- 
+
         var c = _str.charAt(_pos);
         _pos += 1;
- 
+
         if (c == '=') {
           _buflen = 0;
           return -1;
@@ -1990,16 +1990,16 @@ var qrcode = function() {
           // ignore if whitespace.
           continue;
         }
- 
+
         _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
         _buflen += 6;
       }
- 
+
       var n = (_buffer >>> (_buflen - 8) ) & 0xff;
       _buflen -= 8;
       return n;
     };
- 
+
     var decode = function(c) {
       if (0x41 <= c && c <= 0x5a) {
         return c - 0x41;
@@ -2015,108 +2015,108 @@ var qrcode = function() {
         throw 'c:' + c;
       }
     };
- 
+
     return _this;
   };
- 
+
   //---------------------------------------------------------------------
   // gifImage (B/W)
   //---------------------------------------------------------------------
- 
+
   var gifImage = function(width, height) {
- 
+
     var _width = width;
     var _height = height;
     var _data = new Array(width * height);
- 
+
     var _this = {};
- 
+
     _this.setPixel = function(x, y, pixel) {
       _data[y * _width + x] = pixel;
     };
- 
+
     _this.write = function(out) {
- 
+
       //---------------------------------
       // GIF Signature
- 
+
       out.writeString('GIF87a');
- 
+
       //---------------------------------
       // Screen Descriptor
- 
+
       out.writeShort(_width);
       out.writeShort(_height);
- 
+
       out.writeByte(0x80); // 2bit
       out.writeByte(0);
       out.writeByte(0);
- 
+
       //---------------------------------
       // Global Color Map
- 
+
       // black
       out.writeByte(0x00);
       out.writeByte(0x00);
       out.writeByte(0x00);
- 
+
       // white
       out.writeByte(0xff);
       out.writeByte(0xff);
       out.writeByte(0xff);
- 
+
       //---------------------------------
       // Image Descriptor
- 
+
       out.writeString(',');
       out.writeShort(0);
       out.writeShort(0);
       out.writeShort(_width);
       out.writeShort(_height);
       out.writeByte(0);
- 
+
       //---------------------------------
       // Local Color Map
- 
+
       //---------------------------------
       // Raster Data
- 
+
       var lzwMinCodeSize = 2;
       var raster = getLZWRaster(lzwMinCodeSize);
- 
+
       out.writeByte(lzwMinCodeSize);
- 
+
       var offset = 0;
- 
+
       while (raster.length - offset > 255) {
         out.writeByte(255);
         out.writeBytes(raster, offset, 255);
         offset += 255;
       }
- 
+
       out.writeByte(raster.length - offset);
       out.writeBytes(raster, offset, raster.length - offset);
       out.writeByte(0x00);
- 
+
       //---------------------------------
       // GIF Terminator
       out.writeString(';');
     };
- 
+
     var bitOutputStream = function(out) {
- 
+
       var _out = out;
       var _bitLength = 0;
       var _bitBuffer = 0;
- 
+
       var _this = {};
- 
+
       _this.write = function(data, length) {
- 
+
         if ( (data >>> length) != 0) {
           throw 'length over';
         }
- 
+
         while (_bitLength + length >= 8) {
           _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
           length -= (8 - _bitLength);
@@ -2124,89 +2124,89 @@ var qrcode = function() {
           _bitBuffer = 0;
           _bitLength = 0;
         }
- 
+
         _bitBuffer = (data << _bitLength) | _bitBuffer;
         _bitLength = _bitLength + length;
       };
- 
+
       _this.flush = function() {
         if (_bitLength > 0) {
           _out.writeByte(_bitBuffer);
         }
       };
- 
+
       return _this;
     };
- 
+
     var getLZWRaster = function(lzwMinCodeSize) {
- 
+
       var clearCode = 1 << lzwMinCodeSize;
       var endCode = (1 << lzwMinCodeSize) + 1;
       var bitLength = lzwMinCodeSize + 1;
- 
+
       // Setup LZWTable
       var table = lzwTable();
- 
+
       for (var i = 0; i < clearCode; i += 1) {
         table.add(String.fromCharCode(i) );
       }
       table.add(String.fromCharCode(clearCode) );
       table.add(String.fromCharCode(endCode) );
- 
+
       var byteOut = byteArrayOutputStream();
       var bitOut = bitOutputStream(byteOut);
- 
+
       // clear code
       bitOut.write(clearCode, bitLength);
- 
+
       var dataIndex = 0;
- 
+
       var s = String.fromCharCode(_data[dataIndex]);
       dataIndex += 1;
- 
+
       while (dataIndex < _data.length) {
- 
+
         var c = String.fromCharCode(_data[dataIndex]);
         dataIndex += 1;
- 
+
         if (table.contains(s + c) ) {
- 
+
           s = s + c;
- 
+
         } else {
- 
+
           bitOut.write(table.indexOf(s), bitLength);
- 
+
           if (table.size() < 0xfff) {
- 
+
             if (table.size() == (1 << bitLength) ) {
               bitLength += 1;
             }
- 
+
             table.add(s + c);
           }
- 
+
           s = c;
         }
       }
- 
+
       bitOut.write(table.indexOf(s), bitLength);
- 
+
       // end code
       bitOut.write(endCode, bitLength);
- 
+
       bitOut.flush();
- 
+
       return byteOut.toByteArray();
     };
- 
+
     var lzwTable = function() {
- 
+
       var _map = {};
       var _size = 0;
- 
+
       var _this = {};
- 
+
       _this.add = function(key) {
         if (_this.contains(key) ) {
           throw 'dup key:' + key;
@@ -2214,25 +2214,25 @@ var qrcode = function() {
         _map[key] = _size;
         _size += 1;
       };
- 
+
       _this.size = function() {
         return _size;
       };
- 
+
       _this.indexOf = function(key) {
         return _map[key];
       };
- 
+
       _this.contains = function(key) {
         return typeof _map[key] != 'undefined';
       };
- 
+
       return _this;
     };
- 
+
     return _this;
   };
- 
+
   var createDataURL = function(width, height, getPixel) {
     var gif = gifImage(width, height);
     for (var y = 0; y < height; y += 1) {
@@ -2240,29 +2240,29 @@ var qrcode = function() {
         gif.setPixel(x, y, getPixel(x, y) );
       }
     }
- 
+
     var b = byteArrayOutputStream();
     gif.write(b);
- 
+
     var base64 = base64EncodeOutputStream();
     var bytes = b.toByteArray();
     for (var i = 0; i < bytes.length; i += 1) {
       base64.writeByte(bytes[i]);
     }
     base64.flush();
- 
+
     return 'data:image/gif;base64,' + base64;
   };
- 
+
   //---------------------------------------------------------------------
   // returns qrcode function.
- 
+
   return qrcode;
 }();
- 
+
 // multibyte support
 !function() {
- 
+
   qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
     // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
     function toUTF8Array(str) {
@@ -2297,9 +2297,9 @@ var qrcode = function() {
     }
     return toUTF8Array(s);
   };
- 
+
 }();
- 
+
 (function (factory) {
   if (typeof define === 'function' && define.amd) {
       define([], factory);
@@ -2309,7 +2309,7 @@ var qrcode = function() {
 }(function () {
     return qrcode;
 }));
- 
+
 </script>
 <style>
   :root {
@@ -2345,7 +2345,7 @@ var qrcode = function() {
       linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);
     background-size: 24px 24px;
   }
- 
+
   /* HEADER */
   header { background: rgba(255,253,246,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 72px; position: sticky; top: 0; z-index: 100; }
   .logo { display: flex; align-items: center; gap: 12px; }
@@ -2356,31 +2356,31 @@ var qrcode = function() {
   .by-daat b { color: var(--text); font-weight: 700; }
   .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
   #header-date { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
- 
+
   /* TABS */
   .tabs { display: flex; gap: 4px; padding: 10px 2rem; background: transparent; overflow-x: auto; }
   .tab { padding: 10px 16px; font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; background: transparent; border: none; border-radius: 999px; cursor: pointer; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: all .18s; white-space: nowrap; }
   .tab:hover { color: var(--text); background: rgba(20,18,12,.04); }
   .tab.active { color: var(--text); background: var(--accent); font-weight: 700; box-shadow: var(--shadow-sm); }
   .tab i { font-size: 16px; }
- 
+
   /* LAYOUT */
   .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
   .section { display: none; }
   .section.active { display: block; }
- 
+
   /* CARDS */
   .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
   .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; font-family: var(--font-body); }
   .card-title i { color: var(--text); background: var(--accent); border-radius: 8px; padding: 6px; font-size: 15px; }
- 
+
   /* GRID */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
   .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .form-group.full { grid-column: 1 / -1; }
   label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-family: var(--font-mono); }
- 
+
   /* INPUTS */
   input, select, textarea {
     background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
@@ -2390,7 +2390,7 @@ var qrcode = function() {
   input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,196,0,.2); }
   select option { background: var(--bg2); }
   textarea { resize: vertical; min-height: 68px; }
- 
+
   /* BUTTONS */
   .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-body); border: none; transition: opacity .15s, transform .1s, box-shadow .15s; }
   .btn:active { transform: scale(.98); }
@@ -2402,35 +2402,35 @@ var qrcode = function() {
   .btn-danger:hover { background: rgba(201,138,122,.12); }
   .btn-sm { padding: 6px 14px; font-size: 12px; }
   .actions { display: flex; gap: 10px; margin-top: 1.25rem; align-items: center; }
- 
+
   /* METRICS */
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
   .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; box-shadow: var(--shadow); }
   .metric-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; font-family: var(--font-mono); }
   .metric-value { font-size: 26px; font-weight: 400; color: var(--text); line-height: 1; font-family: var(--font-title); }
   .metric-sub { font-size: 11px; color: var(--text3); margin-top: 8px; }
- 
+
   /* DASHBOARD — visual mais coeso */
   .card-title-lg { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 1.5rem; padding-bottom: .85rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--font-body); }
   .card-title-lg .tag { font-size: 10px; font-family: var(--font-mono); font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
- 
+
   .dash-hero-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.75rem; margin-bottom: 1.5rem; }
   .dash-hero-item .label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-family: var(--font-mono); margin-bottom: 8px; }
   .dash-hero-item .value { font-size: 32px; font-family: var(--font-title); line-height: 1; }
   .dash-hero-item .pct { font-size: 12px; color: var(--text3); margin-top: 6px; font-family: var(--font-mono); }
   .dash-hero-bar { height: 14px; border-radius: 999px; overflow: hidden; display: flex; background: var(--bg); border: 1px solid var(--border); }
   .dash-hero-bar > div { height: 100%; }
- 
+
   .dash-metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
   .dash-metric-sm { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem 1.15rem; box-shadow: var(--shadow-sm); }
   .dash-metric-sm .label { font-size: 11.5px; font-weight: 700; color: var(--text2); margin-bottom: 6px; font-family: var(--font-body); }
   .dash-metric-sm .value { font-size: 21px; font-family: var(--font-title); color: var(--text); line-height: 1; }
   .dash-metric-sm .flag { font-size: 10.5px; color: var(--amber); font-weight: 600; margin-top: 5px; }
- 
+
   .chart-tempo-wrap { width: 100%; overflow-x: auto; }
   .chart-tempo-tip { font-size: 10px; color: var(--text3); font-family: var(--font-mono); text-align: right; margin-top: 4px; }
   .metric-accent { background: linear-gradient(135deg, var(--bg2), rgba(245,196,0,.12)); border-color: rgba(245,196,0,.35); }
- 
+
   /* TABLE */
   .table-wrap { overflow-x: auto; max-width: 100%; }
   .scroll-hint-mobile { display: none; }
@@ -2439,7 +2439,7 @@ var qrcode = function() {
   td { padding: 12px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: rgba(20,18,12,.02); }
- 
+
   /* BADGES */
   .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .badge-green { background: rgba(122,155,110,.16); color: var(--green); }
@@ -2450,19 +2450,19 @@ var qrcode = function() {
   .badge-teal { background: rgba(147,168,132,.18); color: var(--sage); }
   .badge-blue { background: rgba(211,161,132,.18); color: var(--terracota); }
   .badge-gold { background: rgba(245,196,0,.18); color: var(--amber); }
- 
+
   /* SERIE colors */
   .serie-premium { color: var(--accent); font-size: 11px; font-weight: 600; }
   .serie-menstyle { color: var(--sage); font-size: 11px; font-weight: 600; }
   .serie-intense { color: var(--terracota); font-size: 11px; font-weight: 600; }
- 
+
   /* FILTER ROW */
   .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
   .filter-row input, .filter-row select { font-size: 12px; padding: 7px 11px; }
- 
+
   /* VENDA ITEM */
   .item-line { display: grid; grid-template-columns: 2fr 90px 90px 32px; gap: 8px; align-items: end; margin-bottom: 8px; }
- 
+
   /* CHART BAR */
   .bar-row { margin-bottom: 10px; }
   .bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
@@ -2470,18 +2470,18 @@ var qrcode = function() {
   .bar-label span:last-child { font-weight: 600; color: var(--text); }
   .bar-track { background: var(--bg3); border-radius: 999px; height: 7px; }
   .bar-fill { height: 7px; border-radius: 999px; background: var(--accent); }
- 
+
   /* TOAST */
   #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: var(--bg2); padding: 12px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; box-shadow: var(--shadow); }
   #toast.show { opacity: 1; }
- 
+
   /* EMPTY */
   .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); }
   .empty i { font-size: 32px; display: block; margin-bottom: 10px; }
- 
+
   /* TWO COL */
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
- 
+
   @media (max-width: 700px) {
     .form-grid, .form-grid.cols3, .two-col { grid-template-columns: 1fr; }
     .form-group.full { grid-column: 1; }
@@ -2495,7 +2495,7 @@ var qrcode = function() {
     .dash-hero-item .value { font-size: 26px; }
     .scroll-hint-mobile { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--text3); font-family: var(--font-mono); margin-bottom: 8px; }
   }
- 
+
   /* LOGIN */
   #login-screen { position: fixed; inset: 0; background: var(--bg); background-image: linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px); background-size: 24px 24px; display: flex; align-items: center; justify-content: center; z-index: 999; }
   #login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.75rem; width: 100%; max-width: 380px; box-shadow: var(--shadow); }
@@ -2508,7 +2508,7 @@ var qrcode = function() {
 </style>
 </head>
 <body>
- 
+
 <!-- ===== LOGIN ===== -->
 <div id="login-screen">
   <div id="login-box">
@@ -2531,7 +2531,7 @@ var qrcode = function() {
     </div>
     <button class="btn btn-outline btn-sm" onclick="mostrarCadastro();return false;" style="width:100%;justify-content:center;margin-top:12px;">Não tenho cadastro</button>
   </div>
- 
+
   <div id="recuperar-box" style="display:none;">
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Recuperar senha</div>
@@ -2545,7 +2545,7 @@ var qrcode = function() {
     <div id="recuperar-sucesso" style="color:var(--green);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
     <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
   </div>
- 
+
   <div id="nova-senha-box" style="display:none;">
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Criar nova senha</div>
@@ -2566,7 +2566,7 @@ var qrcode = function() {
     <button class="btn btn-gold" onclick="salvarNovaSenhaRecuperacao()">Salvar nova senha</button>
     <div id="ns-error" style="color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none;font-family:var(--font-mono);"></div>
   </div>
- 
+
   <div id="cadastro-box" style="display:none;">
     <div class="logo-word">DAAT<span class="dot">.</span></div>
     <div class="header-sup">Novo cliente</div>
@@ -2601,7 +2601,7 @@ var qrcode = function() {
     <button class="btn btn-outline btn-sm" onclick="mostrarLogin();return false;" style="width:100%;justify-content:center;margin-top:12px;">&larr; Voltar pro login</button>
   </div>
 </div>
- 
+
 <!-- ===== ACESSO BLOQUEADO ===== -->
 <div id="bloqueado-screen" style="display:none;position:fixed;inset:0;background:var(--bg);background-image:linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);background-size:24px 24px;align-items:center;justify-content:center;z-index:999;padding:1rem;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2.75rem;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;">
@@ -2615,7 +2615,7 @@ var qrcode = function() {
     <button class="btn btn-outline btn-sm" onclick="fazerLogoutBloqueado()" style="width:100%;justify-content:center;">Sair</button>
   </div>
 </div>
- 
+
 <div id="app-wrap">
 <header>
   <div class="logo">
@@ -2631,7 +2631,7 @@ var qrcode = function() {
     </div>
   </div>
 </header>
- 
+
 <div class="tabs">
   <button class="tab active" onclick="switchTab('crm')"><i class="ti ti-calendar-event"></i> CRM</button>
   <button class="tab" onclick="switchTab('produtos')"><i class="ti ti-package"></i> Produtos</button>
@@ -2641,11 +2641,11 @@ var qrcode = function() {
   <button class="tab" onclick="switchTab('config')"><i class="ti ti-settings"></i> Configurações</button>
   <button class="tab" onclick="switchTab('ajuda')"><i class="ti ti-lifebuoy"></i> Ajuda</button>
 </div>
- 
+
 <!-- ===== PRODUTOS ===== -->
 <div id="tab-produtos" class="section">
 <div class="container">
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-plus"></i> Adicionar item</div>
     <div class="form-grid cols3">
@@ -2688,7 +2688,7 @@ var qrcode = function() {
       <button class="btn btn-gold" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar item</button>
     </div>
   </div>
- 
+
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-list"></i> Catálogo <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="prod-count"></span></span>
@@ -2717,14 +2717,14 @@ var qrcode = function() {
     <div class="scroll-hint-mobile"><i class="ti ti-arrow-right" style="font-size:11px;"></i> arraste pro lado pra ver mais</div>
     <div class="table-wrap" id="prod-table"></div>
   </div>
- 
+
 </div>
 </div>
- 
+
 <!-- ===== VENDAS ===== -->
 <div id="tab-vendas" class="section">
 <div class="container">
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-receipt"></i> Nova venda</div>
     <div class="form-grid cols3">
@@ -2740,13 +2740,13 @@ var qrcode = function() {
       <div class="form-group"><label>Cliente / referência</label><input id="v-cliente" placeholder="" /></div>
       <div class="form-group"><label>Comissão do vendedor (%)</label><input id="v-comissao-pct" type="number" step="0.1" min="0" placeholder="" oninput="calcTotal()" /></div>
     </div>
- 
+
     <div style="margin-top:1.25rem;">
       <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Itens</div>
       <div id="itens-wrap"></div>
       <button class="btn btn-outline btn-sm" onclick="addItem()" style="margin-top:4px;"><i class="ti ti-plus"></i> Item</button>
     </div>
- 
+
     <div id="v-total-wrap" style="display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);">
       <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
         <span style="color:var(--text2);">Total:</span>
@@ -2754,19 +2754,19 @@ var qrcode = function() {
       </div>
       <div id="v-comissao" style="margin-top:6px;display:none;"></div>
     </div>
- 
+
     <div class="actions">
       <button class="btn btn-gold" onclick="salvarVenda()"><i class="ti ti-check"></i> Salvar venda</button>
     </div>
   </div>
- 
+
 </div>
 </div>
- 
+
 <!-- ===== CRM ===== -->
 <div id="tab-crm" class="section active">
 <div class="container">
- 
+
   <div class="two-col">
     <div class="card">
       <div class="card-title"><i class="ti ti-user-plus"></i> Novo cliente</div>
@@ -2782,7 +2782,7 @@ var qrcode = function() {
         <button class="btn btn-gold" onclick="addCliente()"><i class="ti ti-plus"></i> Adicionar cliente</button>
       </div>
     </div>
- 
+
     <div class="card">
       <div class="card-title"><i class="ti ti-calendar-plus"></i> Novo agendamento</div>
       <div class="form-grid">
@@ -2810,7 +2810,7 @@ var qrcode = function() {
       </div>
     </div>
   </div>
- 
+
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-calendar-event"></i> Agenda <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="agenda-count"></span></span>
@@ -2828,7 +2828,7 @@ var qrcode = function() {
     <div class="scroll-hint-mobile"><i class="ti ti-arrow-right" style="font-size:11px;"></i> arraste pro lado pra ver mais</div>
     <div class="table-wrap" id="agenda-table"></div>
   </div>
- 
+
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-address-book"></i> Clientes <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="cliente-count"></span></span>
@@ -2837,10 +2837,10 @@ var qrcode = function() {
     <div class="scroll-hint-mobile"><i class="ti ti-arrow-right" style="font-size:11px;"></i> arraste pro lado pra ver mais</div>
     <div class="table-wrap" id="cliente-table"></div>
   </div>
- 
+
 </div>
 </div>
- 
+
 <!-- ===== HISTÓRICO ===== -->
 <div id="tab-historico" class="section">
 <div class="container">
@@ -2859,24 +2859,24 @@ var qrcode = function() {
   </div>
 </div>
 </div>
- 
+
 <!-- ===== DASHBOARD ===== -->
 <div id="tab-dashboard" class="section">
 <div class="container">
- 
+
   <div class="card">
     <div class="card-title-lg">Resumo do período <span class="tag" id="dash-periodo-tag"></span></div>
     <div class="dash-hero-grid" id="dash-hero"></div>
     <div class="dash-hero-bar" id="dash-hero-bar"></div>
   </div>
- 
+
   <div class="card">
     <div class="card-title-lg"><i class="ti ti-bulb" style="color:var(--accent);margin-right:6px;"></i>Insights Acionáveis</div>
     <div id="dash-insights"></div>
   </div>
- 
+
   <div class="dash-metrics-row" id="dash-metrics-sec"></div>
- 
+
   <div class="card">
     <div class="card-title-lg" style="justify-content:space-between;">
       <span>Receita ao longo do tempo</span>
@@ -2888,7 +2888,7 @@ var qrcode = function() {
     </div>
     <div class="chart-tempo-wrap" id="dash-chart-tempo"></div>
   </div>
- 
+
   <div class="two-col">
     <div class="card">
       <div class="card-title-lg">Top produtos e serviços</div>
@@ -2909,11 +2909,11 @@ var qrcode = function() {
   </div>
 </div>
 </div>
- 
+
 <!-- ===== CONFIG ===== -->
 <div id="tab-config" class="section">
 <div class="container">
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-building"></i> Conta</div>
     <div class="form-grid">
@@ -2925,7 +2925,7 @@ var qrcode = function() {
     </div>
     <div id="cfg-empresa-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
   </div>
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-qrcode"></i> Pagamento via Pix</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Escaneie o QR Code ou copie o código Pix abaixo pra pagar sua mensalidade.</p>
@@ -2943,7 +2943,7 @@ var qrcode = function() {
       </div>
     </div>
   </div>
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-file-spreadsheet"></i> Exportar dados</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Baixe todos os seus dados (produtos, vendas, clientes e agenda) num único arquivo Excel — abre normal no Excel, Google Sheets ou qualquer planilha.</p>
@@ -2951,7 +2951,7 @@ var qrcode = function() {
       <button class="btn btn-gold" onclick="exportarTudo()"><i class="ti ti-download"></i> Exportar tudo (Excel)</button>
     </div>
   </div>
- 
+
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-trash"></i> Lixeira</span>
@@ -2960,7 +2960,7 @@ var qrcode = function() {
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Produtos, clientes, vendas e agendamentos excluídos ficam aqui, recuperáveis a qualquer momento.</p>
     <div id="lixeira-lista"></div>
   </div>
- 
+
   <div class="card" id="equipe-card">
     <div class="card-title"><i class="ti ti-users-group"></i> Equipe</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Crie um acesso pra um funcionário que só precisa registrar vendas e mexer no CRM — ele não vê Produtos, Histórico, Dashboard nem Configurações.</p>
@@ -2988,7 +2988,7 @@ var qrcode = function() {
     <div id="eq-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
     <div id="equipe-lista" style="margin-top:1.5rem;"></div>
   </div>
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-lock"></i> Trocar senha</div>
     <div class="form-grid">
@@ -3019,19 +3019,19 @@ var qrcode = function() {
     </div>
     <div id="cfg-senha-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
   </div>
- 
+
 </div>
 </div>
- 
+
 <!-- ===== AJUDA ===== -->
 <div id="tab-ajuda" class="section">
 <div class="container">
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-help-circle"></i> Perguntas frequentes</div>
     <div id="faq-lista"></div>
   </div>
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-message-2"></i> Não encontrou o que precisava?</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;">Manda sua dúvida ou problema pra gente. Você vê a resposta aqui mesmo, assim que respondermos.</p>
@@ -3044,15 +3044,15 @@ var qrcode = function() {
     </div>
     <div id="ch-msg" style="font-size:12px;margin-top:10px;display:none;font-family:var(--font-mono);"></div>
   </div>
- 
+
   <div class="card">
     <div class="card-title"><i class="ti ti-list-details"></i> Meus chamados <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="chamados-count"></span></div>
     <div class="table-wrap" id="chamados-lista"></div>
   </div>
- 
+
 </div>
 </div>
- 
+
 <!-- ===== LEMBRETES DE HOJE ===== -->
 <div id="lembretes-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,18,12,.45);z-index:998;align-items:center;justify-content:center;padding:1rem;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-width:420px;width:100%;padding:1.75rem;">
@@ -3067,12 +3067,32 @@ var qrcode = function() {
     </div>
   </div>
 </div>
- 
+
+<!-- ===== ENVIAR MENSAGEM VIA WHATSAPP ===== -->
+<div id="whatsapp-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,18,12,.45);z-index:998;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-width:440px;width:100%;padding:1.75rem;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <i class="ti ti-brand-whatsapp" style="color:#fff;background:#25D366;border-radius:8px;padding:6px;font-size:18px;"></i>
+      <div style="font-size:15px;font-weight:700;color:var(--text);">Enviar mensagem</div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;font-family:var(--font-mono);" id="whatsapp-destino"></div>
+    <div class="form-group full">
+      <label>Mensagem (edite à vontade antes de enviar)</label>
+      <textarea id="whatsapp-texto" style="min-height:120px;"></textarea>
+    </div>
+    <div class="actions" style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="fecharModalWhatsApp()" style="flex:1;justify-content:center;">Cancelar</button>
+      <button class="btn btn-gold" onclick="confirmarEnvioWhatsApp()" style="flex:1;justify-content:center;"><i class="ti ti-brand-whatsapp"></i> Abrir no WhatsApp</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;">O WhatsApp abre com a mensagem pronta — você confere e aperta enviar por lá.</div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
- 
- 
- 
+
+
+
 <script>
 // =========================================================
 // CONFIGURAÇÃO DO SUPABASE — troque pelos dados do seu projeto
@@ -3081,7 +3101,7 @@ var qrcode = function() {
 const SUPABASE_URL = 'https://mdekuwxqqdbokbzsibrh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZWt1d3hxcWRib2tienNpYnJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NjM0NzQsImV4cCI6MjEwMzIzOTQ3NH0.zMkm02EAvDsOw3pCBg9h1QxTZbW_gcYUZXfJl-8WCfo';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
- 
+
 // =========================================================
 // CONFIGURAÇÃO DO EMAILJS — troque pelos dados da sua conta
 // (emailjs.com > Email Services / API Keys)
@@ -3091,7 +3111,7 @@ const EMAILJS_TEMPLATE_ID = 'template_zektyll';
 const EMAILJS_PUBLIC_KEY = '0dja_oBx-MN5tkBfv';
 const DAAT_SELL_APP_URL = 'https://app.daat-tech.com.br/';
 if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
- 
+
 async function enviarEmailBoasVindas(empresa, nome, email) {
   if (!window.emailjs || EMAILJS_SERVICE_ID.includes('SEU_')) {
     console.warn('EmailJS não configurado ainda — pulando envio de e-mail de boas-vindas.');
@@ -3109,7 +3129,7 @@ async function enviarEmailBoasVindas(empresa, nome, email) {
     // não bloqueia o cadastro — o cliente já foi criado com sucesso de qualquer forma
   }
 }
- 
+
 // ===== STATE (cache local, alimentado pelo Supabase) =====
 let produtos = [];
 let vendas = [];
@@ -3117,11 +3137,13 @@ let clientes = [];
 let agendamentos = [];
 let itens = [{ prodId:'', qty:1, preco:0 }];
 let organizacaoId = null;
+let nomeOrganizacao = '';
 let meuRole = 'owner';
+let whatsappAlvoNumero = null;
 let dashPeriodoGrafico = 'dia';
 const ITENS_POR_PAGINA = 20;
 let paginaProdutos = 1, paginaHistorico = 1, paginaClientes = 1, paginaAgenda = 1;
- 
+
 // gera os botões de "anterior/próxima página" — reaproveitado nas 4 tabelas
 function gerarControlePaginacao(pagina, totalItens, nomeFuncaoMudar) {
   const totalPaginas = Math.max(1, Math.ceil(totalItens / ITENS_POR_PAGINA));
@@ -3138,7 +3160,7 @@ function mudarPaginaProdutos(p) { paginaProdutos = p; renderProdutos(); }
 function mudarPaginaHistorico(p) { paginaHistorico = p; renderHistorico(); }
 function mudarPaginaClientes(p) { paginaClientes = p; renderClientes(); }
 function mudarPaginaAgenda(p) { paginaAgenda = p; renderAgenda(); }
- 
+
 // ===== AUTH =====
 function toggleSenhaVisivel() {
   const input = document.getElementById('login-senha');
@@ -3146,59 +3168,59 @@ function toggleSenhaVisivel() {
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
- 
+
 function toggleSenhaVisivelCadastro() {
   const input = document.getElementById('cad-senha');
   const btn = event.target;
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
- 
+
 function toggleSenhaVisivelCadastroConfirma() {
   const input = document.getElementById('cad-senha-confirma');
   const btn = event.target;
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
- 
+
 function mostrarCadastro() {
   document.getElementById('login-box').style.display = 'none';
   document.getElementById('cadastro-box').style.display = 'block';
 }
- 
+
 function mostrarLogin() {
   document.getElementById('cadastro-box').style.display = 'none';
   document.getElementById('recuperar-box').style.display = 'none';
   document.getElementById('nova-senha-box').style.display = 'none';
   document.getElementById('login-box').style.display = 'block';
 }
- 
+
 function mostrarRecuperarSenha() {
   document.getElementById('login-box').style.display = 'none';
   document.getElementById('recuperar-box').style.display = 'block';
   document.getElementById('recuperar-error').style.display = 'none';
   document.getElementById('recuperar-sucesso').style.display = 'none';
 }
- 
+
 function toggleSenhaVisivelNS(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
- 
+
 async function enviarRecuperacaoSenha() {
   const email = document.getElementById('recuperar-email').value.trim();
   const errEl = document.getElementById('recuperar-error');
   const sucEl = document.getElementById('recuperar-sucesso');
   errEl.style.display = 'none';
   sucEl.style.display = 'none';
- 
+
   if (!email) { errEl.textContent = 'Preencha seu e-mail.'; errEl.style.display = 'block'; return; }
- 
+
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: DAAT_SELL_APP_URL,
   });
- 
+
   if (error) {
     errEl.textContent = 'Erro ao enviar: ' + error.message;
     errEl.style.display = 'block';
@@ -3208,25 +3230,25 @@ async function enviarRecuperacaoSenha() {
   sucEl.style.display = 'block';
   document.getElementById('recuperar-email').value = '';
 }
- 
+
 async function salvarNovaSenhaRecuperacao() {
   const senha = document.getElementById('ns-senha').value;
   const confirma = document.getElementById('ns-senha-confirma').value;
   const errEl = document.getElementById('ns-error');
   errEl.style.display = 'none';
- 
+
   if (!senha || !confirma) { errEl.textContent = 'Preencha os dois campos.'; errEl.style.display = 'block'; return; }
   if (senha.length < 8) { errEl.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; errEl.style.display = 'block'; return; }
   if (senha !== confirma) { errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return; }
- 
+
   const { error } = await supabaseClient.auth.updateUser({ password: senha });
   if (error) { errEl.textContent = 'Erro ao salvar: ' + error.message; errEl.style.display = 'block'; return; }
- 
+
   toast('Senha atualizada! Você já está logado.');
   document.getElementById('nova-senha-box').style.display = 'none';
   await iniciarApp();
 }
- 
+
 async function cadastrarNovoCliente() {
   const email          = document.getElementById('cad-email').value.trim();
   const empresa        = document.getElementById('cad-empresa').value.trim();
@@ -3234,7 +3256,7 @@ async function cadastrarNovoCliente() {
   const senhaConfirma  = document.getElementById('cad-senha-confirma').value;
   const errEl          = document.getElementById('cadastro-error');
   errEl.style.display = 'none';
- 
+
   if (!empresa || !email || !senha || !senhaConfirma) {
     errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return;
   }
@@ -3247,7 +3269,7 @@ async function cadastrarNovoCliente() {
   if (senha !== senhaConfirma) {
     errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return;
   }
- 
+
   // 1) cria o usuário de login
   const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({ email, password: senha });
   if (signUpErr) {
@@ -3261,14 +3283,14 @@ async function cadastrarNovoCliente() {
     errEl.style.display = 'block';
     return;
   }
- 
+
   // força a sessão recém-criada a ficar ativa no client antes de prosseguir
   // (evita problema de timing onde o insert seguinte sai sem o token do usuário novo)
   await supabaseClient.auth.setSession({
     access_token: signUpData.session.access_token,
     refresh_token: signUpData.session.refresh_token,
   });
- 
+
   // 2) cria a organização + o perfil numa única operação no banco
   // (contorna o paradoxo de RLS: ver a organização recém-criada exige
   // um perfil que só existe depois dela — por isso usamos uma função
@@ -3288,7 +3310,7 @@ async function cadastrarNovoCliente() {
     errEl.style.display = 'block';
     return;
   }
- 
+
   toast('Cliente cadastrado! Pode fazer login agora.');
   enviarEmailBoasVindas(empresa, '', email);
   ['cad-empresa','cad-email','cad-senha','cad-senha-confirma'].forEach(id => document.getElementById(id).value = '');
@@ -3296,14 +3318,14 @@ async function cadastrarNovoCliente() {
   await supabaseClient.auth.signOut(); // sai da sessão do cliente recém-criado, volta pro login
   mostrarLogin();
 }
- 
+
 async function fazerLogin() {
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
   if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; errEl.style.display = 'block'; return; }
- 
+
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
   if (error) {
     errEl.textContent = 'Erro: ' + error.message + (error.status ? ' (status ' + error.status + ')' : '');
@@ -3313,7 +3335,7 @@ async function fazerLogin() {
   }
   await iniciarApp();
 }
- 
+
 async function fazerLogout() {
   await supabaseClient.auth.signOut();
   document.getElementById('app-wrap').style.display = 'none';
@@ -3321,28 +3343,30 @@ async function fazerLogout() {
   document.getElementById('login-email').value = '';
   document.getElementById('login-senha').value = '';
 }
- 
+
 async function iniciarApp() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
- 
+
   const { data: perfil, error: perfilErr } = await supabaseClient
     .from('perfis').select('organizacao_id, role').eq('id', user.id).single();
- 
+
   if (perfilErr || !perfil) {
     document.getElementById('login-error').textContent = 'Usuário sem organização vinculada. Fale com a DAAT.';
     document.getElementById('login-error').style.display = 'block';
     await supabaseClient.auth.signOut();
     return;
   }
- 
+
   organizacaoId = perfil.organizacao_id;
   meuRole = perfil.role || 'owner';
- 
+
   // checa status de pagamento e teste grátis antes de liberar o app
   const { data: org, error: orgErr } = await supabaseClient
     .from('organizacoes').select('nome, status, em_teste, trial_fim').eq('id', organizacaoId).single();
- 
+
+  if (!orgErr && org) nomeOrganizacao = org.nome || '';
+
   if (!orgErr && org && org.status !== 'ativo') {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('bloqueado-titulo').textContent = 'Acesso temporariamente indisponível';
@@ -3350,7 +3374,7 @@ async function iniciarApp() {
     document.getElementById('bloqueado-screen').style.display = 'flex';
     return;
   }
- 
+
   if (!orgErr && org && org.em_teste && org.trial_fim) {
     const hoje = hojeLocal();
     if (org.trial_fim < hoje) {
@@ -3366,10 +3390,10 @@ async function iniciarApp() {
       return;
     }
   }
- 
+
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-wrap').style.display = 'block';
- 
+
   await carregarTudo();
   setDefaultDate();
   renderItens();
@@ -3379,7 +3403,7 @@ async function iniciarApp() {
   verificarLembretesHoje();
   aplicarRestricaoPapel();
 }
- 
+
 function aplicarRestricaoPapel() {
   if (meuRole !== 'funcionario') return;
   // funcionário só mexe em CRM, Registrar Venda e Ajuda — o resto some do menu
@@ -3389,13 +3413,13 @@ function aplicarRestricaoPapel() {
     if (abasEscondidas.includes(nomesAbas[i])) el.style.display = 'none';
   });
 }
- 
+
 async function fazerLogoutBloqueado() {
   await supabaseClient.auth.signOut();
   document.getElementById('bloqueado-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
 }
- 
+
 async function carregarTudo() {
   const [p, v, c, a] = await Promise.all([
     supabaseClient.from('produtos').select('*').eq('organizacao_id', organizacaoId).is('deletado_em', null).order('nome'),
@@ -3408,7 +3432,7 @@ async function carregarTudo() {
   clientes = (c.data || []).map(mapClienteDb);
   agendamentos = (a.data || []).map(mapAgendamentoDb);
 }
- 
+
 // mapeia nomes de coluna do banco (snake_case) pros nomes usados no front (camelCase)
 function mapProdutoDb(p) {
   return { id: p.id, nome: p.nome, tipo: p.tipo || 'Produto', fornecedor: p.fornecedor, serie: p.serie, categoria: p.categoria,
@@ -3423,7 +3447,7 @@ function mapAgendamentoDb(a) {
   return { id: a.id, clienteId: a.cliente_id, clienteNome: a.cliente_nome, data: a.data,
     hora: a.hora, motivo: a.motivo, obs: a.obs, status: a.status };
 }
- 
+
 // ===== TOAST =====
 // ===== SEGURANÇA: escapa texto do usuário antes de inserir na página (previne XSS) =====
 function escapeHTML(str) {
@@ -3435,16 +3459,16 @@ function escapeHTML(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
- 
+
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
- 
+
 // detecta quando o usuário chega pelo link de recuperação de senha do e-mail
 const isRecoveryLink = window.location.hash.includes('type=recovery');
- 
+
 supabaseClient.auth.onAuthStateChange((event) => {
   if (event === 'PASSWORD_RECOVERY') {
     document.getElementById('login-screen').style.display = 'flex';
@@ -3455,7 +3479,7 @@ supabaseClient.auth.onAuthStateChange((event) => {
     document.getElementById('nova-senha-box').style.display = 'block';
   }
 });
- 
+
 // checa se já existe sessão ativa ao carregar a página
 // (pula essa checagem se for um link de recuperação — nesse caso o evento acima cuida da tela)
 (async function checkSession() {
@@ -3463,7 +3487,7 @@ supabaseClient.auth.onAuthStateChange((event) => {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) await iniciarApp();
 })();
- 
+
 // ===== TABS =====
 function switchTab(tab) {
   const names = ['crm','produtos','vendas','historico','dashboard','config','ajuda'];
@@ -3478,25 +3502,25 @@ function switchTab(tab) {
   if (tab === 'config')     renderConfig();
   if (tab === 'ajuda')      renderAjuda();
 }
- 
+
 // ===== HEADER DATE =====
 function updateDate() {
   document.getElementById('header-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 }
 updateDate();
- 
+
 // ===== LINHA BADGE =====
 function serieBadge(s) {
   if (!s) return '';
   return `<span class="badge badge-gold">${escapeHTML(s)}</span>`;
 }
- 
+
 // ===== ADD PRODUTO =====
 async function addProduto() {
   const nome = document.getElementById('f-nome').value.trim();
   const tipo = document.getElementById('f-tipo').value;
   if (!nome) { toast(`Preencha o nome d${tipo === 'Serviço' ? 'o' : 'o'} ${tipo.toLowerCase()}.`); return; }
- 
+
   const catSelecionada = document.getElementById('f-cat-select').value;
   if (catSelecionada === '__nova__' && !document.getElementById('f-cat-nova').value.trim()) {
     toast('Digite o nome da nova categoria.'); return;
@@ -3504,7 +3528,7 @@ async function addProduto() {
   const categoria = catSelecionada === '__nova__'
     ? document.getElementById('f-cat-nova').value.trim()
     : catSelecionada;
- 
+
   const novo = {
     organizacao_id: organizacaoId,
     nome,
@@ -3532,7 +3556,7 @@ async function addProduto() {
   toggleCamposEstoque();
   renderProdutos(); toast(`${tipo} adicionado!`);
 }
- 
+
 function toggleCamposEstoque() {
   const tipo = document.getElementById('f-tipo').value;
   const ehServico = tipo === 'Serviço';
@@ -3542,7 +3566,7 @@ function toggleCamposEstoque() {
   document.getElementById('f-nome-label').textContent = ehServico ? 'Nome do serviço' : 'Nome do produto';
   document.getElementById('f-preco-label').textContent = ehServico ? 'Preço do serviço (R$)' : 'Preço de venda (R$)';
 }
- 
+
 function popularFiltrosProduto() {
   const serieSel = document.getElementById('f-serie-filtro');
   const catSel   = document.getElementById('f-cat-filtro');
@@ -3551,7 +3575,7 @@ function popularFiltrosProduto() {
   const cats   = [...new Set(produtos.map(p => p.categoria).filter(Boolean))].sort();
   serieSel.innerHTML = '<option value="">Todas as linhas</option>' + series.map(s => `<option ${s===serieAtual?'selected':''}>${escapeHTML(s)}</option>`).join('');
   catSel.innerHTML   = '<option value="">Todas categorias</option>' + cats.map(c => `<option ${c===catAtual?'selected':''}>${escapeHTML(c)}</option>`).join('');
- 
+
   // select de categoria do formulario de cadastro (com opção de criar nova)
   const formSel = document.getElementById('f-cat-select');
   if (formSel) {
@@ -3561,7 +3585,7 @@ function popularFiltrosProduto() {
       '<option value="__nova__">+ Criar nova categoria</option>';
   }
 }
- 
+
 function toggleNovaCategoria() {
   const sel = document.getElementById('f-cat-select');
   const novaInput = document.getElementById('f-cat-nova');
@@ -3573,7 +3597,7 @@ function toggleNovaCategoria() {
     novaInput.value = '';
   }
 }
- 
+
 // ===== RENDER PRODUTOS =====
 function renderProdutos() {
   popularFiltrosProduto();
@@ -3582,7 +3606,7 @@ function renderProdutos() {
   const serie  = document.getElementById('f-serie-filtro').value;
   const cat    = document.getElementById('f-cat-filtro').value;
   const status = document.getElementById('f-status-filtro').value;
- 
+
   let lista = produtos.filter(p => {
     if (busca && !p.nome.toLowerCase().includes(busca) && !(p.obs||'').toLowerCase().includes(busca)) return false;
     if (tipoF && p.tipo !== tipoF) return false;
@@ -3593,24 +3617,24 @@ function renderProdutos() {
     if (status === 'baixo'   && !(p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin)) return false;
     return true;
   });
- 
+
   document.getElementById('prod-count').textContent = `(${lista.length} de ${produtos.length})`;
- 
+
   if (!lista.length) {
     document.getElementById('prod-table').innerHTML = '<div class="empty"><i class="ti ti-package"></i>Nenhum item encontrado</div>';
     return;
   }
- 
+
   const totalFiltrado = lista.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaProdutos > totalPaginas) paginaProdutos = totalPaginas;
   lista = lista.slice((paginaProdutos - 1) * ITENS_POR_PAGINA, paginaProdutos * ITENS_POR_PAGINA);
- 
+
   let h = `<table><thead><tr>
     <th>Item</th><th>Tipo</th><th>Série</th><th>Categoria</th><th>Volume</th>
     <th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th>Status</th><th></th>
   </tr></thead><tbody>`;
- 
+
   lista.forEach(p => {
     const ehServico = p.tipo === 'Serviço';
     const margem = p.preco > 0 && p.custo > 0 ? ((p.preco - p.custo) / p.preco * 100).toFixed(0) + '%' : '—';
@@ -3623,7 +3647,7 @@ function renderProdutos() {
                       : baixo   ? `<span class="badge badge-amber"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> Baixo</span>`
                       : `<span class="badge badge-green">Ativo</span>`;
     const tipoBadge = ehServico ? `<span class="badge badge-teal">Serviço</span>` : `<span class="badge badge-gray">Produto</span>`;
- 
+
     h += `<tr>
       <td>
         <div style="font-weight:600;color:var(--text);">${escapeHTML(p.nome)}</div>
@@ -3645,12 +3669,12 @@ function renderProdutos() {
       </td>
     </tr>`;
   });
- 
+
   h += '</tbody></table>';
   h += gerarControlePaginacao(paginaProdutos, totalFiltrado, 'mudarPaginaProdutos');
   document.getElementById('prod-table').innerHTML = h;
 }
- 
+
 async function toggleAtivo(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
@@ -3658,7 +3682,7 @@ async function toggleAtivo(id) {
   if (error) { toast('Erro ao atualizar produto.'); console.error(error); return; }
   p.ativo = !p.ativo; renderProdutos();
 }
- 
+
 async function deleteProduto(id) {
   if (!confirm('Mover produto pra lixeira? Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('produtos').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -3667,12 +3691,12 @@ async function deleteProduto(id) {
   renderProdutos();
   toast('Produto movido pra lixeira.');
 }
- 
+
 async function editEstoque(id) {
   const p = produtos.find(x => x.id === id);
   if (!p) return;
   const ehServico = p.tipo === 'Serviço';
- 
+
   let estoque = p.estoque;
   if (!ehServico) {
     const novoEst = prompt(`Estoque atual de "${p.nome}":`, p.estoque);
@@ -3690,13 +3714,13 @@ async function editEstoque(id) {
   p.estoque = estoque; p.custo = custo; p.preco = preco;
   renderProdutos(); toast(`${p.tipo} atualizado!`);
 }
- 
+
 // ===== VENDAS =====
 function setDefaultDate() {
   const d = document.getElementById('v-data');
   if (!d.value) d.value = new Date().toISOString().split('T')[0];
 }
- 
+
 function renderItens() {
   const ativos = produtos.filter(p => p.ativo);
   let h = '';
@@ -3714,7 +3738,7 @@ function renderItens() {
   document.getElementById('itens-wrap').innerHTML = h;
   calcTotal();
 }
- 
+
 function updateItem(i, field, val) {
   if (field === 'prodId') {
     itens[i].prodId = val || '';
@@ -3724,10 +3748,10 @@ function updateItem(i, field, val) {
   else if (field === 'preco')   { itens[i].preco = parseFloat(val) || 0; }
   renderItens();
 }
- 
+
 function addItem()    { itens.push({ prodId:'', qty:1, preco:0 }); renderItens(); }
 function removeItem(i){ itens.splice(i, 1); if (!itens.length) itens = [{ prodId:'', qty:1, preco:0 }]; renderItens(); }
- 
+
 function calcTotal() {
   const total    = itens.reduce((s, i) => s + i.qty * i.preco, 0);
   const pct      = parseFloat(document.getElementById('v-comissao-pct').value) || 0;
@@ -3743,7 +3767,7 @@ function calcTotal() {
   }
   wrap.style.display = total > 0 ? 'block' : 'none';
 }
- 
+
 async function salvarVenda() {
   const data     = document.getElementById('v-data').value;
   const vendedor = document.getElementById('v-vendedor').value.trim();
@@ -3754,14 +3778,14 @@ async function salvarVenda() {
   if (!data || !validos.length) { toast('Preencha data e ao menos um produto.'); return; }
   const total     = validos.reduce((s, i) => s + i.qty * i.preco, 0);
   const comissao  = parseFloat((total * (pct / 100)).toFixed(2));
- 
+
   const { data: vendaSalva, error } = await supabaseClient.from('vendas').insert({
     organizacao_id: organizacaoId, data, vendedor, canal, cliente,
     itens: validos.map(i => ({ ...i })), total, comissao,
   }).select().single();
   if (error) { toast('Erro ao salvar venda.'); console.error(error); return; }
   vendas.push(mapVendaDb(vendaSalva));
- 
+
   // atualiza estoque dos produtos vendidos (local + banco)
   for (const item of validos) {
     const p = produtos.find(x => x.id === item.prodId);
@@ -3770,7 +3794,7 @@ async function salvarVenda() {
     const { error: errEst } = await supabaseClient.from('produtos').update({ estoque: novoEstoque }).eq('id', p.id).eq('organizacao_id', organizacaoId);
     if (!errEst) p.estoque = novoEstoque;
   }
- 
+
   itens = [{ prodId:'', qty:1, preco:0 }];
   document.getElementById('v-cliente').value = '';
   document.getElementById('v-canal').value = '';
@@ -3778,30 +3802,30 @@ async function salvarVenda() {
   document.getElementById('v-comissao-pct').value = '';
   renderItens(); toast('Venda salva! Estoque atualizado.');
 }
- 
+
 // ===== HISTÓRICO =====
 function renderHistorico() {
   const busca = (document.getElementById('h-busca').value || '').toLowerCase();
   const de    = document.getElementById('h-de').value;
   const ate   = document.getElementById('h-ate').value;
- 
+
   let lista = [...vendas].reverse().filter(v => {
     if (busca && !(v.cliente||'').toLowerCase().includes(busca) && !(v.canal||'').toLowerCase().includes(busca) && !(v.vendedor||'').toLowerCase().includes(busca)) return false;
     if (de  && v.data < de)  return false;
     if (ate && v.data > ate) return false;
     return true;
   });
- 
+
   if (!lista.length) {
     document.getElementById('hist-table').innerHTML = '<div class="empty"><i class="ti ti-receipt"></i>Nenhuma venda encontrada</div>';
     return;
   }
- 
+
   const totalFiltrado = lista.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaHistorico > totalPaginas) paginaHistorico = totalPaginas;
   lista = lista.slice((paginaHistorico - 1) * ITENS_POR_PAGINA, paginaHistorico * ITENS_POR_PAGINA);
- 
+
   let h = `<table><thead><tr><th>Data</th><th>Vendedor</th><th>Canal</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Comissão</th><th></th></tr></thead><tbody>`;
   lista.forEach(v => {
     const nomes = v.itens.map(i => {
@@ -3826,7 +3850,7 @@ function renderHistorico() {
   h += gerarControlePaginacao(paginaHistorico, totalFiltrado, 'mudarPaginaHistorico');
   document.getElementById('hist-table').innerHTML = h;
 }
- 
+
 async function deleteVenda(id) {
   if (!confirm('Mover venda pra lixeira? Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('vendas').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -3835,7 +3859,7 @@ async function deleteVenda(id) {
   renderHistorico();
   toast('Venda movida pra lixeira.');
 }
- 
+
 // ===== DASHBOARD =====
 // ===== INSIGHTS AUTOMÁTICOS (regras estatísticas, sem IA) =====
 function gerarInsights() {
@@ -3843,7 +3867,7 @@ function gerarInsights() {
   const hoje = new Date(hojeLocal() + 'T00:00:00');
   const addDiasD = (date, n) => { const d = new Date(date); d.setDate(d.getDate() + n); return d; };
   const paraStr = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
- 
+
   // 1) tendência: últimos 7 dias vs 7 dias anteriores
   const iniUlt7 = paraStr(addDiasD(hoje, -6));
   const iniAnt7 = paraStr(addDiasD(hoje, -13));
@@ -3863,7 +3887,7 @@ function gerarInsights() {
   } else if (somaUlt7 > 0) {
     insights.push({ tipo: 'positivo', icone: 'ti-sparkles', texto: `Você teve vendas nos últimos 7 dias — continue por aí!` });
   }
- 
+
   // 2) item mais lucrativo (por margem, não só receita)
   const lucroPorItem = {};
   vendas.forEach(v => v.itens.forEach(i => {
@@ -3876,7 +3900,7 @@ function gerarInsights() {
   if (topLucro && topLucro[1] > 0) {
     insights.push({ tipo: 'neutro', icone: 'ti-crown', texto: `<strong>${escapeHTML(topLucro[0])}</strong> é seu item mais lucrativo no período, com R$ ${topLucro[1].toFixed(2)} de lucro.` });
   }
- 
+
   // 3) cliente que sumiu (maior tempo sem comprar, acima de 45 dias)
   let piorCliente = null, piorDias = 0;
   clientes.forEach(c => {
@@ -3889,7 +3913,7 @@ function gerarInsights() {
   if (piorCliente && piorDias > 45) {
     insights.push({ tipo: 'atencao', icone: 'ti-user-x', texto: `<strong>${escapeHTML(piorCliente)}</strong> não compra há ${piorDias} dias — pode valer um contato.` });
   }
- 
+
   // 4) dia da semana mais forte (só com uma base mínima de vendas)
   if (vendas.length >= 5) {
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -3900,20 +3924,20 @@ function gerarInsights() {
       insights.push({ tipo: 'neutro', icone: 'ti-calendar-stats', texto: `<strong>${diasSemana[maxIdx]}</strong> costuma ser seu melhor dia de vendas.` });
     }
   }
- 
+
   return insights;
 }
- 
+
 function renderInsights() {
   const wrap = document.getElementById('dash-insights');
   if (!wrap) return;
   const insights = gerarInsights();
- 
+
   if (!insights.length) {
     wrap.innerHTML = '<div class="empty" style="padding:1.5rem;"><i class="ti ti-bulb"></i>Ainda não há dados suficientes pra gerar recomendações — continue registrando vendas.</div>';
     return;
   }
- 
+
   const cor = { positivo: 'var(--sage)', atencao: 'var(--terracota)', neutro: 'var(--amber)' };
   wrap.innerHTML = insights.map((ins, i) => `
     <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;${i < insights.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
@@ -3922,7 +3946,7 @@ function renderInsights() {
     </div>
   `).join('');
 }
- 
+
 // ===== GRÁFICO: receita ao longo do tempo (SVG, sem biblioteca externa) =====
 // ===== controle do seletor de período do gráfico =====
 function mudarPeriodoGrafico(periodo) {
@@ -3930,7 +3954,7 @@ function mudarPeriodoGrafico(periodo) {
   document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas, dashPeriodoGrafico);
   atualizarBotoesPeriodo();
 }
- 
+
 function atualizarBotoesPeriodo() {
   ['dia', 'semana', 'mes'].forEach(p => {
     const btn = document.getElementById(`btn-periodo-${p}`);
@@ -3938,12 +3962,12 @@ function atualizarBotoesPeriodo() {
     btn.className = p === dashPeriodoGrafico ? 'btn btn-gold btn-sm' : 'btn btn-outline btn-sm';
   });
 }
- 
+
 function gerarGraficoTempo(vendasList, periodo) {
   if (!vendasList.length) {
     return '<div class="empty" style="padding:2rem 1rem;"><i class="ti ti-chart-line"></i>Sem vendas registradas ainda</div>';
   }
- 
+
   const addDias = (dataStr, n) => {
     const d = new Date(dataStr + 'T00:00:00');
     d.setDate(d.getDate() + n);
@@ -3964,7 +3988,7 @@ function gerarGraficoTempo(vendasList, periodo) {
   const mesAbrev = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const fmtDia = d => d.split('-').slice(1).reverse().join('/');
   const fmtMes = d => `${mesAbrev[parseInt(d.slice(5,7),10)-1]}/${d.slice(2,4)}`;
- 
+
   // define, por período: como agrupar a data da venda, como avançar pro próximo intervalo,
   // como formatar o rótulo, e o tamanho máximo da janela mostrada
   let chaveFn, proximoFn, labelFn, janelaMax;
@@ -3984,10 +4008,10 @@ function gerarGraficoTempo(vendasList, periodo) {
     labelFn = fmtDia;
     janelaMax = 30;
   }
- 
+
   const porBucket = {};
   vendasList.forEach(v => { const k = chaveFn(v.data); porBucket[k] = (porBucket[k] || 0) + v.total; });
- 
+
   const chaves = Object.keys(porBucket).sort();
   let atual = chaves[0];
   const max = chaves[chaves.length - 1];
@@ -3999,20 +4023,20 @@ function gerarGraficoTempo(vendasList, periodo) {
     guard++;
   }
   if (todasChaves.length > janelaMax) todasChaves = todasChaves.slice(-janelaMax);
- 
+
   const pontos = todasChaves.map(k => [k, porBucket[k] || 0]);
- 
+
   const n = pontos.length;
   const w = Math.max(640, Math.min(1200, n * 30)), h = 210, padL = 56, padR = 20, padT = 20, padB = 34;
   const plotW = w - padL - padR, plotH = h - padT - padB;
   const maxVal = Math.max(...pontos.map(p => p[1]), 1);
- 
+
   const xFor = i => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
   const yFor = val => padT + plotH - (val / maxVal) * plotH;
- 
+
   const linePath = pontos.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(p[1]).toFixed(1)}`).join(' ');
   const areaPath = `${linePath} L${xFor(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${xFor(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
- 
+
   // grid horizontal com 4 níveis (0, 1/3, 2/3, máximo) e valor em cada um
   let gridLines = '', yLabels = '';
   for (let g = 0; g <= 3; g++) {
@@ -4022,7 +4046,7 @@ function gerarGraficoTempo(vendasList, periodo) {
     gridLines += `<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${w - padR}" y2="${gy.toFixed(1)}" stroke="var(--border)" stroke-width="1" />`;
     yLabels += `<text x="${padL - 8}" y="${(gy + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text3)" font-family="monospace">R$${val.toFixed(0)}</text>`;
   }
- 
+
   // rótulos do eixo X — mostra todos se poucos pontos, senão distribui uns 7 igualmente
   let xLabels = '';
   const qtdLabels = Math.min(n, 7);
@@ -4033,10 +4057,10 @@ function gerarGraficoTempo(vendasList, periodo) {
   [...idxsParaLabel].sort((a,b)=>a-b).forEach(i => {
     xLabels += `<text x="${xFor(i).toFixed(1)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="var(--text3)" font-family="monospace">${labelFn(pontos[i][0])}</text>`;
   });
- 
+
   // só marca o último ponto (mais recente), pra dar uma referência sem poluir a linha
   const ultimoPonto = `<circle cx="${xFor(n-1).toFixed(1)}" cy="${yFor(pontos[n-1][1]).toFixed(1)}" r="4" fill="#f5c400" stroke="#14120c" stroke-width="1.4" />`;
- 
+
   return `
     <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;min-width:420px;display:block;">
       ${gridLines}
@@ -4048,7 +4072,7 @@ function gerarGraficoTempo(vendasList, periodo) {
     </svg>
   `;
 }
- 
+
 function renderDashboard() {
   const totalRec  = vendas.reduce((s, v) => s + v.total, 0);
   const nVendas   = vendas.length;
@@ -4056,7 +4080,7 @@ function renderDashboard() {
   const ativos    = produtos.filter(p => p.ativo).length;
   const baixo     = produtos.filter(p => p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin).length;
   const comissaoTotal = vendas.reduce((s,v) => s + (v.comissao||0), 0);
- 
+
   // custo total (usa o custo ATUAL de cada produto — não é um custo "congelado" no momento da venda)
   const custoTotal = vendas.reduce((s, v) => s + v.itens.reduce((si, i) => {
     const p = produtos.find(x => x.id === i.prodId);
@@ -4065,9 +4089,9 @@ function renderDashboard() {
   const lucroBruto = totalRec - custoTotal;
   const pctCusto  = totalRec > 0 ? (custoTotal / totalRec * 100) : 0;
   const pctLucro  = totalRec > 0 ? (lucroBruto / totalRec * 100) : 0;
- 
+
   document.getElementById('dash-periodo-tag').textContent = nVendas ? `${nVendas} venda${nVendas!==1?'s':''} no total` : 'sem vendas ainda';
- 
+
   // ===== HERO: Receita / Custo / Lucro, coeso, com barra de proporção =====
   document.getElementById('dash-hero').innerHTML = `
     <div class="dash-hero-item">
@@ -4088,9 +4112,9 @@ function renderDashboard() {
   document.getElementById('dash-hero-bar').innerHTML = totalRec > 0
     ? `<div style="width:${pctCusto}%;background:var(--terracota);"></div><div style="width:${pctLucro}%;background:var(--sage);"></div>`
     : `<div style="width:100%;background:var(--border);"></div>`;
- 
+
   renderInsights();
- 
+
   // ===== métricas secundárias, compactas =====
   document.getElementById('dash-metrics-sec').innerHTML = `
     <div class="dash-metric-sm"><div class="label">Nº de vendas</div><div class="value">${nVendas}</div></div>
@@ -4102,11 +4126,11 @@ function renderDashboard() {
       ${baixo > 0 ? `<div class="flag"><i class="ti ti-alert-triangle" style="font-size:11px;"></i> ${baixo} com estoque baixo</div>` : ''}
     </div>
   `;
- 
+
   // ===== gráfico: receita ao longo do tempo =====
   document.getElementById('dash-chart-tempo').innerHTML = gerarGraficoTempo(vendas, dashPeriodoGrafico);
   atualizarBotoesPeriodo();
- 
+
   // top produtos
   const porProd = {};
   vendas.forEach(v => v.itens.forEach(i => {
@@ -4124,7 +4148,7 @@ function renderDashboard() {
           <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxP*100)}%"></div></div>
         </div>`).join('')
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-chart-bar"></i>Sem dados</div>';
- 
+
   // top categorias
   const porCat = {};
   vendas.forEach(v => v.itens.forEach(i => {
@@ -4143,7 +4167,7 @@ function renderDashboard() {
           <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxC*100)}%;background:${colors[i%colors.length]}"></div></div>
         </div>`).join('')
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-tag"></i>Sem dados</div>';
- 
+
   // ranking vendedores
   const vColorPalette = ['var(--accent)','var(--sage)','var(--terracota)','var(--lavanda)','var(--amber)','var(--green)'];
   const porVend = {};
@@ -4175,7 +4199,7 @@ function renderDashboard() {
   document.getElementById('rank-vendedor').innerHTML = rankV.length
     ? vHtml
     : '<div class="empty" style="padding:1.5rem"><i class="ti ti-users"></i>Nenhuma venda registrada ainda</div>';
- 
+
   // alertas
   const alertas = produtos.filter(p => p.ativo && p.tipo !== 'Serviço' && p.estoque <= p.estoqueMin);
   if (!alertas.length) {
@@ -4190,12 +4214,12 @@ function renderDashboard() {
   ah += '</tbody></table>';
   document.getElementById('alerta-estoque').innerHTML = ah;
 }
- 
+
 // ===== CRM: CLIENTES =====
 function mapClienteDb(c) {
   return { id: c.id, nome: c.nome, tel: c.telefone, email: c.email, cpf: c.cpf, cnpj: c.cnpj, obs: c.obs };
 }
- 
+
 async function addCliente() {
   const nome = document.getElementById('c-nome').value.trim();
   if (!nome) { toast('Preencha o nome do cliente.'); return; }
@@ -4214,7 +4238,7 @@ async function addCliente() {
   ['c-nome','c-tel','c-email','c-cpf','c-cnpj','c-obs'].forEach(id => document.getElementById(id).value = '');
   renderClientes(); renderClienteSelect(); toast('Cliente adicionado!');
 }
- 
+
 async function deleteCliente(id) {
   if (!confirm('Mover cliente pra lixeira? Agendamentos ligados a ele continuam na agenda. Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('clientes').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -4223,7 +4247,7 @@ async function deleteCliente(id) {
   renderClientes(); renderClienteSelect();
   toast('Cliente movido pra lixeira.');
 }
- 
+
 function renderClienteSelect() {
   const sel = document.getElementById('a-cliente');
   if (!sel) return;
@@ -4231,7 +4255,7 @@ function renderClienteSelect() {
   sel.innerHTML = '<option value="">Selecionar...</option>' +
     clientes.map(c => `<option value="${c.id}" ${c.id == atual ? 'selected' : ''}>${escapeHTML(c.nome)}${c.tel ? ' — ' + escapeHTML(c.tel) : ''}</option>`).join('');
 }
- 
+
 function renderClientes() {
   const wrap = document.getElementById('cliente-table');
   if (!wrap) return;
@@ -4240,13 +4264,13 @@ function renderClientes() {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-address-book"></i>Nenhum cliente cadastrado ainda</div>';
     return;
   }
- 
+
   const totalFiltrado = clientes.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaClientes > totalPaginas) paginaClientes = totalPaginas;
   const listaPagina = clientes.slice((paginaClientes - 1) * ITENS_POR_PAGINA, paginaClientes * ITENS_POR_PAGINA);
- 
-  let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>CPF</th><th>CNPJ</th><th>Observações</th><th></th></tr></thead><tbody>`;
+
+  let h = `<table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>CPF</th><th>CNPJ</th><th>Observações</th><th></th><th></th></tr></thead><tbody>`;
   listaPagina.forEach(c => {
     h += `<tr>
       <td style="font-weight:600;">${escapeHTML(c.nome)}</td>
@@ -4255,6 +4279,7 @@ function renderClientes() {
       <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.cpf) || '—'}</td>
       <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.cnpj) || '—'}</td>
       <td style="font-size:12px;color:var(--text2);">${escapeHTML(c.obs) || '—'}</td>
+      <td><button class="btn btn-outline btn-sm" style="color:#25D366;border-color:#25D366;" onclick="enviarMensagemWhatsApp('${c.id}')" title="Enviar mensagem por WhatsApp"><i class="ti ti-brand-whatsapp"></i></button></td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')"><i class="ti ti-trash"></i></button></td>
     </tr>`;
   });
@@ -4262,7 +4287,7 @@ function renderClientes() {
   h += gerarControlePaginacao(paginaClientes, totalFiltrado, 'mudarPaginaClientes');
   wrap.innerHTML = h;
 }
- 
+
 // ===== CRM: AGENDAMENTOS =====
 async function addAgendamento() {
   const clienteId = document.getElementById('a-cliente').value;
@@ -4287,14 +4312,14 @@ async function addAgendamento() {
   document.getElementById('a-motivo').value = '';
   renderAgenda(); toast('Agendamento criado!');
 }
- 
+
 async function updateAgendaStatus(id, status) {
   const { error } = await supabaseClient.from('agendamentos').update({ status }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao atualizar status.'); console.error(error); return; }
   const a = agendamentos.find(x => x.id === id);
   if (a) { a.status = status; renderAgenda(); }
 }
- 
+
 async function deleteAgendamento(id) {
   if (!confirm('Mover agendamento pra lixeira? Você pode restaurar depois em Configurações.')) return;
   const { error } = await supabaseClient.from('agendamentos').update({ deletado_em: new Date().toISOString() }).eq('id', id).eq('organizacao_id', organizacaoId);
@@ -4303,28 +4328,28 @@ async function deleteAgendamento(id) {
   renderAgenda();
   toast('Agendamento movido pra lixeira.');
 }
- 
+
 function renderAgenda() {
   const wrap = document.getElementById('agenda-table');
   if (!wrap) return;
   const statusFiltro = document.getElementById('ag-status-filtro').value;
   let lista = [...agendamentos].sort((a, b) => (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')));
   if (statusFiltro) lista = lista.filter(a => a.status === statusFiltro);
- 
+
   document.getElementById('agenda-count').textContent = `(${lista.length} de ${agendamentos.length})`;
- 
+
   if (!lista.length) {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-calendar-event"></i>Nenhum agendamento encontrado</div>';
     return;
   }
- 
+
   const totalFiltrado = lista.length;
   const totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
   if (paginaAgenda > totalPaginas) paginaAgenda = totalPaginas;
   lista = lista.slice((paginaAgenda - 1) * ITENS_POR_PAGINA, paginaAgenda * ITENS_POR_PAGINA);
- 
+
   const statusCls = { 'Agendado':'badge-amber', 'Confirmado':'badge-blue', 'Concluído':'badge-green', 'Cancelado':'badge-red' };
-  let h = `<table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Motivo</th><th>Status</th><th>Observações</th><th></th><th></th></tr></thead><tbody>`;
+  let h = `<table><thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Motivo</th><th>Status</th><th>Observações</th><th></th><th></th><th></th></tr></thead><tbody>`;
   lista.forEach(a => {
     h += `<tr>
       <td>${a.data.split('-').reverse().join('/')}</td>
@@ -4338,6 +4363,7 @@ function renderAgenda() {
       </td>
       <td style="font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(a.obs) || '—'}</td>
       <td><button class="btn btn-outline btn-sm" onclick="adicionarAoGoogleAgenda('${a.id}')" title="Adicionar ao Google Agenda"><i class="ti ti-calendar-plus"></i></button></td>
+      <td><button class="btn btn-outline btn-sm" style="color:#25D366;border-color:#25D366;" onclick="enviarLembreteWhatsApp('${a.id}')" title="Enviar lembrete por WhatsApp"><i class="ti ti-brand-whatsapp"></i></button></td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteAgendamento('${a.id}')"><i class="ti ti-trash"></i></button></td>
     </tr>`;
   });
@@ -4345,14 +4371,14 @@ function renderAgenda() {
   h += gerarControlePaginacao(paginaAgenda, totalFiltrado, 'mudarPaginaAgenda');
   wrap.innerHTML = h;
 }
- 
+
 function adicionarAoGoogleAgenda(id) {
   const a = agendamentos.find(x => x.id === id);
   if (!a) return;
- 
+
   const dataBase = a.data.replace(/-/g, ''); // YYYYMMDD
   let datesParam;
- 
+
   if (a.hora) {
     const [hh, mm] = a.hora.split(':');
     const inicio = `${dataBase}T${hh}${mm}00`;
@@ -4367,16 +4393,83 @@ function adicionarAoGoogleAgenda(id) {
     const fimStr = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
     datesParam = `${dataBase}/${fimStr}`;
   }
- 
+
   const titulo = encodeURIComponent(`${a.clienteNome} — ${a.motivo || 'Agendamento DAAT.'}`);
   const detalhes = encodeURIComponent(
     `Agendamento criado no DAAT.\nCliente: ${a.clienteNome}\nMotivo: ${a.motivo || '—'}${a.obs ? '\nObservações: ' + a.obs : ''}`
   );
- 
+
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${datesParam}&details=${detalhes}&ctz=America/Sao_Paulo`;
   window.open(url, '_blank');
 }
- 
+
+// ===== ENVIAR MENSAGEM VIA WHATSAPP (sem API — abre o WhatsApp com o texto pronto) =====
+// não manda nada sozinho: só monta o link "wa.me" com a mensagem preenchida e quem usa
+// aperta enviar por conta própria, exatamente como digitar manualmente.
+function formatarTelefoneWhatsApp(tel) {
+  if (!tel) return null;
+  let digitos = String(tel).replace(/\D/g, '');
+  if (!digitos) return null;
+  digitos = digitos.replace(/^0+/, ''); // remove zero à esquerda que às vezes entra no DDD
+  if (!digitos.startsWith('55') && (digitos.length === 10 || digitos.length === 11)) {
+    digitos = '55' + digitos; // assume número brasileiro sem o código do país
+  }
+  if (digitos.length < 12) return null; // muito curto pra ser um número válido com DDI+DDD
+  return digitos;
+}
+
+function abrirModalWhatsApp(telefone, mensagemPadrao, nomeDestino) {
+  const numero = formatarTelefoneWhatsApp(telefone);
+  if (!numero) { toast('Esse cliente não tem um telefone válido cadastrado.'); return; }
+  whatsappAlvoNumero = numero;
+  document.getElementById('whatsapp-destino').textContent = `Para: ${nomeDestino || ''} · ${telefone}`;
+  document.getElementById('whatsapp-texto').value = mensagemPadrao;
+  document.getElementById('whatsapp-overlay').style.display = 'flex';
+}
+
+function fecharModalWhatsApp() {
+  document.getElementById('whatsapp-overlay').style.display = 'none';
+  whatsappAlvoNumero = null;
+}
+
+function confirmarEnvioWhatsApp() {
+  const texto = document.getElementById('whatsapp-texto').value.trim();
+  if (!texto) { toast('Escreva uma mensagem antes de enviar.'); return; }
+  if (!whatsappAlvoNumero) { toast('Erro ao identificar o destinatário.'); return; }
+  const url = `https://wa.me/${whatsappAlvoNumero}?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
+  fecharModalWhatsApp();
+}
+
+// lembrete de agendamento — botão na Agenda
+function enviarLembreteWhatsApp(id) {
+  const a = agendamentos.find(x => x.id === id);
+  if (!a) return;
+  const cliente = clientes.find(c => c.id === a.clienteId);
+  if (!cliente) { toast('Cliente desse agendamento não encontrado.'); return; }
+  if (!cliente.tel) { toast('Esse cliente não tem telefone cadastrado.'); return; }
+
+  const dataFmt = a.data.split('-').reverse().join('/');
+  const horaTxt = a.hora ? ` às ${a.hora}` : '';
+  const empresaTxt = nomeOrganizacao ? ` com a ${nomeOrganizacao}` : '';
+  const motivoTxt = a.motivo ? ` (${a.motivo})` : '';
+  const msg = `Olá, ${cliente.nome}! Passando pra lembrar do seu agendamento${empresaTxt} no dia ${dataFmt}${horaTxt}${motivoTxt}. Qualquer coisa, é só chamar por aqui!`;
+
+  abrirModalWhatsApp(cliente.tel, msg, cliente.nome);
+}
+
+// mensagem livre (aviso, promoção etc.) — botão no CRM
+function enviarMensagemWhatsApp(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  if (!c.tel) { toast('Esse cliente não tem telefone cadastrado.'); return; }
+
+  const assinatura = nomeOrganizacao || 'a gente';
+  const msg = `Olá, ${c.nome}! Aqui é ${assinatura}. `;
+
+  abrirModalWhatsApp(c.tel, msg, c.nome);
+}
+
 // ===== CONFIG =====
 async function renderConfig() {
   const { data: { user } } = await supabaseClient.auth.getUser();
@@ -4393,7 +4486,7 @@ async function renderConfig() {
   renderEquipe();
   renderPix(Number(org?.valor_mensal) || 69.90);
 }
- 
+
 async function salvarEmpresa() {
   const nome = document.getElementById('cfg-empresa').value.trim();
   const msg = document.getElementById('cfg-empresa-msg');
@@ -4408,20 +4501,20 @@ async function salvarEmpresa() {
   msg.style.color = 'var(--green)'; msg.textContent = 'Empresa atualizada!';
   toast('Empresa atualizada!');
 }
- 
+
 function toggleSenhaVisivelCfg(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
- 
+
 async function trocarSenha() {
   const senhaAtual = document.getElementById('cfg-senha-atual').value;
   const nova = document.getElementById('cfg-nova-senha').value;
   const confirma = document.getElementById('cfg-confirma-senha').value;
   const msg = document.getElementById('cfg-senha-msg');
   msg.style.display = 'block';
- 
+
   if (!senhaAtual || !nova || !confirma) {
     msg.style.color = 'var(--red)'; msg.textContent = 'Preencha os três campos.'; return;
   }
@@ -4431,7 +4524,7 @@ async function trocarSenha() {
   if (nova !== confirma) {
     msg.style.color = 'var(--red)'; msg.textContent = 'As senhas não coincidem.'; return;
   }
- 
+
   // confirma que quem está na frente da tela sabe a senha atual, antes de trocar —
   // protege contra alguém mexendo numa sessão que ficou aberta/desbloqueada
   msg.style.color = 'var(--text2)'; msg.textContent = 'Confirmando sua senha atual...';
@@ -4440,19 +4533,19 @@ async function trocarSenha() {
   if (erroAuth) {
     msg.style.color = 'var(--red)'; msg.textContent = 'Senha atual incorreta.'; return;
   }
- 
+
   const { error } = await supabaseClient.auth.updateUser({ password: nova });
   if (error) {
     msg.style.color = 'var(--red)'; msg.textContent = 'Erro ao trocar senha: ' + error.message; return;
   }
- 
+
   msg.style.color = 'var(--green)'; msg.textContent = 'Senha atualizada com sucesso!';
   document.getElementById('cfg-senha-atual').value = '';
   document.getElementById('cfg-nova-senha').value = '';
   document.getElementById('cfg-confirma-senha').value = '';
   toast('Senha atualizada!');
 }
- 
+
 // ===== LEMBRETES DE HOJE =====
 function hojeLocal() {
   const d = new Date();
@@ -4461,12 +4554,12 @@ function hojeLocal() {
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
- 
+
 function montarListaLembretes(deHoje) {
   const hoje = hojeLocal();
   const dataFormatada = new Date(hoje + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
   document.getElementById('lembretes-data').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
- 
+
   const statusCls = { 'Agendado': 'badge-amber', 'Confirmado': 'badge-gold' };
   let html = '';
   if (!deHoje.length) {
@@ -4485,12 +4578,12 @@ function montarListaLembretes(deHoje) {
   document.getElementById('lembretes-lista').innerHTML = html;
   document.getElementById('lembretes-overlay').style.display = 'flex';
 }
- 
+
 function agendamentosDeHoje() {
   const hoje = hojeLocal();
   return agendamentos.filter(a => a.data === hoje && a.status !== 'Cancelado' && a.status !== 'Concluído');
 }
- 
+
 // chamado automaticamente ao logar — só aparece uma vez por dia nesse navegador, e só se tiver algo
 function verificarLembretesHoje() {
   // limpeza de uma versão antiga da chave (que marcava o dia inteiro, não cada agendamento)
@@ -4498,32 +4591,32 @@ function verificarLembretesHoje() {
   localStorage.removeItem(`daat_lembretes_${organizacaoId}_${hoje}`);
   const chave = `daat_lembretes_ids_${organizacaoId}_${hoje}`;
   const idsJaMostrados = JSON.parse(localStorage.getItem(chave) || '[]');
- 
+
   const deHoje = agendamentosDeHoje();
   if (!deHoje.length) return;
- 
+
   const temNovo = deHoje.some(a => !idsJaMostrados.includes(a.id));
   if (!temNovo) return; // todos os agendamentos de hoje já foram mostrados nesse navegador
- 
+
   localStorage.setItem(chave, JSON.stringify(deHoje.map(a => a.id)));
   montarListaLembretes(deHoje);
 }
- 
+
 // chamado pelo sininho no header — sempre mostra, mesmo que já tenha visto hoje ou não tenha nada
 function mostrarLembretesManual() {
   montarListaLembretes(agendamentosDeHoje());
 }
- 
+
 function fecharLembretes() {
   document.getElementById('lembretes-overlay').style.display = 'none';
 }
- 
+
 // ===== EXPORTAR (EXCEL) =====
 function nomeArquivoComData(prefixo) {
   const hoje = new Date().toISOString().split('T')[0];
   return `${prefixo}-${hoje}.xlsx`;
 }
- 
+
 function exportarProdutos() {
   if (!produtos.length) { toast('Nenhum item pra exportar.'); return; }
   const linhas = produtos.map(p => ({
@@ -4547,7 +4640,7 @@ function exportarProdutos() {
   XLSX.writeFile(wb, nomeArquivoComData('produtos'));
   toast('Exportado!');
 }
- 
+
 function exportarVendas() {
   if (!vendas.length) { toast('Nenhuma venda pra exportar.'); return; }
   const linhas = [...vendas].reverse().map(v => ({
@@ -4568,7 +4661,7 @@ function exportarVendas() {
   XLSX.writeFile(wb, nomeArquivoComData('vendas'));
   toast('Exportado!');
 }
- 
+
 function exportarClientes() {
   if (!clientes.length) { toast('Nenhum cliente pra exportar.'); return; }
   const linhas = clientes.map(c => ({
@@ -4585,7 +4678,7 @@ function exportarClientes() {
   XLSX.writeFile(wb, nomeArquivoComData('clientes'));
   toast('Exportado!');
 }
- 
+
 function exportarAgendamentos() {
   if (!agendamentos.length) { toast('Nenhum agendamento pra exportar.'); return; }
   const linhas = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
@@ -4602,13 +4695,13 @@ function exportarAgendamentos() {
   XLSX.writeFile(wb, nomeArquivoComData('agendamentos'));
   toast('Exportado!');
 }
- 
+
 function exportarTudo() {
   if (!produtos.length && !vendas.length && !clientes.length && !agendamentos.length) {
     toast('Nenhum dado pra exportar ainda.'); return;
   }
   const wb = XLSX.utils.book_new();
- 
+
   if (produtos.length) {
     const shProdutos = produtos.map(p => ({
       'Nome': p.nome, 'Tipo': p.tipo || 'Produto', 'Fornecedor': p.fornecedor || '', 'Linha/Coleção': p.serie || '',
@@ -4618,7 +4711,7 @@ function exportarTudo() {
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shProdutos), 'Produtos');
   }
- 
+
   if (vendas.length) {
     const shVendas = [...vendas].reverse().map(v => ({
       'Data': v.data.split('-').reverse().join('/'), 'Vendedor': v.vendedor || '', 'Canal': v.canal || '',
@@ -4628,14 +4721,14 @@ function exportarTudo() {
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shVendas), 'Vendas');
   }
- 
+
   if (clientes.length) {
     const shClientes = clientes.map(c => ({
       'Nome': c.nome, 'Telefone': c.tel || '', 'E-mail': c.email || '', 'CPF': c.cpf || '', 'CNPJ': c.cnpj || '', 'Observações': c.obs || '',
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shClientes), 'Clientes');
   }
- 
+
   if (agendamentos.length) {
     const shAgenda = [...agendamentos].sort((a,b) => (a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).map(a => ({
       'Data': a.data.split('-').reverse().join('/'), 'Hora': a.hora || '', 'Cliente': a.clienteNome || '',
@@ -4643,11 +4736,11 @@ function exportarTudo() {
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shAgenda), 'Agendamentos');
   }
- 
+
   XLSX.writeFile(wb, nomeArquivoComData('daat-dados-completos'));
   toast('Exportado!');
 }
- 
+
 // ===== AJUDA: FAQ =====
 const FAQ_ITEMS = [
   { pergunta: 'Esqueci minha senha, e agora?', resposta: 'Na tela de login, clique em "Esqueci minha senha", digite seu e-mail e você vai receber um link pra criar uma senha nova. Confira também a caixa de spam.' },
@@ -4659,7 +4752,7 @@ const FAQ_ITEMS = [
   { pergunta: 'O sistema bloqueou meu acesso, o que houve?', resposta: 'Isso acontece se o teste grátis expirou ou se há alguma pendência. A tela de bloqueio mostra nossos contatos — é só chamar a gente que resolvemos rápido.' },
   { pergunta: 'Posso trocar o nome da minha empresa no sistema?', resposta: 'Sim, vá em Configurações, campo "Empresa", digite o nome novo e clique em "Salvar".' },
 ];
- 
+
 function renderFAQ() {
   const wrap = document.getElementById('faq-lista');
   if (!wrap) return;
@@ -4673,7 +4766,7 @@ function renderFAQ() {
     </div>
   `).join('');
 }
- 
+
 function toggleFAQ(i) {
   const resp = document.getElementById(`faq-resposta-${i}`);
   const icon = document.getElementById(`faq-icon-${i}`);
@@ -4681,23 +4774,23 @@ function toggleFAQ(i) {
   resp.style.display = aberto ? 'none' : 'block';
   icon.style.transform = aberto ? 'rotate(180deg)' : 'rotate(0deg)';
 }
- 
+
 // ===== AJUDA: CHAMADOS =====
 async function renderAjuda() {
   renderFAQ();
   await renderChamados();
 }
- 
+
 async function abrirChamado() {
   const assunto = document.getElementById('ch-assunto').value.trim();
   const mensagem = document.getElementById('ch-mensagem').value.trim();
   const msgEl = document.getElementById('ch-msg');
   msgEl.style.display = 'block';
- 
+
   if (!assunto || !mensagem) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Preencha assunto e mensagem.'; return;
   }
- 
+
   const { data: { user } } = await supabaseClient.auth.getUser();
   const { error } = await supabaseClient.from('chamados').insert({
     organizacao_id: organizacaoId,
@@ -4705,34 +4798,34 @@ async function abrirChamado() {
     assunto,
     mensagem,
   });
- 
+
   if (error) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Erro ao enviar: ' + error.message; return;
   }
- 
+
   msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Chamado enviado! A resposta aparece aqui embaixo assim que a gente responder.';
   document.getElementById('ch-assunto').value = '';
   document.getElementById('ch-mensagem').value = '';
   toast('Chamado enviado!');
   await renderChamados();
 }
- 
+
 async function renderChamados() {
   const wrap = document.getElementById('chamados-lista');
   if (!wrap) return;
- 
+
   const { data, error } = await supabaseClient
     .from('chamados').select('*').eq('organizacao_id', organizacaoId).order('criado_em', { ascending: false });
- 
+
   if (error || !data) { wrap.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i>Erro ao carregar chamados</div>'; return; }
- 
+
   document.getElementById('chamados-count').textContent = `(${data.length})`;
- 
+
   if (!data.length) {
     wrap.innerHTML = '<div class="empty"><i class="ti ti-message-2"></i>Nenhum chamado enviado ainda</div>';
     return;
   }
- 
+
   const statusCls = { 'aberto': 'badge-amber', 'respondido': 'badge-green', 'fechado': 'badge-gray' };
   const statusLabel = { 'aberto': 'Aberto', 'respondido': 'Respondido', 'fechado': 'Fechado' };
   let h = '';
@@ -4749,32 +4842,32 @@ async function renderChamados() {
   });
   wrap.innerHTML = h;
 }
- 
+
 // ===== LIXEIRA (itens excluídos, recuperáveis) =====
 async function renderLixeira() {
   const wrap = document.getElementById('lixeira-lista');
   if (!wrap) return;
   wrap.innerHTML = '<div style="text-align:center;color:var(--text3);padding:1rem;font-size:12px;">Carregando...</div>';
- 
+
   const [p, v, c, a] = await Promise.all([
     supabaseClient.from('produtos').select('id, nome, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
     supabaseClient.from('vendas').select('id, cliente, data, total, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
     supabaseClient.from('clientes').select('id, nome, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
     supabaseClient.from('agendamentos').select('id, cliente_nome, data, deletado_em').eq('organizacao_id', organizacaoId).not('deletado_em', 'is', null).order('deletado_em', { ascending: false }),
   ]);
- 
+
   const itens = [
     ...(p.data || []).map(x => ({ tipo: 'Produto', tabela: 'produtos', id: x.id, label: x.nome, deletadoEm: x.deletado_em })),
     ...(v.data || []).map(x => ({ tipo: 'Venda', tabela: 'vendas', id: x.id, label: `${x.cliente || 'Sem cliente'} — R$ ${Number(x.total).toFixed(2)}`, deletadoEm: x.deletado_em })),
     ...(c.data || []).map(x => ({ tipo: 'Cliente', tabela: 'clientes', id: x.id, label: x.nome, deletadoEm: x.deletado_em })),
     ...(a.data || []).map(x => ({ tipo: 'Agendamento', tabela: 'agendamentos', id: x.id, label: `${x.cliente_nome || 'Sem cliente'} — ${(x.data||'').split('-').reverse().join('/')}`, deletadoEm: x.deletado_em })),
   ].sort((x, y) => new Date(y.deletadoEm) - new Date(x.deletadoEm));
- 
+
   if (!itens.length) {
     wrap.innerHTML = '<div class="empty" style="padding:1.5rem 0;"><i class="ti ti-trash-off"></i>Lixeira vazia</div>';
     return;
   }
- 
+
   let h = '';
   itens.forEach(it => {
     h += `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
@@ -4788,7 +4881,7 @@ async function renderLixeira() {
   });
   wrap.innerHTML = h;
 }
- 
+
 async function restaurarItem(tabela, id) {
   const { error } = await supabaseClient.from(tabela).update({ deletado_em: null }).eq('id', id).eq('organizacao_id', organizacaoId);
   if (error) { toast('Erro ao restaurar.'); console.error(error); return; }
@@ -4796,14 +4889,14 @@ async function restaurarItem(tabela, id) {
   renderLixeira();
   toast('Item restaurado!');
 }
- 
+
 // ===== EQUIPE (funcionários) =====
 function toggleSenhaVisivelEq(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') { input.type = 'text'; btn.textContent = 'OCULTAR'; }
   else { input.type = 'password'; btn.textContent = 'MOSTRAR'; }
 }
- 
+
 async function convidarFuncionario() {
   const nome = document.getElementById('eq-nome').value.trim();
   const email = document.getElementById('eq-email').value.trim();
@@ -4811,7 +4904,7 @@ async function convidarFuncionario() {
   const senhaConfirma = document.getElementById('eq-senha-confirma').value;
   const msgEl = document.getElementById('eq-msg');
   msgEl.style.display = 'block';
- 
+
   if (!nome || !email || !senha || !senhaConfirma) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Preencha todos os campos.'; return;
   }
@@ -4821,13 +4914,13 @@ async function convidarFuncionario() {
   if (senha !== senhaConfirma) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'As senhas não coincidem.'; return;
   }
- 
+
   // usa um client temporário (sessão própria, não persistida) pra criar o login do
   // funcionário sem derrubar a sua sessão de dono aqui no navegador
   const clientTemp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
- 
+
   const { data: signUpData, error: signUpErr } = await clientTemp.auth.signUp({ email, password: senha });
   if (signUpErr) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Erro ao criar acesso: ' + signUpErr.message; return;
@@ -4836,32 +4929,32 @@ async function convidarFuncionario() {
   if (!novoId) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Não foi possível criar o usuário. Confira se a confirmação de e-mail está desativada no Supabase.'; return;
   }
- 
+
   const { error: rpcErr } = await supabaseClient.rpc('convidar_funcionario', { p_novo_user_id: novoId, p_nome: nome });
   if (rpcErr) {
     msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Usuário criado, mas houve erro ao vincular: ' + rpcErr.message; return;
   }
- 
+
   msgEl.style.color = 'var(--green)'; msgEl.textContent = 'Acesso do funcionário criado!';
   ['eq-nome','eq-email','eq-senha','eq-senha-confirma'].forEach(id => document.getElementById(id).value = '');
   toast('Funcionário adicionado!');
   renderEquipe();
 }
- 
+
 async function renderEquipe() {
   const card = document.getElementById('equipe-card');
   if (!card) return;
   if (meuRole === 'funcionario') { card.style.display = 'none'; return; }
- 
+
   const wrap = document.getElementById('equipe-lista');
   const { data, error } = await supabaseClient.from('perfis').select('id, nome, role').eq('organizacao_id', organizacaoId).order('role');
   if (error || !data) { wrap.innerHTML = ''; return; }
- 
+
   if (data.length <= 1) {
     wrap.innerHTML = '<div class="empty" style="padding:1rem 0;"><i class="ti ti-users-group"></i>Só você tem acesso até agora</div>';
     return;
   }
- 
+
   wrap.innerHTML = data.map(p => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
       <span style="font-size:13px;color:var(--text);">${escapeHTML(p.nome) || '—'}</span>
@@ -4869,13 +4962,13 @@ async function renderEquipe() {
     </div>
   `).join('');
 }
- 
+
 // ===== PIX (QR code estático, gerado no navegador, sem gateway nem custo) =====
 const PIX_CHAVE = '6b6a5dfa-401e-4f92-bf4d-b00f8fb64848';
 const PIX_NOME = 'DAAT-TECH';
 const PIX_CIDADE = 'SAO JOSE CAMPOS';
 let pixPayloadAtual = '';
- 
+
 function crc16ccitt(str) {
   let crc = 0xFFFF;
   for (let i = 0; i < str.length; i++) {
@@ -4887,16 +4980,16 @@ function crc16ccitt(str) {
   }
   return crc.toString(16).toUpperCase().padStart(4, '0');
 }
- 
+
 function campoEMV(id, valor) {
   const tamanho = String(valor.length).padStart(2, '0');
   return `${id}${tamanho}${valor}`;
 }
- 
+
 function gerarPayloadPix(valor) {
   const merchantAccountInfo = campoEMV('26', campoEMV('00', 'br.gov.bcb.pix') + campoEMV('01', PIX_CHAVE));
   const valorFormatado = valor.toFixed(2);
- 
+
   const payload = ''
     + campoEMV('00', '01')
     + merchantAccountInfo
@@ -4908,15 +5001,15 @@ function gerarPayloadPix(valor) {
     + campoEMV('60', PIX_CIDADE.substring(0, 15))
     + campoEMV('62', campoEMV('05', '***'))
     + '6304';
- 
+
   return payload + crc16ccitt(payload);
 }
- 
+
 function renderPix(valor) {
   pixPayloadAtual = gerarPayloadPix(valor);
   document.getElementById('pix-valor').textContent = `R$ ${valor.toFixed(2)}`;
   document.getElementById('pix-copia-cola').value = pixPayloadAtual;
- 
+
   const wrap = document.getElementById('pix-qr-wrap');
   wrap.innerHTML = '';
   try {
@@ -4930,7 +5023,7 @@ function renderPix(valor) {
     wrap.innerHTML = '<div style="font-size:11px;color:var(--text2);padding:10px;max-width:160px;">Não foi possível carregar o QR agora — usa o código "copia e cola" ao lado pra pagar.</div>';
   }
 }
- 
+
 function copiarPix() {
   navigator.clipboard.writeText(pixPayloadAtual).then(() => {
     const msg = document.getElementById('pix-copiado-msg');
@@ -4942,7 +5035,7 @@ function copiarPix() {
     document.execCommand('copy');
   });
 }
- 
+
 // ===== INIT =====
 // (a inicialização acontece em iniciarApp(), chamada após login ou sessão existente)
 </script>
