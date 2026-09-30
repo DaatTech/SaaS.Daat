@@ -2692,7 +2692,10 @@ var qrcode = function() {
   <div class="card">
     <div class="card-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:10px;"><i class="ti ti-list"></i> Catálogo <span style="font-size:12px;color:var(--text3);margin-left:6px;" id="prod-count"></span></span>
-      <button class="btn btn-outline btn-sm" onclick="exportarProdutos()"><i class="ti ti-download"></i> Exportar</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="abrirModalImport()"><i class="ti ti-table-import"></i> Importar planilha</button>
+        <button class="btn btn-outline btn-sm" onclick="exportarProdutos()"><i class="ti ti-download"></i> Exportar</button>
+      </div>
     </div>
     <div class="filter-row">
       <input id="busca" placeholder="Buscar..." oninput="paginaProdutos=1;renderProdutos()" style="flex:1;min-width:100px;" />
@@ -3088,6 +3091,45 @@ var qrcode = function() {
   </div>
 </div>
 
+<!-- ===== IMPORTAR PRODUTOS DE PLANILHA ===== -->
+<div id="import-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,18,12,.45);z-index:998;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-width:760px;width:100%;max-height:88vh;overflow-y:auto;padding:1.75rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <i class="ti ti-table-import" style="color:var(--text);background:var(--accent);border-radius:8px;padding:6px;font-size:18px;"></i>
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Importar produtos de planilha</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="fecharModalImport()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div id="import-passo-arquivo">
+      <p style="font-size:13px;color:var(--text2);margin:12px 0;">Selecione um arquivo Excel (.xlsx) ou CSV com a lista de produtos ou serviços que você já tem. Na próxima tela você indica qual coluna da sua planilha corresponde a cada campo do sistema — não precisa mudar nada na planilha original.</p>
+      <input type="file" id="import-arquivo" accept=".xlsx,.xls,.csv" onchange="lerArquivoImportacao(event)" />
+    </div>
+
+    <div id="import-passo-mapeamento" style="display:none;">
+      <div style="font-size:12px;color:var(--text3);margin:12px 0;" id="import-resumo-linhas"></div>
+
+      <div style="overflow-x:auto;margin-bottom:1.25rem;border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <table style="font-size:11px;">
+          <thead><tr id="import-preview-cabecalho"></tr></thead>
+          <tbody id="import-preview-linhas"></tbody>
+        </table>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">De onde vem cada campo</div>
+      <div class="form-grid cols3" id="import-mapeamento-campos"></div>
+
+      <div class="actions" style="margin-top:1.25rem;">
+        <button class="btn btn-outline" onclick="fecharModalImport()">Cancelar</button>
+        <button class="btn btn-gold" onclick="confirmarImportacao()"><i class="ti ti-upload"></i> Importar produtos</button>
+      </div>
+    </div>
+
+    <div id="import-msg" style="font-size:12px;margin-top:14px;display:none;font-family:var(--font-mono);"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
 
@@ -3439,6 +3481,163 @@ function mapProdutoDb(p) {
     volume: p.volume, unidade: p.unidade, custo: Number(p.custo), preco: Number(p.preco),
     estoque: p.estoque, estoqueMin: p.estoque_min, obs: p.obs, ativo: p.ativo };
 }
+// ===== IMPORTAR PRODUTOS DE PLANILHA (upload livre + mapeamento manual) =====
+const CAMPOS_IMPORT_PRODUTOS = [
+  { key: 'nome',       label: 'Nome *',                  aliases: ['nome','produto','descricao','item','servico'] },
+  { key: 'tipo',       label: 'Tipo (Produto/Serviço)',  aliases: ['tipo'] },
+  { key: 'fornecedor', label: 'Fornecedor',              aliases: ['fornecedor','marca'] },
+  { key: 'categoria',  label: 'Categoria',                aliases: ['categoria'] },
+  { key: 'serie',      label: 'Linha / Coleção',          aliases: ['linha','serie','colecao'] },
+  { key: 'volume',     label: 'Volume / Variação',        aliases: ['volume','variacao','tamanho'] },
+  { key: 'unidade',    label: 'Unidade',                  aliases: ['unidade','un'] },
+  { key: 'custo',      label: 'Custo (R$)',               aliases: ['custo','preco de custo'] },
+  { key: 'preco',      label: 'Preço de venda (R$)',      aliases: ['preco','preco de venda','valor'] },
+  { key: 'estoque',    label: 'Estoque atual',            aliases: ['estoque','qtd','quantidade'] },
+  { key: 'estoqueMin', label: 'Estoque mínimo',           aliases: ['estoque minimo','minimo'] },
+  { key: 'obs',        label: 'Observações',              aliases: ['observacoes','obs'] },
+];
+
+let importCabecalho = [];
+let importLinhas = [];
+
+function normalizarTexto(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+
+function abrirModalImport() {
+  document.getElementById('import-arquivo').value = '';
+  document.getElementById('import-passo-arquivo').style.display = 'block';
+  document.getElementById('import-passo-mapeamento').style.display = 'none';
+  document.getElementById('import-msg').style.display = 'none';
+  document.getElementById('import-overlay').style.display = 'flex';
+}
+
+function fecharModalImport() {
+  document.getElementById('import-overlay').style.display = 'none';
+  importCabecalho = [];
+  importLinhas = [];
+}
+
+function lerArquivoImportacao(ev) {
+  const arquivo = ev.target.files[0];
+  if (!arquivo) return;
+  const leitor = new FileReader();
+  leitor.onload = (e) => {
+    try {
+      const dados = new Uint8Array(e.target.result);
+      const wb = XLSX.read(dados, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const linhasBrutas = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!linhasBrutas.length) { toast('Essa planilha está vazia.'); return; }
+      importCabecalho = linhasBrutas[0].map(c => String(c || '').trim());
+      importLinhas = linhasBrutas.slice(1).filter(l => l.some(c => String(c).trim() !== ''));
+      if (!importLinhas.length) { toast('Não encontrei linhas de dados abaixo do cabeçalho.'); return; }
+      montarTelaMapeamento();
+    } catch (err) {
+      console.error(err);
+      toast('Não consegui ler esse arquivo. Confira se é um .xlsx ou .csv válido.');
+    }
+  };
+  leitor.readAsArrayBuffer(arquivo);
+}
+
+function montarTelaMapeamento() {
+  document.getElementById('import-resumo-linhas').textContent =
+    `${importLinhas.length} linha(s) encontrada(s) na planilha, ${importCabecalho.length} coluna(s).`;
+
+  document.getElementById('import-preview-cabecalho').innerHTML =
+    importCabecalho.map(c => `<th>${escapeHTML(c) || '—'}</th>`).join('');
+  document.getElementById('import-preview-linhas').innerHTML = importLinhas.slice(0, 5).map(l =>
+    `<tr>${importCabecalho.map((_, i) => `<td>${escapeHTML(l[i])}</td>`).join('')}</tr>`
+  ).join('');
+
+  const opcoesColunas = importCabecalho.map((c, i) => `<option value="${i}">${escapeHTML(c) || ('Coluna ' + (i + 1))}</option>`).join('');
+  document.getElementById('import-mapeamento-campos').innerHTML = CAMPOS_IMPORT_PRODUTOS.map(campo => `
+    <div class="form-group">
+      <label>${campo.label}</label>
+      <select id="import-map-${campo.key}">
+        <option value="">Não importar</option>
+        ${opcoesColunas}
+      </select>
+    </div>
+  `).join('');
+
+  // sugestão automática de coluna por nome parecido — o usuário pode trocar qualquer uma
+  CAMPOS_IMPORT_PRODUTOS.forEach(campo => {
+    const indiceSugerido = importCabecalho.findIndex(c => campo.aliases.includes(normalizarTexto(c)));
+    if (indiceSugerido >= 0) document.getElementById(`import-map-${campo.key}`).value = String(indiceSugerido);
+  });
+
+  document.getElementById('import-passo-arquivo').style.display = 'none';
+  document.getElementById('import-passo-mapeamento').style.display = 'block';
+}
+
+async function confirmarImportacao() {
+  const mapa = {};
+  CAMPOS_IMPORT_PRODUTOS.forEach(campo => {
+    const val = document.getElementById(`import-map-${campo.key}`).value;
+    mapa[campo.key] = val === '' ? null : parseInt(val, 10);
+  });
+
+  if (mapa.nome === null) { toast('Selecione qual coluna é o Nome — esse campo é obrigatório.'); return; }
+
+  const numBR = (v) => {
+    if (v === '' || v === null || v === undefined) return 0;
+    if (typeof v === 'number') return v;
+    const limpo = String(v).trim();
+    if (!limpo) return 0;
+    // aceita tanto "1.234,56" (padrão BR) quanto "1234.56" (padrão internacional)
+    return parseFloat(limpo.includes(',') ? limpo.replace(/\./g, '').replace(',', '.') : limpo) || 0;
+  };
+
+  const novosProdutos = [];
+  let ignoradas = 0;
+  importLinhas.forEach(linha => {
+    const nome = String(linha[mapa.nome] || '').trim();
+    if (!nome) { ignoradas++; return; }
+
+    const tipoTexto = mapa.tipo !== null ? normalizarTexto(linha[mapa.tipo]) : '';
+    const tipo = tipoTexto.includes('servi') ? 'Serviço' : 'Produto';
+
+    novosProdutos.push({
+      organizacao_id: organizacaoId,
+      nome,
+      tipo,
+      fornecedor: mapa.fornecedor !== null ? String(linha[mapa.fornecedor] || '').trim() : '',
+      categoria: mapa.categoria !== null ? String(linha[mapa.categoria] || '').trim() : '',
+      serie: mapa.serie !== null ? String(linha[mapa.serie] || '').trim() : '',
+      volume: tipo === 'Serviço' ? '' : (mapa.volume !== null ? String(linha[mapa.volume] || '').trim() : ''),
+      unidade: tipo === 'Serviço' ? 'un' : ((mapa.unidade !== null ? String(linha[mapa.unidade] || '').trim() : '') || 'un'),
+      custo: mapa.custo !== null ? numBR(linha[mapa.custo]) : 0,
+      preco: mapa.preco !== null ? numBR(linha[mapa.preco]) : 0,
+      estoque: tipo === 'Serviço' ? 0 : (mapa.estoque !== null ? (parseInt(linha[mapa.estoque], 10) || 0) : 0),
+      estoque_min: tipo === 'Serviço' ? 0 : (mapa.estoqueMin !== null ? (parseInt(linha[mapa.estoqueMin], 10) || 3) : 3),
+      obs: mapa.obs !== null ? String(linha[mapa.obs] || '').trim() : '',
+      ativo: true,
+    });
+  });
+
+  if (!novosProdutos.length) { toast('Nenhuma linha válida pra importar — confira a coluna mapeada como Nome.'); return; }
+
+  const msgEl = document.getElementById('import-msg');
+  msgEl.style.display = 'block';
+  msgEl.style.color = 'var(--text2)';
+  msgEl.textContent = `Importando ${novosProdutos.length} item(ns)...`;
+
+  const { data, error } = await supabaseClient.from('produtos').insert(novosProdutos).select();
+  if (error) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Erro ao importar. Confira os dados e tente de novo.';
+    console.error(error);
+    return;
+  }
+
+  data.forEach(p => produtos.push(mapProdutoDb(p)));
+  renderProdutos();
+  fecharModalImport();
+  toast(`${data.length} item(ns) importado(s)${ignoradas ? `, ${ignoradas} linha(s) ignorada(s) sem nome` : ''}!`);
+}
+
 function mapVendaDb(v) {
   return { id: v.id, data: v.data, vendedor: v.vendedor, canal: v.canal, cliente: v.cliente,
     itens: v.itens || [], total: Number(v.total), comissao: Number(v.comissao || 0) };
@@ -3826,7 +4025,7 @@ function renderHistorico() {
   if (paginaHistorico > totalPaginas) paginaHistorico = totalPaginas;
   lista = lista.slice((paginaHistorico - 1) * ITENS_POR_PAGINA, paginaHistorico * ITENS_POR_PAGINA);
 
-  let h = `<table><thead><tr><th>Data</th><th>Vendedor</th><th>Canal</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Comissão</th><th></th></tr></thead><tbody>`;
+  let h = `<table><thead><tr><th>Data</th><th>Vendedor</th><th>Canal</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Comissão</th><th></th><th></th></tr></thead><tbody>`;
   lista.forEach(v => {
     const nomes = v.itens.map(i => {
       const p = produtos.find(x => x.id == i.prodId);
@@ -3835,6 +4034,10 @@ function renderHistorico() {
     const comissaoCell = v.comissao > 0
       ? `<span style="color:var(--terracota);font-weight:600;">R$ ${v.comissao.toFixed(2)}</span>`
       : `<span style="color:var(--text3);">—</span>`;
+    const temServico = v.itens.some(i => {
+      const p = produtos.find(x => x.id == i.prodId);
+      return p && p.tipo === 'Serviço';
+    });
     h += `<tr>
       <td>${v.data.split('-').reverse().join('/')}</td>
       <td>${v.vendedor ? `<span class="badge badge-gold"><i class="ti ti-user" style="font-size:10px;"></i> ${escapeHTML(v.vendedor)}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
@@ -3843,12 +4046,108 @@ function renderHistorico() {
       <td style="font-size:12px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${nomes}</td>
       <td style="font-weight:700;color:var(--accent);">R$ ${v.total.toFixed(2)}</td>
       <td>${comissaoCell}</td>
+      <td>${temServico ? `<button class="btn btn-outline btn-sm" onclick="gerarOS('${v.id}')" title="Gerar Ordem de Serviço"><i class="ti ti-file-text"></i></button>` : ''}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteVenda('${v.id}')"><i class="ti ti-trash"></i></button></td>
     </tr>`;
   });
   h += '</tbody></table>';
   h += gerarControlePaginacao(paginaHistorico, totalFiltrado, 'mudarPaginaHistorico');
   document.getElementById('hist-table').innerHTML = h;
+}
+
+// ===== GERAR ORDEM DE SERVIÇO (OS) A PARTIR DE UMA VENDA JÁ REGISTRADA =====
+// abre um documento pronto pra imprimir/salvar como PDF — sem biblioteca nova,
+// o próprio "Salvar como PDF" do navegador resolve, igual já fazíamos no contrato.
+function gerarOS(vendaId) {
+  const v = vendas.find(x => x.id === vendaId);
+  if (!v) { toast('Venda não encontrada.'); return; }
+
+  const obsDigitada = prompt('Observações pra incluir na OS (prazo, garantia, condições) — opcional:', '') || '';
+
+  const linhasItens = v.itens.map(i => {
+    const p = produtos.find(x => x.id == i.prodId);
+    return {
+      nome: p ? p.nome : 'Item removido',
+      tipo: p ? p.tipo : '',
+      qty: i.qty,
+      preco: i.preco,
+      subtotal: i.qty * i.preco,
+    };
+  });
+
+  const numeroOS = 'OS-' + String(v.id).replace(/-/g, '').slice(0, 8).toUpperCase();
+  const dataFmt = v.data.split('-').reverse().join('/');
+  const empresa = nomeOrganizacao || 'Minha Empresa';
+
+  const linhasHtml = linhasItens.map(l => `
+    <tr>
+      <td>${escapeHTML(l.nome)}${l.tipo === 'Serviço' ? ' <span style="font-size:10px;color:#888;">(serviço)</span>' : ''}</td>
+      <td style="text-align:center;">${l.qty}</td>
+      <td style="text-align:right;">R$ ${l.preco.toFixed(2)}</td>
+      <td style="text-align:right;">R$ ${l.subtotal.toFixed(2)}</td>
+    </tr>`).join('');
+
+  const htmlOS = `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>${numeroOS}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #14120c; padding: 40px; max-width: 720px; margin: 0 auto; }
+  .cabecalho { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #14120c; padding-bottom:16px; margin-bottom:24px; }
+  .empresa { font-size:22px; font-weight:800; }
+  .os-num { text-align:right; font-size:13px; color:#555; line-height:1.5; }
+  .bloco { margin-bottom:20px; }
+  .bloco-label { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#888; margin-bottom:4px; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  th { text-align:left; font-size:11px; text-transform:uppercase; color:#888; border-bottom:1px solid #ccc; padding:8px 6px; }
+  td { padding:8px 6px; border-bottom:1px solid #eee; font-size:13px; }
+  .total-row td { font-weight:800; font-size:15px; border-top:2px solid #14120c; border-bottom:none; }
+  .assinaturas { display:flex; gap:40px; margin-top:64px; }
+  .assinatura { flex:1; text-align:center; }
+  .linha-assinatura { border-top:1px solid #14120c; margin-top:50px; padding-top:6px; font-size:12px; color:#555; }
+  .rodape { margin-top:50px; text-align:center; font-size:10px; color:#aaa; }
+  @media print { .no-print { display:none; } body { padding:0; } }
+</style></head>
+<body>
+  <div class="cabecalho">
+    <div class="empresa">${escapeHTML(empresa)}</div>
+    <div class="os-num">ORDEM DE SERVIÇO<br><strong>${numeroOS}</strong><br>${dataFmt}</div>
+  </div>
+
+  <div class="bloco">
+    <div class="bloco-label">Cliente</div>
+    <div>${escapeHTML(v.cliente) || '—'}</div>
+  </div>
+
+  <div class="bloco">
+    <div class="bloco-label">Itens / Serviços</div>
+    <table>
+      <thead><tr><th>Descrição</th><th style="text-align:center;">Qtd</th><th style="text-align:right;">Valor unit.</th><th style="text-align:right;">Subtotal</th></tr></thead>
+      <tbody>
+        ${linhasHtml}
+        <tr class="total-row"><td colspan="3">Total</td><td style="text-align:right;">R$ ${v.total.toFixed(2)}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  ${obsDigitada.trim() ? `<div class="bloco"><div class="bloco-label">Observações</div><div>${escapeHTML(obsDigitada).replace(/\n/g, '<br>')}</div></div>` : ''}
+
+  <div class="assinaturas">
+    <div class="assinatura"><div class="linha-assinatura">Assinatura do cliente</div></div>
+    <div class="assinatura"><div class="linha-assinatura">Assinatura do responsável</div></div>
+  </div>
+
+  <div class="rodape">Documento gerado via Sistema DAAT. — daat-tech.com.br</div>
+
+  <div class="no-print" style="text-align:center;margin-top:30px;">
+    <button onclick="window.print()" style="background:#f5c400;border:none;padding:12px 28px;border-radius:999px;font-weight:700;cursor:pointer;">Salvar / Imprimir</button>
+  </div>
+</body></html>`;
+
+  const janela = window.open('', '_blank');
+  if (!janela) { toast('Seu navegador bloqueou o pop-up. Permita pop-ups pra esse site e tente de novo.'); return; }
+  janela.document.write(htmlOS);
+  janela.document.close();
 }
 
 async function deleteVenda(id) {
