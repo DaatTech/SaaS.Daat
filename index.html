@@ -2398,6 +2398,10 @@ var qrcode = function() {
   .btn-gold:hover { background: var(--accent2); box-shadow: var(--shadow); }
   .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
   .btn-outline:hover { border-color: var(--text); color: var(--text); }
+  .lang-switch { display:flex; gap:8px; flex-wrap:wrap; }
+  .lang-btn { background: transparent; border: 1px solid var(--border2); color: var(--text2); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; cursor: pointer; font-family: var(--font-body, inherit); }
+  .lang-btn:hover { border-color: var(--text); color: var(--text); }
+  .lang-btn.active { background: var(--accent); border-color: var(--text); color: var(--text); font-weight: 600; }
   .btn-danger { background: transparent; border: 1px solid rgba(201,138,122,.4); color: var(--red); font-size: 12px; padding: 6px 12px; }
   .btn-danger:hover { background: rgba(201,138,122,.12); }
   .btn-sm { padding: 6px 14px; font-size: 12px; }
@@ -2530,6 +2534,11 @@ var qrcode = function() {
       <a href="#" onclick="mostrarRecuperarSenha();return false;" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);">Esqueci minha senha</a>
     </div>
     <button class="btn btn-outline btn-sm" onclick="mostrarCadastro();return false;" style="width:100%;justify-content:center;margin-top:12px;">Não tenho cadastro</button>
+    <div class="lang-switch" style="justify-content:center;margin-top:16px;" data-no-i18n>
+      <button type="button" class="lang-btn" data-idioma="pt" onclick="setIdioma('pt')" style="padding:4px 10px;font-size:11px;">PT</button>
+      <button type="button" class="lang-btn" data-idioma="en" onclick="setIdioma('en')" style="padding:4px 10px;font-size:11px;">EN</button>
+      <button type="button" class="lang-btn" data-idioma="es" onclick="setIdioma('es')" style="padding:4px 10px;font-size:11px;">ES</button>
+    </div>
   </div>
 
   <div id="recuperar-box" style="display:none;">
@@ -2603,11 +2612,24 @@ var qrcode = function() {
 </div>
 
 <!-- ===== ACESSO BLOQUEADO ===== -->
-<div id="bloqueado-screen" style="display:none;position:fixed;inset:0;background:var(--bg);background-image:linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);background-size:24px 24px;align-items:center;justify-content:center;z-index:999;padding:1rem;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2.75rem;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;">
+<div id="bloqueado-screen" style="display:none;position:fixed;inset:0;background:var(--bg);background-image:linear-gradient(rgba(20,18,12,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,0.035) 1px, transparent 1px);background-size:24px 24px;align-items:center;justify-content:center;z-index:999;padding:1rem;overflow-y:auto;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem 1.75rem;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;margin:auto;">
     <div class="logo-word" style="font-size:26px;margin-bottom:14px;">DAAT<span class="dot">.</span></div>
     <div id="bloqueado-titulo" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;">Acesso temporariamente indisponível</div>
     <p id="bloqueado-msg" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;"></p>
+
+    <!-- pagamento via Pix direto na tela de bloqueio -->
+    <div id="bloqueado-pix" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;background:var(--bg);">
+      <div style="font-size:11px;font-family:var(--font-mono);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Continue usando — pague via Pix</div>
+      <div id="bloq-pix-qr-wrap" style="display:inline-block;background:#fff;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:10px;"></div>
+      <div id="bloq-pix-valor" style="font-family:var(--font-title);font-size:24px;margin-bottom:10px;"></div>
+      <textarea id="bloq-pix-copia-cola" readonly style="font-family:var(--font-mono);font-size:10px;height:56px;width:100%;box-sizing:border-box;margin-bottom:8px;"></textarea>
+      <button class="btn btn-outline btn-sm" onclick="copiarPix('bloq-pix')" style="width:100%;justify-content:center;margin-bottom:8px;"><i class="ti ti-copy"></i> Copiar código Pix</button>
+      <div id="bloq-pix-copiado-msg" style="font-size:11px;color:var(--green);margin-bottom:8px;display:none;font-family:var(--font-mono);">Copiado!</div>
+      <a id="bloq-avisar-pagamento" href="#" target="_blank" rel="noopener" class="btn btn-gold btn-sm" style="display:none;width:100%;justify-content:center;text-decoration:none;box-sizing:border-box;"><i class="ti ti-brand-whatsapp"></i> Já paguei, avisar a DAAT.</a>
+      <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;">Depois de pagar, mande o comprovante com o nome da sua empresa. Liberamos o acesso em seguida.</div>
+    </div>
+
     <div style="font-size:12px;color:var(--text3);font-family:var(--font-mono);line-height:2;margin-bottom:20px;">
       Instagram <strong style="color:var(--text);">@daat.tech</strong><br>
       E-mail <strong style="color:var(--text);">daat.comercial@gmail.com</strong>
@@ -2928,6 +2950,15 @@ var qrcode = function() {
 <div class="container">
 
   <div class="card">
+    <div class="card-title"><i class="ti ti-language"></i> <span data-no-i18n>Idioma · Language · Idioma</span></div>
+    <div class="lang-switch" data-no-i18n>
+      <button type="button" class="lang-btn" data-idioma="pt" onclick="setIdioma('pt')">Português</button>
+      <button type="button" class="lang-btn" data-idioma="en" onclick="setIdioma('en')">English</button>
+      <button type="button" class="lang-btn" data-idioma="es" onclick="setIdioma('es')">Español</button>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-title"><i class="ti ti-building"></i> Conta</div>
     <div class="form-grid">
       <div class="form-group"><label>Empresa</label><input id="cfg-empresa" placeholder="" /></div>
@@ -3145,6 +3176,174 @@ var qrcode = function() {
 
 
 
+<script>
+// ===== DAAT. i18n — Português (padrão) / English / Español =====
+(function () {
+  const DICT = {"+ Criar nova categoria": ["+ Create new category", "+ Crear nueva categoría"], "Abrir no WhatsApp": ["Open in WhatsApp", "Abrir en WhatsApp"], "Acesso temporariamente indisponível": ["Access temporarily unavailable", "Acceso temporalmente no disponible"], "Adicionar cliente": ["Add client", "Agregar cliente"], "Adicionar item": ["Add item", "Agregar artículo"], "Agenda": ["Schedule", "Agenda"], "Agendado": ["Scheduled", "Agendado"], "Agendar": ["Schedule", "Agendar"], "Ajuda": ["Help", "Ayuda"], "Alerta estoque mínimo": ["Minimum stock alert", "Alerta de stock mínimo"], "Alertas de estoque": ["Stock alerts", "Alertas de stock"], "Assunto": ["Subject", "Asunto"], "Ativo": ["Active", "Activo"], "Atualizar": ["Refresh", "Actualizar"], "Baixe todos os seus dados (produtos, vendas, clientes e agenda) num único arquivo Excel — abre normal no Excel, Google Sheets ou qualquer planilha.": ["Download all your data (products, sales, clients and schedule) in a single Excel file — it opens normally in Excel, Google Sheets or any spreadsheet app.", "Descarga todos tus datos (productos, ventas, clientes y agenda) en un único archivo de Excel: se abre normalmente en Excel, Google Sheets o cualquier hoja de cálculo."], "Balcão": ["Counter", "Mostrador"], "CNPJ": ["CNPJ (company ID)", "CNPJ (ID de empresa)"], "CPF": ["CPF (personal ID)", "CPF (ID personal)"], "Caixa (cx)": ["Box (bx)", "Caja (cj)"], "Canal": ["Channel", "Canal"], "Cancelado": ["Canceled", "Cancelado"], "Cancelar": ["Cancel", "Cancelar"], "Categoria": ["Category", "Categoría"], "Catálogo": ["Catalog", "Catálogo"], "Cliente": ["Client", "Cliente"], "Cliente / referência": ["Client / reference", "Cliente / referencia"], "Clientes": ["Clients", "Clientes"], "Comissão do vendedor (%)": ["Salesperson commission (%)", "Comisión del vendedor (%)"], "Concluído": ["Completed", "Completado"], "Configurações": ["Settings", "Configuración"], "Confirmado": ["Confirmed", "Confirmado"], "Confirmar nova senha": ["Confirm new password", "Confirmar nueva contraseña"], "Confirmar senha": ["Confirm password", "Confirmar contraseña"], "Conta": ["Account", "Cuenta"], "Continue usando — pague via Pix": ["Keep using it — pay via Pix", "Sigue usando — paga con Pix"], "Copiado!": ["Copied!", "¡Copiado!"], "Copiar código Pix": ["Copy Pix code", "Copiar código Pix"], "Criar acesso do cliente": ["Create client login", "Crear acceso del cliente"], "Criar acesso do funcionário": ["Create employee login", "Crear acceso del empleado"], "Criar nova senha": ["Create new password", "Crear nueva contraseña"], "Crie um acesso pra um funcionário que só precisa registrar vendas e mexer no CRM — ele não vê Produtos, Histórico, Dashboard nem Configurações.": ["Create a login for an employee who only needs to record sales and use the CRM — they can't see Products, History, Dashboard or Settings.", "Crea un acceso para un empleado que solo necesita registrar ventas y usar el CRM: no ve Productos, Historial, Dashboard ni Configuración."], "Custo (R$)": ["Cost (R$)", "Costo (R$)"], "DAAT": ["DAAT", "DAAT"], "Dashboard": ["Dashboard", "Dashboard"], "Data": ["Date", "Fecha"], "De onde vem cada campo": ["Where each field comes from", "De dónde viene cada campo"], "Depois de pagar, mande o comprovante com o nome da sua empresa. Liberamos o acesso em seguida.": ["After paying, send the receipt with your company name. We'll unlock your access right away.", "Después de pagar, envía el comprobante con el nombre de tu empresa. Liberamos el acceso enseguida."], "Desempenho por vendedor": ["Performance by salesperson", "Desempeño por vendedor"], "Dia": ["Day", "Día"], "Digite o e-mail da sua conta. Vamos te mandar um link pra você criar uma senha nova.": ["Enter your account email. We'll send you a link to create a new password.", "Escribe el correo de tu cuenta. Te enviaremos un enlace para crear una contraseña nueva."], "E-mail": ["Email", "Correo electrónico"], "E-mail de acesso": ["Login email", "Correo de acceso"], "E-mail de login": ["Login email", "Correo de acceso"], "Empresa": ["Company", "Empresa"], "Encomenda": ["Custom order", "Encargo"], "Entendi": ["Got it", "Entendido"], "Entrar": ["Log in", "Entrar"], "Enviar": ["Send", "Enviar"], "Enviar link de recuperação": ["Send recovery link", "Enviar enlace de recuperación"], "Enviar mensagem": ["Send message", "Enviar mensaje"], "Equipe": ["Team", "Equipo"], "Escaneie o QR Code ou copie o código Pix abaixo pra pagar sua mensalidade.": ["Scan the QR code or copy the Pix code below to pay your monthly fee.", "Escanea el código QR o copia el código Pix de abajo para pagar tu mensualidad."], "Esqueci minha senha": ["Forgot my password", "Olvidé mi contraseña"], "Estoque atual": ["Current stock", "Stock actual"], "Estoque baixo": ["Low stock", "Stock bajo"], "Exportar": ["Export", "Exportar"], "Exportar dados": ["Export data", "Exportar datos"], "Exportar tudo (Excel)": ["Export everything (Excel)", "Exportar todo (Excel)"], "Follow-up / pós-venda": ["Follow-up / after-sales", "Seguimiento / posventa"], "Fornecedor": ["Supplier", "Proveedor"], "Histórico": ["History", "Historial"], "Horário": ["Time", "Horario"], "Importar planilha": ["Import spreadsheet", "Importar hoja de cálculo"], "Importar produtos": ["Import products", "Importar productos"], "Importar produtos de planilha": ["Import products from a spreadsheet", "Importar productos desde una hoja de cálculo"], "Inativo": ["Inactive", "Inactivo"], "Insights Acionáveis": ["Actionable Insights", "Insights accionables"], "Instagram": ["Instagram", "Instagram"], "Item": ["Item", "Artículo"], "Itens": ["Items", "Artículos"], "Já paguei, avisar a DAAT.": ["I've paid — notify DAAT.", "Ya pagué, avisar a DAAT."], "Lembretes de hoje": ["Today's reminders", "Recordatorios de hoy"], "Li e concordo com a": ["I have read and agree to the", "He leído y acepto la"], "Linha / Coleção": ["Line / Collection", "Línea / Colección"], "Lixeira": ["Trash", "Papelera"], "MOSTRAR": ["SHOW", "MOSTRAR"], "Manda sua dúvida ou problema pra gente. Você vê a resposta aqui mesmo, assim que respondermos.": ["Send us your question or problem. You'll see the answer right here as soon as we reply.", "Envíanos tu duda o problema. Verás la respuesta aquí mismo en cuanto respondamos."], "Mensagem": ["Message", "Mensaje"], "Mensagem (edite à vontade antes de enviar)": ["Message (feel free to edit before sending)", "Mensaje (edítalo con libertad antes de enviar)"], "Meus chamados": ["My tickets", "Mis tickets"], "Motivo": ["Reason", "Motivo"], "Mês": ["Month", "Mes"], "Nome": ["Name", "Nombre"], "Nome da empresa": ["Company name", "Nombre de la empresa"], "Nome do funcionário": ["Employee name", "Nombre del empleado"], "Nome do produto": ["Product name", "Nombre del producto"], "Nova senha": ["New password", "Nueva contraseña"], "Nova venda": ["New sale", "Nueva venta"], "Novo agendamento": ["New appointment", "Nueva cita"], "Novo cliente": ["New client", "Nuevo cliente"], "Não encontrou o que precisava?": ["Didn't find what you needed?", "¿No encontraste lo que necesitabas?"], "Não tenho cadastro": ["I don't have an account", "No tengo cuenta"], "O WhatsApp abre com a mensagem pronta — você confere e aperta enviar por lá.": ["WhatsApp opens with the message ready — you check it and hit send there.", "WhatsApp se abre con el mensaje listo: lo revisas y presionas enviar allí."], "Observações": ["Notes", "Observaciones"], "Outro": ["Other", "Otro"], "Pagamento via Pix": ["Pay via Pix", "Pago con Pix"], "Perguntas frequentes": ["Frequently asked questions", "Preguntas frecuentes"], "Pix Copia e Cola": ["Pix Copy and Paste", "Pix Copia y Pega"], "Política de Privacidade": ["Privacy Policy", "Política de Privacidad"], "Preço de venda (R$)": ["Sale price (R$)", "Precio de venta (R$)"], "Produto": ["Product", "Producto"], "Produtos": ["Products", "Productos"], "Produtos e serviços": ["Products and services", "Productos y servicios"], "Produtos, clientes, vendas e agendamentos excluídos ficam aqui, recuperáveis a qualquer momento.": ["Deleted products, clients, sales and appointments stay here and can be recovered at any time.", "Los productos, clientes, ventas y citas eliminados quedan aquí y se pueden recuperar en cualquier momento."], "Receita ao longo do tempo": ["Revenue over time", "Ingresos a lo largo del tiempo"], "Receita por categoria": ["Revenue by category", "Ingresos por categoría"], "Recuperar senha": ["Recover password", "Recuperar contraseña"], "Registrar venda": ["Record sale", "Registrar venta"], "Reposição de estoque do cliente": ["Client restocking", "Reposición de stock del cliente"], "Resumo do período": ["Period summary", "Resumen del período"], "Retorno de compra": ["Repeat purchase", "Recompra"], "Sair": ["Log out", "Salir"], "Salvar": ["Save", "Guardar"], "Salvar nova senha": ["Save new password", "Guardar nueva contraseña"], "Salvar venda": ["Save sale", "Guardar venta"], "Selecionar...": ["Select...", "Seleccionar..."], "Selecione um arquivo Excel (.xlsx) ou CSV com a lista de produtos ou serviços que você já tem. Na próxima tela você indica qual coluna da sua planilha corresponde a cada campo do sistema — não precisa mudar nada na planilha original.": ["Select an Excel (.xlsx) or CSV file with the list of products or services you already have. On the next screen you tell the system which column of your spreadsheet matches each field — you don't need to change anything in the original spreadsheet.", "Selecciona un archivo de Excel (.xlsx) o CSV con la lista de productos o servicios que ya tienes. En la siguiente pantalla indicas qué columna de tu hoja corresponde a cada campo del sistema: no necesitas cambiar nada en la hoja original."], "Semana": ["Week", "Semana"], "Senha": ["Password", "Contraseña"], "Senha atual": ["Current password", "Contraseña actual"], "Serviço": ["Service", "Servicio"], "Serviço (uso interno)": ["Service (internal use)", "Servicio (uso interno)"], "Só produtos": ["Products only", "Solo productos"], "Só serviços": ["Services only", "Solo servicios"], "Telefone / WhatsApp": ["Phone / WhatsApp", "Teléfono / WhatsApp"], "Tipo": ["Type", "Tipo"], "Todas as linhas": ["All lines", "Todas las líneas"], "Todas categorias": ["All categories", "Todas las categorías"], "Todos": ["All", "Todos"], "Todos os status": ["All statuses", "Todos los estados"], "Top produtos e serviços": ["Top products and services", "Productos y servicios más vendidos"], "Total:": ["Total:", "Total:"], "Trocar senha": ["Change password", "Cambiar contraseña"], "Unidade": ["Unit", "Unidad"], "Unidade (un)": ["Unit (un)", "Unidad (un)"], "Valor da mensalidade": ["Monthly fee", "Valor de la mensualidad"], "Vendas registradas": ["Recorded sales", "Ventas registradas"], "Vendedor": ["Salesperson", "Vendedor"], "Volume / Variação": ["Volume / Variant", "Volumen / Variante"], "arraste pro lado pra ver mais": ["swipe sideways to see more", "desliza hacia el lado para ver más"], "do DAAT.": ["of DAAT.", "de DAAT."], "seu Detetive Amarelo investigando os dados": ["your Yellow Detective investigating the data", "tu Detective Amarillo investigando los datos"], "← Voltar pro login": ["← Back to login", "← Volver al inicio de sesión"], "Buscar cliente, vendedor, canal...": ["Search client, salesperson, channel...", "Buscar cliente, vendedor, canal..."], "Buscar...": ["Search...", "Buscar..."], "Nome da nova categoria": ["New category name", "Nombre de la nueva categoría"], "Ver lembretes de hoje": ["See today's reminders", "Ver recordatorios de hoy"], "A senha precisa ter pelo menos 8 caracteres.": ["The password must be at least 8 characters long.", "La contraseña debe tener al menos 8 caracteres."], "Aberto": ["Open", "Abierto"], "Acesso do funcionário criado!": ["Employee login created!", "¡Acceso del empleado creado!"], "Agendamento": ["Appointment", "Cita"], "Agendamento criado!": ["Appointment created!", "¡Cita creada!"], "Agendamento movido pra lixeira.": ["Appointment moved to trash.", "Cita movida a la papelera."], "Agendamentos": ["Appointments", "Citas"], "Ainda não há dados suficientes pra gerar recomendações — continue registrando vendas.": ["Not enough data yet to generate recommendations — keep recording sales.", "Aún no hay datos suficientes para generar recomendaciones: sigue registrando ventas."], "As senhas não coincidem.": ["The passwords don't match.", "Las contraseñas no coinciden."], "Assinatura do cliente": ["Client signature", "Firma del cliente"], "Assinatura do responsável": ["Responsible party signature", "Firma del responsable"], "Baixo": ["Low", "Bajo"], "Carregando...": ["Loading...", "Cargando..."], "Chamado enviado!": ["Ticket sent!", "¡Ticket enviado!"], "Chamado enviado! A resposta aparece aqui embaixo assim que a gente responder.": ["Ticket sent! The answer will appear below as soon as we reply.", "¡Ticket enviado! La respuesta aparecerá aquí abajo en cuanto respondamos."], "Cliente adicionado!": ["Client added!", "¡Cliente agregado!"], "Cliente cadastrado! Pode fazer login agora.": ["Client registered! You can log in now.", "¡Cliente registrado! Ya puedes iniciar sesión."], "Cliente desse agendamento não encontrado.": ["Client for this appointment not found.", "No se encontró el cliente de esta cita."], "Cliente movido pra lixeira.": ["Client moved to trash.", "Cliente movido a la papelera."], "Comissão": ["Commission", "Comisión"], "Comissão (R$)": ["Commission (R$)", "Comisión (R$)"], "Comissões": ["Commissions", "Comisiones"], "Como adiciono um agendamento na minha Google Agenda?": ["How do I add an appointment to my Google Calendar?", "¿Cómo agrego una cita a mi Google Calendar?"], "Como cadastro um cliente novo?": ["How do I register a new client?", "¿Cómo registro un cliente nuevo?"], "Como exporto meus dados pra Excel?": ["How do I export my data to Excel?", "¿Cómo exporto mis datos a Excel?"], "Como funciona o teste grátis de 7 dias?": ["How does the 7-day free trial work?", "¿Cómo funciona la prueba gratuita de 7 días?"], "Como registro uma venda?": ["How do I record a sale?", "¿Cómo registro una venta?"], "Confirmando sua senha atual...": ["Checking your current password...", "Confirmando tu contraseña actual..."], "Custo": ["Cost", "Costo"], "Custo (R$):": ["Cost (R$):", "Costo (R$):"], "Custo total": ["Total cost", "Costo total"], "Descrição": ["Description", "Descripción"], "Digite o nome da nova categoria.": ["Enter the new category name.", "Escribe el nombre de la nueva categoría."], "Documento gerado via Sistema DAAT. — daat-tech.com.br": ["Document generated by the DAAT. system — daat-tech.com.br", "Documento generado por el sistema DAAT. — daat-tech.com.br"], "Domingo": ["Sunday", "Domingo"], "Segunda": ["Monday", "Lunes"], "Terça": ["Tuesday", "Martes"], "Quarta": ["Wednesday", "Miércoles"], "Quinta": ["Thursday", "Jueves"], "Sexta": ["Friday", "Viernes"], "Sábado": ["Saturday", "Sábado"], "Em cada tabela (Produtos, Vendas, Clientes, Agenda) tem um botão \"Exportar\". Ou, se quiser tudo de uma vez, vá em Configurações e clique em \"Exportar tudo (Excel)\".": ["Each table (Products, Sales, Clients, Schedule) has an \"Export\" button. Or, if you want everything at once, go to Settings and click \"Export everything (Excel)\".", "Cada tabla (Productos, Ventas, Clientes, Agenda) tiene un botón \"Exportar\". O, si quieres todo de una vez, ve a Configuración y haz clic en \"Exportar todo (Excel)\"."], "Empresa atualizada!": ["Company updated!", "¡Empresa actualizada!"], "Erro ao atualizar item.": ["Error updating item.", "Error al actualizar el artículo."], "Erro ao atualizar produto.": ["Error updating product.", "Error al actualizar el producto."], "Erro ao atualizar status.": ["Error updating status.", "Error al actualizar el estado."], "Erro ao carregar chamados": ["Error loading tickets", "Error al cargar los tickets"], "Erro ao criar agendamento.": ["Error creating appointment.", "Error al crear la cita."], "Erro ao identificar o destinatário.": ["Error identifying the recipient.", "Error al identificar al destinatario."], "Erro ao importar. Confira os dados e tente de novo.": ["Import error. Check the data and try again.", "Error al importar. Revisa los datos e inténtalo de nuevo."], "Erro ao remover venda.": ["Error removing sale.", "Error al eliminar la venta."], "Erro ao restaurar.": ["Error restoring.", "Error al restaurar."], "Erro ao salvar cliente.": ["Error saving client.", "Error al guardar el cliente."], "Erro ao salvar item.": ["Error saving item.", "Error al guardar el artículo."], "Erro ao salvar venda.": ["Error saving sale.", "Error al guardar la venta."], "Escreva uma mensagem antes de enviar.": ["Write a message before sending.", "Escribe un mensaje antes de enviar."], "Esqueci minha senha, e agora?": ["I forgot my password, now what?", "Olvidé mi contraseña, ¿y ahora?"], "Essa planilha está vazia.": ["This spreadsheet is empty.", "Esta hoja de cálculo está vacía."], "Esse cliente não tem telefone cadastrado.": ["This client has no phone number registered.", "Este cliente no tiene teléfono registrado."], "Esse cliente não tem um telefone válido cadastrado.": ["This client doesn't have a valid phone number registered.", "Este cliente no tiene un teléfono válido registrado."], "Estoque": ["Stock", "Stock"], "Estoque mínimo": ["Minimum stock", "Stock mínimo"], "Exportado!": ["Exported!", "¡Exportado!"], "Fechado": ["Closed", "Cerrado"], "Funcionário adicionado!": ["Employee added!", "¡Empleado agregado!"], "Gerar Ordem de Serviço": ["Generate Service Order", "Generar orden de servicio"], "Hora": ["Time", "Hora"], "Isso acontece se o teste grátis expirou, se a mensalidade (30 dias) venceu ou se há alguma pendência. A tela de bloqueio traz o Pix pra pagar e nossos contatos — mande o comprovante com o nome da sua empresa e liberamos rápido.": ["This happens if the free trial expired, the monthly fee (30 days) is overdue, or there is a pending issue. The lock screen shows the Pix to pay and our contacts — send the receipt with your company name and we'll unlock it quickly.", "Esto ocurre si la prueba gratuita venció, si la mensualidad (30 días) venció o si hay alguna pendencia. La pantalla de bloqueo trae el Pix para pagar y nuestros contactos: envía el comprobante con el nombre de tu empresa y lo liberamos rápido."], "Item restaurado!": ["Item restored!", "¡Artículo restaurado!"], "Itens / Serviços": ["Items / Services", "Artículos / Servicios"], "Itens ativos": ["Active items", "Artículos activos"], "Linha/Coleção": ["Line/Collection", "Línea/Colección"], "Link enviado! Confere seu e-mail (e a caixa de spam) e clica no link pra criar uma senha nova.": ["Link sent! Check your email (and your spam folder) and click the link to create a new password.", "¡Enlace enviado! Revisa tu correo (y la carpeta de spam) y haz clic en el enlace para crear una contraseña nueva."], "Lixeira vazia": ["Trash is empty", "Papelera vacía"], "Lucro bruto": ["Gross profit", "Ganancia bruta"], "Margem": ["Margin", "Margen"], "Minha Empresa": ["My Company", "Mi Empresa"], "Motivo:": ["Reason:", "Motivo:"], "Mover agendamento pra lixeira? Você pode restaurar depois em Configurações.": ["Move appointment to trash? You can restore it later in Settings.", "¿Mover la cita a la papelera? Puedes restaurarla después en Configuración."], "Mover cliente pra lixeira? Agendamentos ligados a ele continuam na agenda. Você pode restaurar depois em Configurações.": ["Move client to trash? Appointments linked to them stay in the schedule. You can restore later in Settings.", "¿Mover el cliente a la papelera? Las citas vinculadas a él siguen en la agenda. Puedes restaurarlo después en Configuración."], "Mover produto pra lixeira? Você pode restaurar depois em Configurações.": ["Move product to trash? You can restore it later in Settings.", "¿Mover el producto a la papelera? Puedes restaurarlo después en Configuración."], "Mover venda pra lixeira? Você pode restaurar depois em Configurações.": ["Move sale to trash? You can restore it later in Settings.", "¿Mover la venta a la papelera? Puedes restaurarla después en Configuración."], "Mínimo": ["Minimum", "Mínimo"], "Na aba CRM, na tabela de Agenda, clique no ícone de calendário ao lado do agendamento — ele abre o Google Agenda já preenchido, é só confirmar.": ["In the CRM tab, in the Schedule table, click the calendar icon next to the appointment — it opens Google Calendar already filled in, just confirm.", "En la pestaña CRM, en la tabla de Agenda, haz clic en el ícono de calendario junto a la cita: abre Google Calendar ya completado, solo confirma."], "Na tela de login, clique em \"Esqueci minha senha\", digite seu e-mail e você vai receber um link pra criar uma senha nova. Confira também a caixa de spam.": ["On the login screen, click \"Forgot my password\", enter your email and you'll receive a link to create a new password. Check your spam folder too.", "En la pantalla de inicio de sesión, haz clic en \"Olvidé mi contraseña\", escribe tu correo y recibirás un enlace para crear una contraseña nueva. Revisa también la carpeta de spam."], "Nenhum agendamento encontrado": ["No appointments found", "No se encontraron citas"], "Nenhum agendamento pendente pra hoje": ["No pending appointments for today", "No hay citas pendientes para hoy"], "Nenhum agendamento pra exportar.": ["No appointments to export.", "No hay citas para exportar."], "Nenhum chamado enviado ainda": ["No tickets sent yet", "Aún no has enviado tickets"], "Nenhum cliente cadastrado ainda": ["No clients registered yet", "Aún no hay clientes registrados"], "Nenhum cliente pra exportar.": ["No clients to export.", "No hay clientes para exportar."], "Nenhum dado pra exportar ainda.": ["No data to export yet.", "Aún no hay datos para exportar."], "Nenhum item encontrado": ["No items found", "No se encontraron artículos"], "Nenhum item pra exportar.": ["No items to export.", "No hay artículos para exportar."], "Nenhuma linha válida pra importar — confira a coluna mapeada como Nome.": ["No valid rows to import — check the column mapped as Name.", "No hay filas válidas para importar: revisa la columna asignada como Nombre."], "Nenhuma venda encontrada": ["No sales found", "No se encontraron ventas"], "Nenhuma venda pra exportar.": ["No sales to export.", "No hay ventas para exportar."], "Nenhuma venda registrada ainda": ["No sales recorded yet", "Aún no hay ventas registradas"], "Nome *": ["Name *", "Nombre *"], "Nome do serviço": ["Service name", "Nombre del servicio"], "Nº de vendas": ["No. of sales", "N.º de ventas"], "Não": ["No", "No"], "Não consegui ler esse arquivo. Confira se é um .xlsx ou .csv válido.": ["I couldn't read this file. Check that it's a valid .xlsx or .csv.", "No pude leer este archivo. Revisa que sea un .xlsx o .csv válido."], "Não encontrei linhas de dados abaixo do cabeçalho.": ["I didn't find any data rows below the header.", "No encontré filas de datos debajo del encabezado."], "Não foi possível carregar o QR agora — usa o código \"copia e cola\" ao lado pra pagar.": ["Couldn't load the QR right now — use the \"copy and paste\" code next to it to pay.", "No se pudo cargar el QR ahora: usa el código \"copia y pega\" de al lado para pagar."], "Não foi possível criar o usuário. Confira se a confirmação de e-mail está desativada no Supabase.": ["Couldn't create the user. Check that email confirmation is turned off in Supabase.", "No se pudo crear el usuario. Revisa que la confirmación de correo esté desactivada en Supabase."], "Não importar": ["Don't import", "No importar"], "O sistema bloqueou meu acesso, o que houve?": ["The system blocked my access, what happened?", "El sistema bloqueó mi acceso, ¿qué pasó?"], "OCULTAR": ["HIDE", "OCULTAR"], "ORDEM DE SERVIÇO": ["SERVICE ORDER", "ORDEN DE SERVICIO"], "Observações pra incluir na OS (prazo, garantia, condições) — opcional:": ["Notes to include in the service order (deadline, warranty, conditions) — optional:", "Observaciones para incluir en la orden de servicio (plazo, garantía, condiciones) — opcional:"], "Para:": ["To:", "Para:"], "Posso trocar o nome da minha empresa no sistema?": ["Can I change my company name in the system?", "¿Puedo cambiar el nombre de mi empresa en el sistema?"], "Preencha assunto e mensagem.": ["Fill in the subject and message.", "Completa el asunto y el mensaje."], "Preencha data e ao menos um produto.": ["Fill in the date and at least one product.", "Completa la fecha y al menos un producto."], "Preencha e-mail e senha.": ["Fill in email and password.", "Completa el correo y la contraseña."], "Preencha o nome da empresa.": ["Fill in the company name.", "Completa el nombre de la empresa."], "Preencha o nome do cliente.": ["Fill in the client name.", "Completa el nombre del cliente."], "Preencha os dois campos.": ["Fill in both fields.", "Completa los dos campos."], "Preencha os três campos.": ["Fill in all three fields.", "Completa los tres campos."], "Preencha seu e-mail.": ["Fill in your email.", "Completa tu correo."], "Preencha todos os campos.": ["Fill in all fields.", "Completa todos los campos."], "Preço (R$)": ["Price (R$)", "Precio (R$)"], "Preço de venda (R$):": ["Sale price (R$):", "Precio de venta (R$):"], "Preço do serviço (R$)": ["Service price (R$)", "Precio del servicio (R$)"], "Preço do serviço (R$):": ["Service price (R$):", "Precio del servicio (R$):"], "Preço unit.": ["Unit price", "Precio unit."], "Produto movido pra lixeira.": ["Product moved to trash.", "Producto movido a la papelera."], "Página": ["Page", "Página"], "Qtd": ["Qty", "Cant."], "Receita total": ["Total revenue", "Ingresos totales"], "Removido": ["Removed", "Eliminado"], "Item removido": ["Removed item", "Artículo eliminado"], "Respondido": ["Answered", "Respondido"], "Restaurar": ["Restore", "Restaurar"], "Salvar / Imprimir": ["Save / Print", "Guardar / Imprimir"], "Selecione o cliente e a data.": ["Select the client and the date.", "Selecciona el cliente y la fecha."], "Selecione qual coluna é o Nome — esse campo é obrigatório.": ["Select which column is the Name — this field is required.", "Selecciona qué columna es el Nombre: este campo es obligatorio."], "Sem dados": ["No data", "Sin datos"], "Sem vendas registradas ainda": ["No sales recorded yet", "Aún no hay ventas registradas"], "Sem vendedor": ["No salesperson", "Sin vendedor"], "Senha atual incorreta.": ["Incorrect current password.", "Contraseña actual incorrecta."], "Senha atualizada com sucesso!": ["Password updated successfully!", "¡Contraseña actualizada con éxito!"], "Senha atualizada!": ["Password updated!", "¡Contraseña actualizada!"], "Senha atualizada! Você já está logado.": ["Password updated! You're already logged in.", "¡Contraseña actualizada! Ya iniciaste sesión."], "Seu navegador bloqueou o pop-up. Permita pop-ups pra esse site e tente de novo.": ["Your browser blocked the pop-up. Allow pop-ups for this site and try again.", "Tu navegador bloqueó la ventana emergente. Permite ventanas emergentes para este sitio e inténtalo de nuevo."], "Seu teste grátis terminou": ["Your free trial has ended", "Tu prueba gratuita terminó"], "Sim": ["Yes", "Sí"], "Sim, vá em Configurações, campo \"Empresa\", digite o nome novo e clique em \"Salvar\".": ["Yes, go to Settings, \"Company\" field, type the new name and click \"Save\".", "Sí, ve a Configuración, campo \"Empresa\", escribe el nombre nuevo y haz clic en \"Guardar\"."], "Status": ["Status", "Estado"], "Sua mensalidade venceu": ["Your monthly fee is overdue", "Tu mensualidad venció"], "Suas vendas": ["Your sales", "Tus ventas"], "Subtotal": ["Subtotal", "Subtotal"], "Série": ["Line", "Línea"], "Só você tem acesso até agora": ["Only you have access so far", "Solo tú tienes acceso hasta ahora"], "Telefone": ["Phone", "Teléfono"], "Ticket médio": ["Average ticket", "Ticket promedio"], "Tipo (Produto/Serviço)": ["Type (Product/Service)", "Tipo (Producto/Servicio)"], "Todo cadastro novo começa com 7 dias de acesso completo, sem custo. Depois desse prazo, é preciso assinar pra continuar usando — na própria tela de aviso você paga via Pix e a gente libera o acesso assim que o pagamento é confirmado.": ["Every new account starts with 7 days of full access at no cost. After that you need to subscribe to keep using it — on the notice screen itself you pay via Pix and we unlock your access as soon as the payment is confirmed.", "Toda cuenta nueva empieza con 7 días de acceso completo, sin costo. Después de ese plazo es necesario suscribirse para seguir usándolo: en la propia pantalla de aviso pagas con Pix y liberamos el acceso apenas se confirma el pago."], "Todos os produtos com estoque adequado": ["All products have adequate stock", "Todos los productos tienen stock adecuado"], "Total": ["Total", "Total"], "Total (R$)": ["Total (R$)", "Total (R$)"], "Usuário criado, mas a sessão não ficou ativa. Provavelmente a confirmação de e-mail ainda está exigida no projeto — veja Authentication > Providers > Email > \"Confirm email\".": ["User created, but the session did not become active. Email confirmation is probably still required in the project — see Authentication > Providers > Email > \"Confirm email\".", "Usuario creado, pero la sesión no quedó activa. Probablemente la confirmación de correo aún es obligatoria en el proyecto: revisa Authentication > Providers > Email > \"Confirm email\"."], "Usuário criado, mas precisa confirmar por e-mail antes de continuar. Pra evitar isso, desative a confirmação de e-mail em Authentication > Providers > Email (desmarque \"Confirm email\") no painel do Supabase.": ["User created, but must confirm by email before continuing. To avoid this, turn off email confirmation in Authentication > Providers > Email (uncheck \"Confirm email\") in the Supabase dashboard.", "Usuario creado, pero debe confirmar por correo antes de continuar. Para evitarlo, desactiva la confirmación de correo en Authentication > Providers > Email (desmarca \"Confirm email\") en el panel de Supabase."], "Usuário sem organização vinculada. Fale com a DAAT.": ["User has no linked organization. Contact DAAT.", "Usuario sin organización vinculada. Habla con DAAT."], "Valor unit.": ["Unit price", "Valor unit."], "Venda": ["Sale", "Venta"], "Venda movida pra lixeira.": ["Sale moved to trash.", "Venta movida a la papelera."], "Venda não encontrada.": ["Sale not found.", "Venta no encontrada."], "Venda salva! Estoque atualizado.": ["Sale saved! Stock updated.", "¡Venta guardada! Stock actualizado."], "Vendas": ["Sales", "Ventas"], "Você precisa aceitar a Política de Privacidade pra continuar.": ["You need to accept the Privacy Policy to continue.", "Debes aceptar la Política de Privacidad para continuar."], "Você teve vendas nos últimos 7 dias — continue por aí!": ["You had sales in the last 7 days — keep it up!", "Tuviste ventas en los últimos 7 días: ¡sigue así!"], "Volume": ["Volume", "Volumen"], "Vá na aba \"Registrar venda\", escolha o produto, a quantidade e o cliente. O sistema calcula o total sozinho.": ["Go to the \"Record sale\" tab, choose the product, the quantity and the client. The system calculates the total by itself.", "Ve a la pestaña \"Registrar venta\", elige el producto, la cantidad y el cliente. El sistema calcula el total solo."], "Vá na aba CRM e preencha o formulário \"Novo cliente\" com nome, telefone, e-mail e o que mais fizer sentido. Clique em \"Adicionar cliente\".": ["Go to the CRM tab and fill in the \"New client\" form with name, phone, email and anything else that makes sense. Click \"Add client\".", "Ve a la pestaña CRM y completa el formulario \"Nuevo cliente\" con nombre, teléfono, correo y lo que más tenga sentido. Haz clic en \"Agregar cliente\"."], "Zerado": ["Out of stock", "Agotado"], "sem vendas ainda": ["no sales yet", "aún sin ventas"], "sua empresa": ["your company", "tu empresa"], "% da receita": ["% of revenue", "% de los ingresos"], "Agendamento criado no DAAT.": ["Appointment created in DAAT.", "Cita creada en DAAT."], "estoque minimo": ["minimum stock", "stock mínimo"], "preco de custo": ["cost price", "precio de costo"], "preco de venda": ["sale price", "precio de venta"], "Tipo de item": ["Item type", "Tipo de artículo"], "(serviço)": ["(service)", "(servicio)"], "O acesso da": ["The access of", "El acceso de"], "O período de 7 dias de teste da": ["The 7-day trial period of", "El período de prueba de 7 días de"], "chegou ao fim. Pague via Pix abaixo pra continuar usando o DAAT. sem interrupção.": ["has ended. Pay via Pix below to keep using DAAT. without interruption.", "terminó. Paga con Pix abajo para seguir usando DAAT. sin interrupciones."], "venceu. Pague via Pix abaixo pra liberar o DAAT. de novo.": ["has expired. Pay via Pix below to unlock DAAT. again.", "venció. Paga con Pix abajo para liberar DAAT. de nuevo."], "Identificamos uma pendência na assinatura da": ["We found a pending issue with the subscription of", "Identificamos una pendencia en la suscripción de"], ". Pague via Pix abaixo ou entre em contato com a DAAT pra regularizar e liberar o acesso de novo.": [". Pay via Pix below or contact DAAT to resolve it and unlock access again.", ". Paga con Pix abajo o contacta a DAAT para regularizar y liberar el acceso de nuevo."], "Volume/Variação": ["Volume/Variation", "Volumen/Variación"], "Erro ao criar acesso": ["Error creating login", "Error al crear el acceso"], "Erro ao enviar": ["Error sending", "Error al enviar"], "Erro ao salvar": ["Error saving", "Error al guardar"], "Erro ao trocar senha": ["Error changing password", "Error al cambiar la contraseña"], "Erro ao remover agendamento.": ["Error removing appointment.", "Error al eliminar la cita."], "Erro ao remover cliente.": ["Error removing client.", "Error al eliminar el cliente."], "Erro ao remover produto.": ["Error removing product.", "Error al eliminar el producto."], "Erro": ["Error", "Error"], "Usuário criado, mas houve erro ao vincular a organização": ["User created, but there was an error linking the organization", "Usuario creado, pero hubo un error al vincular la organización"], "Usuário criado, mas houve erro ao vincular": ["User created, but there was an error linking", "Usuario creado, pero hubo un error al vincular"], "Para": ["To", "Para"]};
+  const IDX = { pt: -1, en: 0, es: 1 };
+  const LOCALES = { pt: 'pt-BR', en: 'en-US', es: 'es-ES' };
+  const sing = (n, a, b) => (n === 1 ? a : b);
+  // [regex PT, EN (string ou fn), ES (string ou fn)]
+  const PATS = [
+    [/^Importando (\d+) item\(ns\)\.\.\.$/, 'Importing $1 item(s)...', 'Importando $1 artículo(s)...'],
+    [/^(\d+) item\(ns\) importado\(s\), (\d+) linha\(s\) ignorada\(s\) sem nome!$/, '$1 item(s) imported, $2 row(s) skipped (no name)!', '¡$1 artículo(s) importado(s), $2 fila(s) omitida(s) sin nombre!'],
+    [/^(\d+) item\(ns\) importado\(s\)!$/, '$1 item(s) imported!', '¡$1 artículo(s) importado(s)!'],
+    [/^(\d+) linha\(s\) encontrada\(s\) na planilha, (\d+) coluna\(s\)\.$/, '$1 row(s) found in the spreadsheet, $2 column(s).', '$1 fila(s) encontrada(s) en la hoja, $2 columna(s).'],
+    [/^Comissão \(([\d.,]+)%\):$/, 'Commission ($1%):', 'Comisión ($1%):'],
+    [/^margem de ([\d.,-]+)%$/, '$1% margin', 'margen de $1%'],
+    [/^(\d+) vendas? no total$/, (m, n) => `${n} ${sing(+n, 'sale', 'sales')} in total`, (m, n) => `${n} ${sing(+n, 'venta', 'ventas')} en total`],
+    [/^(\d+) vendas?$/, (m, n) => `${n} ${sing(+n, 'sale', 'sales')}`, (m, n) => `${n} ${sing(+n, 'venta', 'ventas')}`],
+    [/^Suas vendas (subiram|caíram)$/, (m, v) => `Your sales ${v === 'subiram' ? 'rose' : 'fell'}`, (m, v) => `Tus ventas ${v === 'subiram' ? 'subieron' : 'cayeron'}`],
+    [/^nos últimos 7 dias, comparado aos 7 dias anteriores\.$/, 'in the last 7 days, compared to the previous 7 days.', 'en los últimos 7 días, comparado con los 7 días anteriores.'],
+    [/^é seu item mais lucrativo no período, com R\$ ([\d.,]+) de lucro\.$/, 'is your most profitable item in the period, with R$ $1 in profit.', 'es tu artículo más rentable del período, con R$ $1 de ganancia.'],
+    [/^não compra há (\d+) dias — pode valer um contato\.$/, "hasn't bought in $1 days — might be worth a contact.", 'no compra hace $1 días: puede valer la pena un contacto.'],
+    [/^costuma ser seu melhor dia de vendas\.$/, 'is usually your best sales day.', 'suele ser tu mejor día de ventas.'],
+    [/^excluído em (.+)$/, 'deleted on $1', 'eliminado el $1'],
+    [/^Estoque atual de "(.+)":$/, 'Current stock of "$1":', 'Stock actual de "$1":'],
+    [/^Preencha o nome do (produto|serviço)\.$/, (m, t) => `Fill in the ${t === 'produto' ? 'product' : 'service'} name.`, (m, t) => `Completa el nombre del ${t === 'produto' ? 'producto' : 'servicio'}.`],
+    [/^(Produto|Serviço) (adicionado|atualizado)!$/, (m, t, a) => `${t === 'Produto' ? 'Product' : 'Service'} ${a === 'adicionado' ? 'added' : 'updated'}!`, (m, t, a) => `¡${t === 'Produto' ? 'Producto' : 'Servicio'} ${a === 'adicionado' ? 'agregado' : 'actualizado'}!`],
+    [/^(\d+) dias?$/, (m, n) => `${n} ${sing(+n, 'day', 'days')}`, (m, n) => `${n} ${sing(+n, 'día', 'días')}`],
+    [/^(\d+) itens?$/, (m, n) => `${n} ${sing(+n, 'item', 'items')}`, (m, n) => `${n} ${sing(+n, 'artículo', 'artículos')}`],
+  ];
+
+  let lang = 'pt';
+  try { const s = localStorage.getItem('daat_idioma'); if (s === 'en' || s === 'es' || s === 'pt') lang = s; } catch (e) {}
+
+  function lookup(core, L) {
+    const e = DICT[core];
+    if (e) return e[IDX[L]];
+    for (const p of PATS) {
+      const m = core.match(p[0]);
+      if (m) { const r = p[IDX[L] + 1]; return typeof r === 'function' ? r.apply(null, m) : core.replace(p[0], r); }
+    }
+    // "Prefixo: resto"
+    const k = core.indexOf(': ');
+    if (k > 0) {
+      const pre = core.slice(0, k), rest = core.slice(k + 2);
+      const e2 = DICT[pre + ':'] || DICT[pre];
+      if (e2) { const t0 = e2[IDX[L]].replace(/:$/, ''); return t0 + ': ' + tr(rest, L); }
+    }
+    return null;
+  }
+  function tr(str, L) {
+    L = L || lang;
+    if (L === 'pt' || typeof str !== 'string' || !str) return str;
+    if (str.indexOf('\n') > -1) return str.split('\n').map(s => tr(s, L)).join('\n');
+    const m = str.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    if (!m[2]) return str;
+    const r = lookup(m[2], L);
+    return r == null ? str : m[1] + r + m[3];
+  }
+
+  const textMap = new WeakMap();   // nó de texto -> { pt, last }
+  const attrMap = new WeakMap();   // elemento -> { attr: {pt,last} }
+  const ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
+  const SKIP = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, CODE: 1, TEXTAREA: 0 };
+
+  function doText(n) {
+    const p = n.parentNode;
+    if (!p || SKIP[p.nodeName] || (p.closest && p.closest('[data-no-i18n]'))) return;
+    const cur = n.nodeValue, e = textMap.get(n);
+    const pt = e && e.last === cur ? e.pt : cur;
+    const out = lang === 'pt' ? pt : tr(pt, lang);
+    if (out !== cur) n.nodeValue = out;
+    if (out !== pt) textMap.set(n, { pt, last: out }); else textMap.delete(n);
+  }
+  function doAttrs(el) {
+    if (!el.getAttribute || (el.closest && el.closest('[data-no-i18n]'))) return;
+    let rec = attrMap.get(el);
+    for (const a of ATTRS) {
+      const cur = el.getAttribute(a);
+      if (cur == null) continue;
+      const e = rec && rec[a];
+      const pt = e && e.last === cur ? e.pt : cur;
+      const out = lang === 'pt' ? pt : tr(pt, lang);
+      if (out !== cur) el.setAttribute(a, out);
+      if (out !== pt) { rec = rec || {}; rec[a] = { pt, last: out }; attrMap.set(el, rec); }
+      else if (rec) delete rec[a];
+    }
+  }
+  function walk(root) {
+    if (root.nodeType === 3) { doText(root); return; }
+    if (root.nodeType !== 1 && root.nodeType !== 9 && root.nodeType !== 11) return;
+    if (root.nodeType === 1) { if (SKIP[root.nodeName]) return; doAttrs(root); }
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) {
+      if (n.nodeType === 3) doText(n);
+      else if (!SKIP[n.nodeName]) doAttrs(n);
+    }
+  }
+
+  let obs = null;
+  function start() {
+    if (!obs) {
+      obs = new MutationObserver(muts => {
+        obs.disconnect();
+        try {
+          for (const m of muts) {
+            if (m.type === 'childList') m.addedNodes.forEach(walk);
+            else if (m.type === 'characterData') doText(m.target);
+            else if (m.type === 'attributes') doAttrs(m.target);
+          }
+        } finally { observe(); }
+      });
+    }
+    observe();
+  }
+  function observe() {
+    obs.observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+  }
+  function applyAll() {
+    if (obs) obs.disconnect();
+    document.documentElement.lang = LOCALES[lang];
+    walk(document.body);
+    if (obs) observe();
+  }
+
+  // alert / confirm / prompt
+  const _alert = window.alert.bind(window), _confirm = window.confirm.bind(window), _prompt = window.prompt.bind(window);
+  window.alert = m => _alert(tr(String(m)));
+  window.confirm = m => _confirm(tr(String(m)));
+  window.prompt = (m, d) => _prompt(tr(String(m)), d);
+
+  // Excel: traduz cabeçalhos e nomes de abas
+  if (window.XLSX && XLSX.utils) {
+    const j2s = XLSX.utils.json_to_sheet.bind(XLSX.utils);
+    XLSX.utils.json_to_sheet = function (rows, opts) {
+      if (lang !== 'pt' && Array.isArray(rows)) rows = rows.map(r => { const o = {}; for (const k in r) o[tr(k)] = r[k]; return o; });
+      return j2s(rows, opts);
+    };
+    const bas = XLSX.utils.book_append_sheet.bind(XLSX.utils);
+    XLSX.utils.book_append_sheet = function (wb, ws, name) { return bas(wb, ws, name ? tr(name).slice(0, 31) : name); };
+  }
+
+  function marcarBotoes() {
+    document.querySelectorAll('[data-idioma]').forEach(b => b.classList.toggle('active', b.dataset.idioma === lang));
+  }
+  window.T = s => tr(s);
+  window.idiomaAtual = () => lang;
+  window.localeAtual = () => LOCALES[lang];
+  window.traduzirDocumentoHTML = function (html) {
+    if (lang === 'pt') return html;
+    const d = new DOMParser().parseFromString(html, 'text/html');
+    const w = d.createTreeWalker(d.body, NodeFilter.SHOW_TEXT);
+    let n; while ((n = w.nextNode())) { if (!SKIP[n.parentNode.nodeName]) n.nodeValue = tr(n.nodeValue); }
+    d.documentElement.lang = LOCALES[lang];
+    return '<!doctype html>' + d.documentElement.outerHTML;
+  };
+  window.setIdioma = function (novo) {
+    if (!(novo in IDX)) return;
+    lang = novo;
+    try { localStorage.setItem('daat_idioma', novo); } catch (e) {}
+    applyAll(); marcarBotoes();
+    if (typeof window.aoMudarIdioma === 'function') window.aoMudarIdioma();
+  };
+  function init() { applyAll(); marcarBotoes(); start(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+</script>
 <script>
 // =========================================================
 // CONFIGURAÇÃO DO SUPABASE — troque pelos dados do seu projeto
@@ -3414,33 +3613,45 @@ async function iniciarApp() {
   meuRole = perfil.role || 'owner';
 
   // checa status de pagamento e teste grátis antes de liberar o app
-  const { data: org, error: orgErr } = await supabaseClient
-    .from('organizacoes').select('nome, status, em_teste, trial_fim').eq('id', organizacaoId).single();
+  // "vencimento" só existe depois de rodar supabase-vencimento-pagamento.sql; sem ela, cai no select antigo
+  // (assim o bloqueio do teste grátis continua funcionando mesmo antes do SQL ser rodado)
+  let { data: org, error: orgErr } = await supabaseClient
+    .from('organizacoes').select('nome, status, em_teste, trial_fim, valor_mensal, vencimento').eq('id', organizacaoId).single();
+  if (orgErr) {
+    ({ data: org, error: orgErr } = await supabaseClient
+      .from('organizacoes').select('nome, status, em_teste, trial_fim, valor_mensal').eq('id', organizacaoId).single());
+  }
 
   if (!orgErr && org) nomeOrganizacao = org.nome || '';
 
-  if (!orgErr && org && org.status !== 'ativo') {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('bloqueado-titulo').textContent = 'Acesso temporariamente indisponível';
-    document.getElementById('bloqueado-msg').innerHTML = `Identificamos uma pendência na assinatura da <strong>${org.nome || 'sua empresa'}</strong>. Entre em contato com a DAAT pra regularizar e liberar o acesso de novo.`;
-    document.getElementById('bloqueado-screen').style.display = 'flex';
+  const hoje = hojeLocal();
+  const nomeEmp = escapeHTML(org?.nome || 'sua empresa');
+  const testeAcabou = !orgErr && org && org.em_teste && org.trial_fim && org.trial_fim < hoje;
+  const mensalidadeVenceu = !orgErr && org && !org.em_teste && org.vencimento && org.vencimento < hoje;
+
+  if (testeAcabou || mensalidadeVenceu) {
+    // marca automaticamente como inadimplente no banco (não só bloqueia na tela),
+    // assim o painel administrativo já reflete a situação real sem precisar de ação manual
+    if (org.status !== 'inadimplente') {
+      supabaseClient.from('organizacoes').update({ status: 'inadimplente' }).eq('id', organizacaoId);
+    }
+    mostrarBloqueio(
+      testeAcabou ? 'Seu teste grátis terminou' : 'Sua mensalidade venceu',
+      testeAcabou
+        ? `O período de 7 dias de teste da <strong>${nomeEmp}</strong> chegou ao fim. Pague via Pix abaixo pra continuar usando o DAAT. sem interrupção.`
+        : `O acesso da <strong>${nomeEmp}</strong> venceu. Pague via Pix abaixo pra liberar o DAAT. de novo.`,
+      org
+    );
     return;
   }
 
-  if (!orgErr && org && org.em_teste && org.trial_fim) {
-    const hoje = hojeLocal();
-    if (org.trial_fim < hoje) {
-      // marca automaticamente como inadimplente no banco (não só bloqueia na tela),
-      // assim o painel administrativo já reflete a situação real sem precisar de ação manual
-      if (org.status !== 'inadimplente') {
-        supabaseClient.from('organizacoes').update({ status: 'inadimplente' }).eq('id', organizacaoId);
-      }
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('bloqueado-titulo').textContent = 'Seu teste grátis terminou';
-      document.getElementById('bloqueado-msg').innerHTML = `O período de 7 dias de teste da <strong>${org.nome || 'sua empresa'}</strong> chegou ao fim. Fala com a gente pra continuar usando o DAAT. sem interrupção.`;
-      document.getElementById('bloqueado-screen').style.display = 'flex';
-      return;
-    }
+  if (!orgErr && org && org.status !== 'ativo') {
+    mostrarBloqueio(
+      'Acesso temporariamente indisponível',
+      `Identificamos uma pendência na assinatura da <strong>${nomeEmp}</strong>. Pague via Pix abaixo ou entre em contato com a DAAT pra regularizar e liberar o acesso de novo.`,
+      org
+    );
+    return;
   }
 
   document.getElementById('login-screen').style.display = 'none';
@@ -3466,6 +3677,15 @@ function aplicarRestricaoPapel() {
   });
   // a aba padrão agora é o Dashboard, que o funcionário não vê — leva ele pro CRM
   switchTab('crm');
+}
+
+// tela de acesso bloqueado (teste acabou, mensalidade vencida ou pendência) já com o Pix pra pagar
+function mostrarBloqueio(titulo, mensagemHtml, org) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('bloqueado-titulo').textContent = titulo;
+  document.getElementById('bloqueado-msg').innerHTML = mensagemHtml;
+  document.getElementById('bloqueado-screen').style.display = 'flex';
+  mostrarPixNoBloqueio(org);
 }
 
 async function fazerLogoutBloqueado() {
@@ -3724,8 +3944,13 @@ function switchTab(tab) {
 }
 
 // ===== HEADER DATE =====
+window.aoMudarIdioma = function () {
+  updateDate();
+  const ativa = document.querySelector('.section.active');
+  if (ativa && ativa.id.startsWith('tab-') && typeof organizacaoId !== 'undefined' && organizacaoId) switchTab(ativa.id.slice(4));
+};
 function updateDate() {
-  document.getElementById('header-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString(localeAtual(), { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 }
 updateDate();
 
@@ -4170,7 +4395,7 @@ function gerarOS(vendaId) {
 
   const janela = window.open('', '_blank');
   if (!janela) { toast('Seu navegador bloqueou o pop-up. Permita pop-ups pra esse site e tente de novo.'); return; }
-  janela.document.write(htmlOS);
+  janela.document.write(traduzirDocumentoHTML(htmlOS));
   janela.document.close();
 }
 
@@ -4717,10 +4942,10 @@ function adicionarAoGoogleAgenda(id) {
     datesParam = `${dataBase}/${fimStr}`;
   }
 
-  const titulo = encodeURIComponent(`${a.clienteNome} — ${a.motivo || 'Agendamento DAAT.'}`);
-  const detalhes = encodeURIComponent(
+  const titulo = encodeURIComponent(`${a.clienteNome} — ${a.motivo || T('Agendamento') + ' DAAT.'}`);
+  const detalhes = encodeURIComponent(T(
     `Agendamento criado no DAAT.\nCliente: ${a.clienteNome}\nMotivo: ${a.motivo || '—'}${a.obs ? '\nObservações: ' + a.obs : ''}`
-  );
+  ));
 
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${datesParam}&details=${detalhes}&ctz=America/Sao_Paulo`;
   window.open(url, '_blank');
@@ -4773,10 +4998,16 @@ function enviarLembreteWhatsApp(id) {
   if (!cliente.tel) { toast('Esse cliente não tem telefone cadastrado.'); return; }
 
   const dataFmt = a.data.split('-').reverse().join('/');
-  const horaTxt = a.hora ? ` às ${a.hora}` : '';
-  const empresaTxt = nomeOrganizacao ? ` com a ${nomeOrganizacao}` : '';
+  const L = idiomaAtual();
+  const dataLoc = L === 'en' ? a.data.split('-').slice(1).concat(a.data.split('-')[0]).join('/') : dataFmt;
+  const horaTxt = a.hora ? (L === 'en' ? ` at ${a.hora}` : L === 'es' ? ` a las ${a.hora}` : ` às ${a.hora}`) : '';
+  const empresaTxt = nomeOrganizacao ? (L === 'en' ? ` with ${nomeOrganizacao}` : L === 'es' ? ` con ${nomeOrganizacao}` : ` com a ${nomeOrganizacao}`) : '';
   const motivoTxt = a.motivo ? ` (${a.motivo})` : '';
-  const msg = `Olá, ${cliente.nome}! Passando pra lembrar do seu agendamento${empresaTxt} no dia ${dataFmt}${horaTxt}${motivoTxt}. Qualquer coisa, é só chamar por aqui!`;
+  const msg = L === 'en'
+    ? `Hi, ${cliente.nome}! Just a reminder of your appointment${empresaTxt} on ${dataLoc}${horaTxt}${motivoTxt}. If you need anything, just message us here!`
+    : L === 'es'
+    ? `¡Hola, ${cliente.nome}! Te recuerdo tu cita${empresaTxt} el día ${dataFmt}${horaTxt}${motivoTxt}. ¡Cualquier cosa, escríbenos por aquí!`
+    : `Olá, ${cliente.nome}! Passando pra lembrar do seu agendamento${empresaTxt} no dia ${dataFmt}${horaTxt}${motivoTxt}. Qualquer coisa, é só chamar por aqui!`;
 
   abrirModalWhatsApp(cliente.tel, msg, cliente.nome);
 }
@@ -4787,8 +5018,9 @@ function enviarMensagemWhatsApp(id) {
   if (!c) return;
   if (!c.tel) { toast('Esse cliente não tem telefone cadastrado.'); return; }
 
-  const assinatura = nomeOrganizacao || 'a gente';
-  const msg = `Olá, ${c.nome}! Aqui é ${assinatura}. `;
+  const L = idiomaAtual();
+  const assinatura = nomeOrganizacao || (L === 'en' ? 'us' : L === 'es' ? 'nosotros' : 'a gente');
+  const msg = L === 'en' ? `Hi, ${c.nome}! This is ${assinatura}. ` : L === 'es' ? `¡Hola, ${c.nome}! Te escribe ${assinatura}. ` : `Olá, ${c.nome}! Aqui é ${assinatura}. `;
 
   abrirModalWhatsApp(c.tel, msg, c.nome);
 }
@@ -4880,7 +5112,7 @@ function hojeLocal() {
 
 function montarListaLembretes(deHoje) {
   const hoje = hojeLocal();
-  const dataFormatada = new Date(hoje + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  const dataFormatada = new Date(hoje + 'T00:00:00').toLocaleDateString(localeAtual(), { weekday: 'long', day: '2-digit', month: 'long' });
   document.getElementById('lembretes-data').textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
 
   const statusCls = { 'Agendado': 'badge-amber', 'Confirmado': 'badge-gold' };
@@ -5071,8 +5303,8 @@ const FAQ_ITEMS = [
   { pergunta: 'Como registro uma venda?', resposta: 'Vá na aba "Registrar venda", escolha o produto, a quantidade e o cliente. O sistema calcula o total sozinho.' },
   { pergunta: 'Como exporto meus dados pra Excel?', resposta: 'Em cada tabela (Produtos, Vendas, Clientes, Agenda) tem um botão "Exportar". Ou, se quiser tudo de uma vez, vá em Configurações e clique em "Exportar tudo (Excel)".' },
   { pergunta: 'Como adiciono um agendamento na minha Google Agenda?', resposta: 'Na aba CRM, na tabela de Agenda, clique no ícone de calendário ao lado do agendamento — ele abre o Google Agenda já preenchido, é só confirmar.' },
-  { pergunta: 'Como funciona o teste grátis de 7 dias?', resposta: 'Todo cadastro novo começa com 7 dias de acesso completo, sem custo. Depois desse prazo, é preciso assinar pra continuar usando — a gente entra em contato pra combinar.' },
-  { pergunta: 'O sistema bloqueou meu acesso, o que houve?', resposta: 'Isso acontece se o teste grátis expirou ou se há alguma pendência. A tela de bloqueio mostra nossos contatos — é só chamar a gente que resolvemos rápido.' },
+  { pergunta: 'Como funciona o teste grátis de 7 dias?', resposta: 'Todo cadastro novo começa com 7 dias de acesso completo, sem custo. Depois desse prazo, é preciso assinar pra continuar usando — na própria tela de aviso você paga via Pix e a gente libera o acesso assim que o pagamento é confirmado.' },
+  { pergunta: 'O sistema bloqueou meu acesso, o que houve?', resposta: 'Isso acontece se o teste grátis expirou, se a mensalidade (30 dias) venceu ou se há alguma pendência. A tela de bloqueio traz o Pix pra pagar e nossos contatos — mande o comprovante com o nome da sua empresa e liberamos rápido.' },
   { pergunta: 'Posso trocar o nome da minha empresa no sistema?', resposta: 'Sim, vá em Configurações, campo "Empresa", digite o nome novo e clique em "Salvar".' },
 ];
 
@@ -5160,7 +5392,7 @@ async function renderChamados() {
       </div>
       <div style="font-size:12.5px;color:var(--text2);margin-bottom:8px;">${escapeHTML(c.mensagem)}</div>
       ${c.resposta ? `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;font-size:12.5px;color:var(--text);"><strong>Resposta da DAAT:</strong><br>${escapeHTML(c.resposta)}</div>` : ''}
-      <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:8px;">${new Date(c.criado_em).toLocaleDateString('pt-BR')}</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:8px;">${new Date(c.criado_em).toLocaleDateString(localeAtual())}</div>
     </div>`;
   });
   wrap.innerHTML = h;
@@ -5197,7 +5429,7 @@ async function renderLixeira() {
       <div>
         <span class="badge badge-gray" style="margin-right:8px;">${it.tipo}</span>
         <span style="font-size:13px;color:var(--text);">${escapeHTML(it.label)}</span>
-        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px;">excluído em ${new Date(it.deletadoEm).toLocaleDateString('pt-BR')}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px;">excluído em ${new Date(it.deletadoEm).toLocaleDateString(localeAtual())}</div>
       </div>
       <button class="btn btn-outline btn-sm" onclick="restaurarItem('${it.tabela}','${it.id}')"><i class="ti ti-arrow-back-up"></i> Restaurar</button>
     </div>`;
@@ -5328,12 +5560,13 @@ function gerarPayloadPix(valor) {
   return payload + crc16ccitt(payload);
 }
 
-function renderPix(valor) {
+// prefixo 'pix' = card em Configurações; 'bloq-pix' = tela de acesso bloqueado
+function renderPix(valor, prefixo = 'pix') {
   pixPayloadAtual = gerarPayloadPix(valor);
-  document.getElementById('pix-valor').textContent = `R$ ${valor.toFixed(2)}`;
-  document.getElementById('pix-copia-cola').value = pixPayloadAtual;
+  document.getElementById(`${prefixo}-valor`).textContent = `R$ ${valor.toFixed(2)}`;
+  document.getElementById(`${prefixo}-copia-cola`).value = pixPayloadAtual;
 
-  const wrap = document.getElementById('pix-qr-wrap');
+  const wrap = document.getElementById(`${prefixo}-qr-wrap`);
   wrap.innerHTML = '';
   try {
     if (!window.qrcode) throw new Error('biblioteca de QR não carregou');
@@ -5347,16 +5580,39 @@ function renderPix(valor) {
   }
 }
 
-function copiarPix() {
+function copiarPix(prefixo = 'pix') {
   navigator.clipboard.writeText(pixPayloadAtual).then(() => {
-    const msg = document.getElementById('pix-copiado-msg');
+    const msg = document.getElementById(`${prefixo}-copiado-msg`);
     msg.style.display = 'block';
     setTimeout(() => { msg.style.display = 'none'; }, 2000);
   }).catch(() => {
-    const txt = document.getElementById('pix-copia-cola');
+    const txt = document.getElementById(`${prefixo}-copia-cola`);
     txt.select();
     document.execCommand('copy');
   });
+}
+
+// ===== PIX NA TELA DE BLOQUEIO =====
+// Número do WhatsApp comercial da DAAT (só dígitos, com 55 + DDD). Se ficar vazio,
+// o botão "Já paguei, avisar a DAAT." não aparece e o cliente usa o e-mail/Instagram.
+const WHATSAPP_COMERCIAL_DAAT = '';
+
+function mostrarPixNoBloqueio(org) {
+  const bloco = document.getElementById('bloqueado-pix');
+  if (!bloco) return;
+  try {
+    renderPix(Number(org?.valor_mensal) || 69.90, 'bloq-pix');
+    bloco.style.display = 'block';
+  } catch (e) {
+    console.error('Erro ao mostrar Pix no bloqueio:', e);
+    return;
+  }
+  const link = document.getElementById('bloq-avisar-pagamento');
+  if (link && WHATSAPP_COMERCIAL_DAAT) {
+    const texto = `Olá! Acabei de pagar o DAAT. da empresa ${org?.nome || ''}. Segue o comprovante.`;
+    link.href = `https://wa.me/${WHATSAPP_COMERCIAL_DAAT}?text=${encodeURIComponent(texto)}`;
+    link.style.display = 'flex';
+  }
 }
 
 // ===== INIT =====
