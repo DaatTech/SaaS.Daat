@@ -2898,11 +2898,39 @@ var qrcode = function() {
   <div class="card">
     <div class="card-title-lg">
       <div style="display:flex;align-items:center;gap:12px;">
-        <svg width="40" height="40" viewBox="0 0 40 40" style="flex-shrink:0;" aria-hidden="true">
-          <circle cx="20" cy="20" r="19" fill="var(--accent)" stroke="var(--text)" stroke-width="1.5"/>
-          <circle cx="17.5" cy="17.5" r="7" fill="var(--bg)" stroke="var(--text)" stroke-width="2"/>
-          <circle cx="17.5" cy="17.5" r="3.2" fill="var(--text)"/>
-          <line x1="22.7" y1="22.7" x2="29.5" y2="29.5" stroke="var(--text)" stroke-width="2.4" stroke-linecap="round"/>
+        <svg width="56" height="69" viewBox="0 0 126 156" style="flex-shrink:0;" aria-hidden="true">
+<g stroke="#14120C" stroke-linejoin="round" stroke-linecap="round">
+  <!-- pernas e sapatos -->
+  <path d="M46 128 L45 146" stroke-width="7"/><path d="M74 128 L75 146" stroke-width="7"/>
+  <ellipse cx="42" cy="148" rx="9" ry="4.5" fill="#14120C" stroke-width="2"/><ellipse cx="78" cy="148" rx="9" ry="4.5" fill="#14120C" stroke-width="2"/>
+  <!-- braço esquerdo -->
+  <path d="M34 80 L22 104" stroke-width="9"/><circle cx="21" cy="107" r="5.5" fill="#F5C400" stroke-width="2.5"/>
+  <!-- capa -->
+  <path d="M32 74 Q60 62 88 74 L102 130 Q60 142 18 130 Z" fill="#14120C" stroke-width="2.5"/>
+  <path d="M60 84 L60 134" stroke="#F5C400" stroke-width="1.5" opacity=".5"/>
+  <circle cx="60" cy="98" r="2.6" fill="#F5C400" stroke="none"/><circle cx="60" cy="112" r="2.6" fill="#F5C400" stroke="none"/>
+  <!-- gola -->
+  <path d="M46 70 L60 86 L74 70 Z" fill="#F3ECDD" stroke-width="2.5"/>
+  <!-- braço direito com lupa -->
+  <path d="M88 80 L102 98" stroke-width="9"/>
+  <path d="M108 70 L106 98" stroke-width="3.2"/>
+  <circle cx="107" cy="101" r="5.5" fill="#F5C400" stroke-width="2.5"/>
+  <circle cx="108" cy="56" r="15" fill="#F3ECDD" fill-opacity=".9" stroke-width="3.5"/>
+  <path d="M100 52 Q103 46 110 46" fill="none" stroke-width="2" opacity=".5"/>
+  <!-- cabeça -->
+  <circle cx="60" cy="46" r="27" fill="#F5C400" stroke-width="3"/>
+  <!-- rosto -->
+  <circle cx="51" cy="52" r="2.8" fill="#14120C" stroke="none"/><circle cx="69" cy="52" r="2.8" fill="#14120C" stroke="none"/>
+  <path d="M46 45 L56 47" stroke-width="2.2"/><path d="M64 46 L74 43" stroke-width="2.2"/>
+  <path d="M52 60 Q60 66 68 60" fill="none" stroke-width="2.4"/>
+  <!-- chapéu deerstalker -->
+  <path d="M33 42 Q33 12 60 12 Q87 12 87 42 Q60 33 33 42 Z" fill="#CBB98A" stroke-width="3"/>
+  <path d="M46 16 Q43 28 44 36" fill="none" stroke-width="1.6" opacity=".55"/><path d="M60 12 L60 34" fill="none" stroke-width="1.6" opacity=".55"/><path d="M74 16 Q77 28 76 36" fill="none" stroke-width="1.6" opacity=".55"/>
+  <path d="M42 38 Q60 46 78 38 L82 44 Q60 52 38 44 Z" fill="#B7A574" stroke-width="2.6"/>
+  <ellipse cx="32" cy="46" rx="5" ry="8" fill="#CBB98A" stroke-width="2.4"/><ellipse cx="88" cy="46" rx="5" ry="8" fill="#CBB98A" stroke-width="2.4"/>
+  <circle cx="60" cy="10.5" r="3.4" fill="#14120C" stroke-width="1.5"/>
+</g>
+
         </svg>
         <span>Insights Acionáveis<br><span style="font-size:11px;font-weight:400;color:var(--text3);">seu Detetive Amarelo investigando os dados</span></span>
       </div>
@@ -5595,7 +5623,7 @@ function copiarPix(prefixo = 'pix') {
 // ===== PIX NA TELA DE BLOQUEIO =====
 // Número do WhatsApp comercial da DAAT (só dígitos, com 55 + DDD). Se ficar vazio,
 // o botão "Já paguei, avisar a DAAT." não aparece e o cliente usa o e-mail/Instagram.
-const WHATSAPP_COMERCIAL_DAAT = '';
+const WHATSAPP_COMERCIAL_DAAT = '5512987034536';
 
 function mostrarPixNoBloqueio(org) {
   const bloco = document.getElementById('bloqueado-pix');
@@ -5609,7 +5637,8 @@ function mostrarPixNoBloqueio(org) {
   }
   const link = document.getElementById('bloq-avisar-pagamento');
   if (link && WHATSAPP_COMERCIAL_DAAT) {
-    const texto = `Olá! Acabei de pagar o DAAT. da empresa ${org?.nome || ''}. Segue o comprovante.`;
+    const L = idiomaAtual(), nm = org?.nome || '';
+    const texto = L === 'en' ? `Hi! I just paid for DAAT. for the company ${nm}. Here is the receipt.` : L === 'es' ? `¡Hola! Acabo de pagar DAAT. de la empresa ${nm}. Te envío el comprobante.` : `Olá! Acabei de pagar o DAAT. da empresa ${nm}. Segue o comprovante.`;
     link.href = `https://wa.me/${WHATSAPP_COMERCIAL_DAAT}?text=${encodeURIComponent(texto)}`;
     link.style.display = 'flex';
   }
