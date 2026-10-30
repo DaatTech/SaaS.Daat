@@ -5067,7 +5067,7 @@ async function renderConfig() {
   document.getElementById('cfg-empresa-msg').style.display = 'none';
   renderLixeira();
   renderEquipe();
-  renderPix(Number(org?.valor_mensal) || 69.90);
+  renderPix(Number(org?.valor_mensal) || 35.90);
 }
 
 async function salvarEmpresa() {
@@ -5629,7 +5629,7 @@ function mostrarPixNoBloqueio(org) {
   const bloco = document.getElementById('bloqueado-pix');
   if (!bloco) return;
   try {
-    renderPix(Number(org?.valor_mensal) || 69.90, 'bloq-pix');
+    renderPix(Number(org?.valor_mensal) || 35.90, 'bloq-pix');
     bloco.style.display = 'block';
   } catch (e) {
     console.error('Erro ao mostrar Pix no bloqueio:', e);
