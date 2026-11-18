@@ -1,0 +1,17 @@
+{
+  "name": "DAAT. Assistente",
+  "short_name": "DAAT.",
+  "description": "Lance vendas, agendamentos e clientes conversando, sem abrir o sistema.",
+  "start_url": "./assistente.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F3ECDD",
+  "theme_color": "#14120C",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
