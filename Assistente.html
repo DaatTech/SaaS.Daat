@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14120C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DAAT.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>DAAT. Assistente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #F3ECDD; --ink: #14120C; --yellow: #F5C400; --paper: #FFFDF6;
+    --mute: #5C5748; --red: #B3261E; --green: #1B7F3B;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; }
+  body { overscroll-behavior: none; }
+  button { font-family: inherit; cursor: pointer; }
+  .screen { display: none; height: 100dvh; flex-direction: column; }
+  .screen.on { display: flex; }
+
+  /* ---------- login / bloqueio ---------- */
+  .center { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 28px 24px; max-width: 420px; width: 100%; margin: 0 auto;
+    background-image: linear-gradient(rgba(20,18,12,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,.05) 1px, transparent 1px); background-size: 36px 36px; }
+  .logo { font-family: 'Archivo Black', sans-serif; font-size: 44px; line-height: 1; }
+  .logo .dot { color: var(--yellow); }
+  .sub { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 8px 0 28px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin: 0 0 6px; }
+  .field { width: 100%; font: inherit; font-size: 17px; padding: 14px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); margin-bottom: 16px; color: var(--ink); }
+  .field:focus { outline: 3px solid var(--yellow); outline-offset: 1px; }
+  .btn { width: 100%; min-height: 52px; font-size: 17px; font-weight: 800; border: 2px solid var(--ink); border-radius: 14px; background: var(--yellow); color: var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn.dark { background: var(--ink); color: var(--paper); box-shadow: none; }
+  .err { color: var(--red); font-size: 14px; font-weight: 600; min-height: 20px; margin: 0 0 12px; }
+  .link { display: block; text-align: center; margin-top: 16px; font-size: 14px; color: var(--ink); font-weight: 600; }
+
+  /* ---------- chat ---------- */
+  header.top { background: var(--ink); color: var(--paper); display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 12px 10px 14px; }
+  header.top .who { flex: 1; min-width: 0; }
+  header.top .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Archivo Black', sans-serif; font-size: 20px; line-height: 1.1; }
+  header.top .name .dot { color: var(--yellow); }
+  header.top .org { font-size: 12px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .avatar { width: 40px; height: 48px; background: var(--yellow); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+  .status { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 99px; border: 1.5px solid currentColor; white-space: nowrap; }
+  .status.on { color: #7BE08F; } .status.off { color: var(--yellow); }
+  .iconbtn { width: 44px; height: 44px; border: 0; background: transparent; color: var(--paper); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+  .iconbtn:active { background: rgba(255,255,255,.12); }
+
+  #chat { flex: 1; overflow-y: auto; padding: 14px 12px 8px; display: flex; flex-direction: column; gap: 8px;
+    background-image: linear-gradient(rgba(20,18,12,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(20,18,12,.05) 1px, transparent 1px); background-size: 36px 36px; scroll-behavior: smooth; }
+  .row { display: flex; }
+  .row.me { justify-content: flex-end; }
+  .bubble { max-width: 86%; padding: 11px 14px; font-size: 16px; line-height: 1.4; border: 2px solid var(--ink); word-wrap: break-word; overflow-wrap: anywhere; }
+  .bubble p { margin: 0 0 6px; } .bubble p:last-child { margin: 0; }
+  .bubble.bot { background: var(--paper); border-radius: 18px 18px 18px 4px; }
+  .bubble.me { background: var(--yellow); border-radius: 18px 18px 4px 18px; font-weight: 600; }
+  .bubble.bot.wide { max-width: 94%; width: 94%; }
+  .muted { color: var(--mute); font-size: 14px; }
+  .big { font-family: 'Archivo Black', sans-serif; font-size: 22px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 2px; }
+  .chip { min-height: 46px; padding: 0 16px; border: 2px solid var(--ink); border-radius: 99px; background: var(--paper); font-size: 16px; font-weight: 700; color: var(--ink); }
+  .chip.primary { background: var(--ink); color: var(--paper); }
+  .chip:active { transform: scale(.97); }
+  .stale .chip, .stale .pick { opacity: .35; pointer-events: none; }
+  .used .chip:not(.chosen), .used .pick:not(.chosen) { opacity: .35; pointer-events: none; }
+
+  .picklist { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .pick { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; min-height: 54px; padding: 8px 12px; border: 2px solid var(--ink); border-radius: 12px; background: #fff; font-size: 16px; font-weight: 700; color: var(--ink); width: 100%; }
+  .pick small { display: block; font-weight: 500; color: var(--mute); font-size: 13px; }
+  .pick .price { font-family: 'IBM Plex Mono', monospace; font-size: 14px; white-space: nowrap; }
+  .lines { margin: 6px 0 4px; padding: 0; list-style: none; }
+  .lines li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px dashed rgba(20,18,12,.3); font-size: 15px; }
+  .lines li:last-child { border: 0; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; font-weight: 800; }
+  .total .big { font-size: 24px; }
+  .undo { margin-top: 10px; min-height: 40px; padding: 0 14px; border: 2px solid var(--ink); border-radius: 10px; background: transparent; font-weight: 700; font-size: 14px; color: var(--ink); }
+  .undo[disabled] { opacity: .45; }
+  .tag { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--paper); }
+  .warn { color: var(--red); font-weight: 700; }
+
+  form.composer { display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--ink); }
+  form.composer input { flex: 1; min-width: 0; font: inherit; font-size: 17px; padding: 13px 16px; border-radius: 99px; border: 2px solid var(--paper); background: var(--paper); color: var(--ink); }
+  form.composer input:focus { outline: 3px solid var(--yellow); }
+  form.composer button { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--paper); background: var(--yellow); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  #menu { position: fixed; inset: 0; background: rgba(20,18,12,.5); display: none; align-items: flex-start; justify-content: flex-end; z-index: 20; }
+  #menu.on { display: flex; }
+  #menu .sheet { margin: calc(60px + env(safe-area-inset-top)) 12px 0; background: var(--paper); border: 2px solid var(--ink); border-radius: 14px; min-width: 240px; overflow: hidden; box-shadow: 5px 5px 0 var(--ink); }
+  #menu .sheet a, #menu .sheet button { display: flex; width: 100%; align-items: center; min-height: 52px; padding: 0 18px; background: transparent; border: 0; border-bottom: 1px solid rgba(20,18,12,.15); font-size: 16px; font-weight: 700; color: var(--ink); text-decoration: none; text-align: left; }
+  #menu .sheet > :last-child { border-bottom: 0; }
+  @media (min-width: 700px) { #chat, form.composer { padding-left: calc(50% - 330px); padding-right: calc(50% - 330px); } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="s-login" class="screen">
+  <div class="center">
+    <div class="logo">DAAT<span class="dot">.</span></div>
+    <div class="sub">Assistente</div>
+    <label for="l-email">E-mail</label>
+    <input id="l-email" class="field" type="email" inputmode="email" autocomplete="username" autocapitalize="none">
+    <label for="l-senha">Senha</label>
+    <input id="l-senha" class="field" type="password" autocomplete="current-password">
+    <div id="l-err" class="err" role="alert"></div>
+    <button id="l-btn" class="btn" type="button">Entrar</button>
+    <a class="link" href="./">Esqueci minha senha / ainda não tenho conta</a>
+  </div>
+</section>
+
+<!-- BLOQUEADO -->
+<section id="s-bloq" class="screen">
+  <div class="center">
+    <div class="logo">DAAT<span class="dot">.</span></div>
+    <div class="sub">Acesso bloqueado</div>
+    <p id="b-msg" style="font-size:17px;line-height:1.5;margin:0 0 22px;"></p>
+    <a class="btn" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="./">Abrir o DAAT para pagar</a>
+    <button id="b-sair" class="btn dark" type="button" style="margin-top:12px;">Sair</button>
+  </div>
+</section>
+
+<!-- CHAT -->
+<section id="s-chat" class="screen">
+  <header class="top">
+    <div class="avatar" aria-hidden="true">
+      <svg width="34" height="42" viewBox="0 0 126 156"><g stroke="#14120C" stroke-linejoin="round" stroke-linecap="round">
+  <!-- pernas e sapatos -->
+  <path d="M46 128 L45 146" stroke-width="7"/><path d="M74 128 L75 146" stroke-width="7"/>
+  <ellipse cx="42" cy="148" rx="9" ry="4.5" fill="#14120C" stroke-width="2"/><ellipse cx="78" cy="148" rx="9" ry="4.5" fill="#14120C" stroke-width="2"/>
+  <!-- braço esquerdo -->
+  <path d="M34 80 L22 104" stroke-width="9"/><circle cx="21" cy="107" r="5.5" fill="#F5C400" stroke-width="2.5"/>
+  <!-- capa -->
+  <path d="M32 74 Q60 62 88 74 L102 130 Q60 142 18 130 Z" fill="#14120C" stroke-width="2.5"/>
+  <path d="M60 84 L60 134" stroke="#F5C400" stroke-width="1.5" opacity=".5"/>
+  <circle cx="60" cy="98" r="2.6" fill="#F5C400" stroke="none"/><circle cx="60" cy="112" r="2.6" fill="#F5C400" stroke="none"/>
+  <!-- gola -->
+  <path d="M46 70 L60 86 L74 70 Z" fill="#F3ECDD" stroke-width="2.5"/>
+  <!-- braço direito com lupa -->
+  <path d="M88 80 L102 98" stroke-width="9"/>
+  <path d="M108 70 L106 98" stroke-width="3.2"/>
+  <circle cx="107" cy="101" r="5.5" fill="#F5C400" stroke-width="2.5"/>
+  <circle cx="108" cy="56" r="15" fill="#F3ECDD" fill-opacity=".9" stroke-width="3.5"/>
+  <path d="M100 52 Q103 46 110 46" fill="none" stroke-width="2" opacity=".5"/>
+  <!-- cabeça -->
+  <circle cx="60" cy="46" r="27" fill="#F5C400" stroke-width="3"/>
+  <!-- rosto -->
+  <circle cx="51" cy="52" r="2.8" fill="#14120C" stroke="none"/><circle cx="69" cy="52" r="2.8" fill="#14120C" stroke="none"/>
+  <path d="M46 45 L56 47" stroke-width="2.2"/><path d="M64 46 L74 43" stroke-width="2.2"/>
+  <path d="M52 60 Q60 66 68 60" fill="none" stroke-width="2.4"/>
+  <!-- chapéu deerstalker -->
+  <path d="M33 42 Q33 12 60 12 Q87 12 87 42 Q60 33 33 42 Z" fill="#CBB98A" stroke-width="3"/>
+  <path d="M46 16 Q43 28 44 36" fill="none" stroke-width="1.6" opacity=".55"/><path d="M60 12 L60 34" fill="none" stroke-width="1.6" opacity=".55"/><path d="M74 16 Q77 28 76 36" fill="none" stroke-width="1.6" opacity=".55"/>
+  <path d="M42 38 Q60 46 78 38 L82 44 Q60 52 38 44 Z" fill="#B7A574" stroke-width="2.6"/>
+  <ellipse cx="32" cy="46" rx="5" ry="8" fill="#CBB98A" stroke-width="2.4"/><ellipse cx="88" cy="46" rx="5" ry="8" fill="#CBB98A" stroke-width="2.4"/>
+  <circle cx="60" cy="10.5" r="3.4" fill="#14120C" stroke-width="1.5"/>
+</g></svg>
+    </div>
+    <div class="who">
+      <div class="name">DAAT<span class="dot">.</span> Assistente</div>
+      <div id="h-org" class="org"></div>
+    </div>
+    <span id="h-status" class="status on">online</span>
+    <button id="h-menu" class="iconbtn" type="button" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+    </button>
+  </header>
+  <div id="chat" aria-live="polite"></div>
+  <form id="composer" class="composer" autocomplete="off">
+    <input id="c-input" type="text" placeholder="Escreva aqui…" enterkeyhint="send" aria-label="Mensagem">
+    <button type="submit" aria-label="Enviar">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#14120C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 17-3-7-7-2z"/></svg>
+    </button>
+  </form>
+</section>
+
+<div id="menu" role="dialog" aria-label="Menu">
+  <div class="sheet">
+    <a href="./">Abrir o DAAT completo</a>
+    <button id="m-install" type="button">Instalar no celular</button>
+    <button id="m-refresh" type="button">Atualizar dados</button>
+    <button id="m-sair" type="button">Sair</button>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+const SUPABASE_URL = 'https://mdekuwxqqdbokbzsibrh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kZWt1d3hxcWRib2tienNpYnJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NjM0NzQsImV4cCI6MjEwMzIzOTQ3NH0.zMkm02EAvDsOw3pCBg9h1QxTZbW_gcYUZXfJl-8WCfo';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ======================= utilidades ======================= */
+const $ = id => document.getElementById(id);
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+function uuid() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+}
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+const brl = n => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const pad = n => String(n).padStart(2, '0');
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function hojeLocal() { return ymd(new Date()); }
+function addDias(str, n) { const d = new Date(str + 'T12:00:00'); d.setDate(d.getDate() + n); return ymd(d); }
+const DIAS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+function dataCurta(str) { const d = new Date(str + 'T12:00:00'); return DIAS[d.getDay()] + ', ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1); }
+function dataExtenso(str) {
+  const h = hojeLocal();
+  if (str === h) return 'hoje (' + dataCurta(str) + ')';
+  if (str === addDias(h, 1)) return 'amanhã (' + dataCurta(str) + ')';
+  return dataCurta(str);
+}
+function primeiroNome(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
+function numero(str) {
+  let s = String(str).trim().replace(/^r\$\s*/i, '');
+  if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  else if (!/^\d+\.\d{1,2}$/.test(s)) s = s.replace(/\./g, '');
+  const n = parseFloat(s);
+  return isFinite(n) ? n : NaN;
+}
+function isNet(err) {
+  if (!navigator.onLine) return true;
+  const m = String((err && (err.message || err)) || '');
+  return /fetch|network|failed|timeout|load failed|offline|abort/i.test(m);
+}
+
+/* ======================= estado ======================= */
+let perfil = null, org = null;
+let produtos = [], clientes = [], agendamentos = [], vendas = [];
+let fila = LS.get('daat_asst_fila', []);
+let handler = null;        // quem recebe o próximo texto digitado
+let instalarEvt = null;
+const CACHE_KEY = 'daat_asst_cache';
+
+function salvarFila() { LS.set('daat_asst_fila', fila); atualizarStatus(); }
+function salvarCache() {
+  LS.set(CACHE_KEY, { perfil, org, produtos, clientes, agendamentos, vendas, orgId: org && org.id, at: Date.now() });
+}
+
+/* ======================= telas ======================= */
+function tela(id) {
+  ['s-login', 's-bloq', 's-chat'].forEach(s => $(s).classList.toggle('on', s === id));
+}
+
+/* ======================= chat: renderização ======================= */
+const chat = $('chat');
+function rolar() { chat.scrollTop = chat.scrollHeight; }
+function bolha(quem, wide) {
+  const row = document.createElement('div'); row.className = 'row ' + quem;
+  const b = document.createElement('div'); b.className = 'bubble ' + quem + (wide ? ' wide' : '');
+  row.appendChild(b); chat.appendChild(row); return b;
+}
+function dizer() {
+  const b = bolha('bot');
+  Array.prototype.forEach.call(arguments, part => {
+    if (part instanceof Node) b.appendChild(part);
+    else { String(part).split('\n').forEach(l => { const p = document.createElement('p'); p.textContent = l; b.appendChild(p); }); }
+  });
+  rolar(); return b;
+}
+function eu(texto) { const b = bolha('me'); b.textContent = texto; rolar(); }
+function envelhecer() { document.querySelectorAll('.chips:not(.used), .picklist:not(.used)').forEach(w => w.classList.add('stale')); }
+function chips(lista, manter) {
+  if (!manter) envelhecer();
+  const wrap = document.createElement('div'); wrap.className = 'chips';
+  lista.forEach(c => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.className = 'chip' + (c.primary ? ' primary' : ''); b.textContent = c.label;
+    b.addEventListener('click', () => {
+      if (wrap.classList.contains('used') || wrap.classList.contains('stale')) return;
+      wrap.classList.add('used'); b.classList.add('chosen');
+      handler = null; eu(c.eco || c.label); c.run();
+    });
+    wrap.appendChild(b);
+  });
+  chat.appendChild(wrap); rolar(); return wrap;
+}
+function lista(itens, aoEscolher) {
+  const wrap = document.createElement('div'); wrap.className = 'picklist';
+  itens.forEach(it => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pick';
+    const esq = document.createElement('span'); esq.textContent = it.titulo;
+    if (it.sub) { const s = document.createElement('small'); s.textContent = it.sub; esq.appendChild(s); }
+    const dir = document.createElement('span'); dir.className = 'price'; dir.textContent = it.dir || '';
+    b.appendChild(esq); b.appendChild(dir);
+    b.addEventListener('click', () => {
+      if (wrap.classList.contains('used') || wrap.classList.contains('stale')) return;
+      wrap.classList.add('used'); b.classList.add('chosen');
+      handler = null; eu(it.titulo); aoEscolher(it.valor);
+    });
+    wrap.appendChild(b);
+  });
+  return wrap;
+}
+function linhas(pares) {
+  const ul = document.createElement('ul'); ul.className = 'lines';
+  pares.forEach(p => { const li = document.createElement('li'); const a = document.createElement('span'); a.textContent = p[0]; const b = document.createElement('span'); b.textContent = p[1]; li.appendChild(a); li.appendChild(b); ul.appendChild(li); });
+  return ul;
+}
+function totalEl(valor) {
+  const d = document.createElement('div'); d.className = 'total';
+  const a = document.createElement('span'); a.textContent = 'Total';
+  const b = document.createElement('span'); b.className = 'big'; b.textContent = brl(valor);
+  d.appendChild(a); d.appendChild(b); return d;
+}
+
+/* ======================= status / fila offline ======================= */
+function atualizarStatus() {
+  const el = $('h-status');
+  const pend = fila.length;
+  if (!navigator.onLine) { el.className = 'status off'; el.textContent = 'offline' + (pend ? ' · ' + pend : ''); }
+  else if (pend) { el.className = 'status off'; el.textContent = pend + ' a enviar'; }
+  else { el.className = 'status on'; el.textContent = 'online'; }
+}
+
+async function enviar(e) {
+  // devolve 'ok' | 'rede' | 'erro: ...'
+  try {
+    const orgId = org.id;
+    if (e.tipo === 'cliente') {
+      const { error } = await sb.from('clientes').insert({ id: e.cliente.id, organizacao_id: orgId, nome: e.cliente.nome, telefone: e.cliente.telefone || '' });
+      if (error && error.code !== '23505') return isNet(error) ? 'rede' : 'erro: ' + error.message;
+      return 'ok';
+    }
+    if (e.tipo === 'agenda') {
+      const a = e.agenda;
+      const { error } = await sb.from('agendamentos').insert({ id: a.id, organizacao_id: orgId, cliente_id: a.cliente_id, cliente_nome: a.cliente_nome, data: a.data, hora: a.hora, motivo: a.motivo || '', obs: '', status: 'Agendado' });
+      if (error && error.code !== '23505') return isNet(error) ? 'rede' : 'erro: ' + error.message;
+      return 'ok';
+    }
+    if (e.tipo === 'venda') {
+      if (!e.inserida) {
+        const v = e.venda;
+        const { error } = await sb.from('vendas').insert({ id: v.id, organizacao_id: orgId, data: v.data, vendedor: v.vendedor, canal: v.canal, cliente: v.cliente, itens: v.itens, total: v.total, comissao: 0 });
+        if (error && error.code !== '23505') return isNet(error) ? 'rede' : 'erro: ' + error.message;
+        e.inserida = true; e.baixados = e.baixados || []; salvarFila();
+      }
+      for (let i = 0; i < e.venda.itens.length; i++) {
+        if ((e.baixados || []).indexOf(i) >= 0) continue;
+        const it = e.venda.itens[i];
+        const { error } = await sb.rpc('baixar_estoque_produto', { p_id: it.prodId, p_qty: it.qty, p_org_id: orgId });
+        if (error) return isNet(error) ? 'rede' : 'erro: ' + error.message;
+        e.baixados.push(i); salvarFila();
+      }
+      return 'ok';
+    }
+    if (e.tipo === 'desfazer_venda') {
+      if (!e.apagada) {
+        const { error } = await sb.from('vendas').update({ deletado_em: new Date().toISOString() }).eq('id', e.id).eq('organizacao_id', orgId);
+        if (error) return isNet(error) ? 'rede' : 'erro: ' + error.message;
+        e.apagada = true; e.devolvidos = e.devolvidos || []; salvarFila();
+      }
+      for (let i = 0; i < e.itens.length; i++) {
+        if ((e.devolvidos || []).indexOf(i) >= 0) continue;
+        const it = e.itens[i];
+        const { error } = await sb.rpc('baixar_estoque_produto', { p_id: it.prodId, p_qty: -it.qty, p_org_id: orgId });
+        if (error) return isNet(error) ? 'rede' : 'erro: ' + error.message;
+        e.devolvidos.push(i); salvarFila();
+      }
+      return 'ok';
+    }
+    if (e.tipo === 'desfazer_agenda') {
+      const { error } = await sb.from('agendamentos').update({ deletado_em: new Date().toISOString() }).eq('id', e.id).eq('organizacao_id', orgId);
+      if (error) return isNet(error) ? 'rede' : 'erro: ' + error.message;
+      return 'ok';
+    }
+    return 'ok';
+  } catch (ex) {
+    return isNet(ex) ? 'rede' : 'erro: ' + (ex && ex.message);
+  }
+}
+
+let sincronizando = false;
+async function sincronizar(silencioso) {
+  if (sincronizando || !fila.length || !org) return { enviados: 0 };
+  sincronizando = true;
+  let enviados = 0;
+  try {
+    while (fila.length) {
+      const r = await enviar(fila[0]);
+      if (r === 'ok') { fila.shift(); enviados++; salvarFila(); }
+      else if (r === 'rede') break;
+      else { const e = fila.shift(); salvarFila(); dizer('Não consegui salvar um lançamento (' + r.replace('erro: ', '') + '). Confira no DAAT completo.'); }
+    }
+  } finally { sincronizando = false; atualizarStatus(); }
+  if (enviados && !silencioso) dizer('Pronto! Enviei ' + enviados + ' lançamento' + (enviados > 1 ? 's' : '') + ' que estava' + (enviados > 1 ? 'm' : '') + ' guardado' + (enviados > 1 ? 's' : '') + ' ✅');
+  return { enviados };
+}
+// coloca na fila (persistida) e tenta enviar na hora. Devolve 'ok' | 'fila' | 'erro: ...'
+async function lancar(entrada) {
+  fila.push(entrada); salvarFila();
+  const r = await enviar(entrada);
+  const idx = fila.indexOf(entrada);
+  if (r === 'ok') { if (idx >= 0) fila.splice(idx, 1); salvarFila(); return 'ok'; }
+  if (r === 'rede') { atualizarStatus(); return 'fila'; }
+  if (idx >= 0) fila.splice(idx, 1); salvarFila();
+  return r;
+}
+
+/* ======================= início / fluxos ======================= */
+function inicio(msg) {
+  handler = null;
+  dizer(msg || 'O que vamos lançar?');
+  chips([
+    { label: '🛒 Venda', eco: 'Venda', primary: true, run: vendaInicio },
+    { label: '📅 Agendar', eco: 'Agendar', run: () => agendaInicio() },
+    { label: '👤 Cliente', eco: 'Cliente', run: clienteInicio },
+    { label: '📊 Hoje', eco: 'Hoje', run: resumoHoje }
+  ]);
+}
+function voltar(msg) { setTimeout(() => inicio(msg), 250); }
+
+/* ---------- VENDA ---------- */
+let carrinho = [], vendaCliente = '', produtoAtual = null;
+
+function vendidos() {
+  const cont = {};
+  vendas.forEach(v => (v.itens || []).forEach(i => { cont[i.prodId] = (cont[i.prodId] || 0) + (Number(i.qty) || 1); }));
+  return cont;
+}
+function disponiveis() {
+  return produtos.filter(p => p.ativo !== false && (p.tipo === 'Serviço' || Number(p.estoque) > 0));
+}
+function vendaInicio() { carrinho = []; vendaCliente = ''; vendaEscolher(); }
+
+function mostrarProdutos(itens, titulo) {
+  const total = disponiveis().length;
+  if (!itens.length) {
+    dizer(total ? 'Não achei esse produto. Tente outro nome.' : 'Você ainda não tem produtos com estoque. Cadastre no DAAT completo.');
+    if (!total) { chips([{ label: 'Voltar', run: () => inicio() }]); return; }
+    handler = buscarProduto; chips([{ label: 'Cancelar venda', run: () => { carrinho = []; voltar('Venda cancelada.'); } }]); return;
+  }
+  envelhecer();
+  const b = dizer(titulo);
+  b.classList.add('wide');
+  b.appendChild(lista(itens.slice(0, 7).map(p => ({
+    titulo: p.nome, valor: p,
+    sub: (p.tipo === 'Serviço' ? 'Serviço' : p.estoque + ' em estoque') + (p.volume ? ' · ' + p.volume : ''),
+    dir: brl(p.preco)
+  })), escolherProduto));
+  if (itens.length > 7) { const m = document.createElement('p'); m.className = 'muted'; m.textContent = 'Tem mais ' + (itens.length - 7) + '. Digite o nome para filtrar.'; b.appendChild(m); }
+  handler = buscarProduto;
+  chips([{ label: 'Cancelar venda', run: () => { carrinho = []; voltar('Venda cancelada.'); } }], true);
+}
+function vendaEscolher() {
+  const cont = vendidos();
+  const lista_ = disponiveis().sort((a, b) => (cont[b.id] || 0) - (cont[a.id] || 0) || a.nome.localeCompare(b.nome));
+  mostrarProdutos(lista_, carrinho.length ? 'Qual o próximo item? Toque ou digite o nome.' : 'O que você vendeu? Toque num produto ou digite o nome.');
+}
+function buscarProduto(texto) {
+  const q = norm(texto);
+  const achados = disponiveis().filter(p => norm(p.nome + ' ' + (p.volume || '') + ' ' + (p.serie || '')).indexOf(q) >= 0);
+  if (achados.length === 1) { escolherProduto(achados[0]); return; }
+  mostrarProdutos(achados, 'Achei ' + achados.length + '. Toque no que você quer:');
+}
+function escolherProduto(p) {
+  produtoAtual = p;
+  dizer('Quantas unidades de ' + p.nome + '? (' + brl(p.preco) + ' cada)', 'Dica: para outro valor, escreva assim: 2 por 15,50');
+  handler = receberQtd;
+  chips([1, 2, 3, 5].map(n => ({ label: String(n), run: () => adicionarItem(n, produtoAtual.preco, false) })).concat([{ label: 'Cancelar venda', run: () => { carrinho = []; voltar('Venda cancelada.'); } }]));
+}
+function receberQtd(texto) {
+  const m = norm(texto).match(/^(\d+)\s*(?:(?:x|por|a|@|de)\s*(?:r\$)?\s*(\d+(?:[.,]\d+)*))?$/);
+  if (!m) { dizer('Não entendi. Digite só a quantidade, por exemplo 2, ou 2 por 15,50.'); handler = receberQtd; return; }
+  const qtd = parseInt(m[1], 10);
+  const preco = m[2] ? numero(m[2]) : produtoAtual.preco;
+  if (!(qtd > 0) || !isFinite(preco) || preco < 0) { dizer('Esses números não fecharam. Tente de novo.'); handler = receberQtd; return; }
+  adicionarItem(qtd, preco, false);
+}
+function adicionarItem(qtd, preco, confirmouEstoque) {
+  const p = produtoAtual;
+  const jaNoCarrinho = carrinho.filter(i => i.prodId === p.id).reduce((s, i) => s + i.qty, 0);
+  if (!confirmouEstoque && p.tipo !== 'Serviço' && qtd + jaNoCarrinho > Number(p.estoque)) {
+    const b = dizer('Atenção: no sistema só tem ' + p.estoque + ' de ' + p.nome + ' em estoque.');
+    chips([
+      { label: 'Vender mesmo assim', run: () => adicionarItem(qtd, preco, true) },
+      { label: 'Mudar quantidade', run: () => escolherProduto(p) }
+    ]);
+    return;
+  }
+  carrinho.push({ prodId: p.id, nome: p.nome, qty: qtd, preco: Math.round(preco * 100) / 100 });
+  dizer('Anotado: ' + qtd + ' × ' + p.nome + ' — ' + brl(qtd * preco));
+  chips([
+    { label: '＋ Outro item', run: vendaEscolher },
+    { label: 'Finalizar', primary: true, run: vendaCliente_ },
+    { label: 'Cancelar venda', run: () => { carrinho = []; voltar('Venda cancelada.'); } }
+  ]);
+}
+function vendaCliente_() {
+  dizer('Foi para algum cliente? Escreva o nome, ou pule.');
+  handler = t => { vendaCliente = t.trim(); vendaResumo(); };
+  chips([{ label: 'Pular', run: () => { vendaCliente = ''; vendaResumo(); } }]);
+}
+function totalCarrinho() { return Math.round(carrinho.reduce((s, i) => s + i.qty * i.preco, 0) * 100) / 100; }
+function vendaResumo() {
+  const b = dizer('Confira a venda:');
+  b.appendChild(linhas(carrinho.map(i => [i.qty + ' × ' + i.nome, brl(i.qty * i.preco)])));
+  b.appendChild(totalEl(totalCarrinho()));
+  if (vendaCliente) { const c = document.createElement('p'); c.className = 'muted'; c.textContent = 'Cliente: ' + vendaCliente; b.appendChild(c); }
+  chips([
+    { label: '✅ Confirmar venda', eco: 'Confirmar', primary: true, run: vendaSalvar },
+    { label: 'Cancelar', run: () => { carrinho = []; voltar('Venda cancelada.'); } }
+  ]);
+}
+async function vendaSalvar() {
+  const venda = {
+    id: uuid(), data: hojeLocal(), vendedor: (perfil && perfil.nome) || '', canal: 'Assistente', cliente: vendaCliente,
+    itens: carrinho.map(i => ({ prodId: i.prodId, qty: i.qty, preco: i.preco })), total: totalCarrinho()
+  };
+  // atualiza o estado local já (estoque e vendas), para os próximos lançamentos
+  venda.itens.forEach(i => { const p = produtos.find(x => x.id === i.prodId); if (p) p.estoque = Math.max(0, Number(p.estoque) - i.qty); });
+  vendas.push({ id: venda.id, data: venda.data, total: venda.total, itens: venda.itens });
+  salvarCache();
+  const r = await lancar({ tipo: 'venda', venda, inserida: false, baixados: [] });
+  carrinho = [];
+  if (r !== 'ok' && r !== 'fila') {
+    // não gravou: desfaz o estado local
+    venda.itens.forEach(i => { const p = produtos.find(x => x.id === i.prodId); if (p) p.estoque = Number(p.estoque) + i.qty; });
+    vendas = vendas.filter(v => v.id !== venda.id); salvarCache();
+    dizer('Não consegui salvar a venda. ' + r.replace('erro: ', ''));
+    voltar(); return;
+  }
+  const b = dizer(r === 'ok' ? 'Venda registrada ✅ ' + brl(venda.total) + '. Estoque atualizado.' : 'Sem sinal: guardei a venda ⏳ ' + brl(venda.total) + '. Envio sozinho quando a internet voltar.');
+  botaoDesfazer(b, () => desfazerVenda(venda));
+  voltar('Mais alguma coisa?');
+}
+function botaoDesfazer(bolhaEl, acao) {
+  const u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = '↩ Desfazer';
+  u.addEventListener('click', async () => { u.disabled = true; u.textContent = 'Desfazendo…'; const ok = await acao(); u.textContent = ok ? 'Desfeito' : 'Não foi possível'; });
+  bolhaEl.appendChild(u);
+}
+async function desfazerVenda(venda) {
+  const idx = fila.findIndex(e => e.tipo === 'venda' && e.venda.id === venda.id);
+  venda.itens.forEach(i => { const p = produtos.find(x => x.id === i.prodId); if (p) p.estoque = Number(p.estoque) + i.qty; });
+  vendas = vendas.filter(v => v.id !== venda.id); salvarCache();
+  if (idx >= 0 && !fila[idx].inserida && !(fila[idx].baixados || []).length) { fila.splice(idx, 1); salvarFila(); dizer('Venda desfeita. Nada tinha sido enviado ainda.'); return true; }
+  const r = await lancar({ tipo: 'desfazer_venda', id: venda.id, itens: venda.itens, apagada: false, devolvidos: [] });
+  dizer(r === 'ok' ? 'Venda desfeita e estoque devolvido ✅' : r === 'fila' ? 'Desfeita aqui. Sem sinal: aviso o sistema quando voltar ⏳' : 'Não consegui desfazer: ' + r.replace('erro: ', ''));
+  return r === 'ok' || r === 'fila';
+}
+
+/* ---------- AGENDA ---------- */
+let ag = null; // {texto, nome, cliente, data, hora, motivo, novoCliente}
+const PALAVRAS_DIA = { domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6 };
+
+function interpretarAgenda(texto) {
+  const toks = texto.trim().split(/\s+/).filter(Boolean);
+  const n = toks.map(t => norm(t).replace(/[,.;!?]+$/g, ''));
+  const usado = new Array(toks.length).fill(false);
+  let data = null, hora = null;
+  const hoje = hojeLocal();
+  for (let i = 0; i < n.length; i++) {
+    const t = n[i];
+    let m = null;
+    if (hora === null) m = t.match(/^(\d{1,2})h(\d{2})?$/) || t.match(/^(\d{1,2}):(\d{2})$/);
+    if (m) {
+      const hh = +m[1], mm = m[2] ? +m[2] : 0;
+      if (hh < 24 && mm < 60) { hora = pad(hh) + ':' + pad(mm); usado[i] = true; if (i > 0 && n[i - 1] === 'as') usado[i - 1] = true; continue; }
+    }
+    if (hora === null && t === 'as' && n[i + 1] && /^\d{1,2}$/.test(n[i + 1]) && +n[i + 1] < 24) { hora = pad(+n[i + 1]) + ':00'; usado[i] = usado[i + 1] = true; continue; }
+    if (hora === null && t === 'meio' && n[i + 1] === 'dia') { hora = '12:00'; usado[i] = usado[i + 1] = true; continue; }
+    if (data === null) {
+      if (t === 'hoje') { data = hoje; usado[i] = true; continue; }
+      if (t === 'amanha') { data = addDias(hoje, 1); usado[i] = true; continue; }
+      if (t === 'depois' && n[i + 1] === 'de' && n[i + 2] === 'amanha') { data = addDias(hoje, 2); usado[i] = usado[i + 1] = usado[i + 2] = true; continue; }
+      if (t in PALAVRAS_DIA) {
+        const alvo = PALAVRAS_DIA[t]; const hojeDow = new Date(hoje + 'T12:00:00').getDay();
+        data = addDias(hoje, ((alvo - hojeDow + 7) % 7) || 7); usado[i] = true; if (n[i + 1] === 'feira') usado[i + 1] = true; continue;
+      }
+      m = t.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+      if (m) {
+        let a = m[3] ? +m[3] : +hoje.slice(0, 4); if (a < 100) a += 2000;
+        const d = a + '-' + pad(+m[2]) + '-' + pad(+m[1]);
+        if (+m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12) { data = (!m[3] && d < hoje) ? (a + 1) + '-' + pad(+m[2]) + '-' + pad(+m[1]) : d; usado[i] = true; continue; }
+      }
+      if (t === 'dia' && n[i + 1] && /^\d{1,2}$/.test(n[i + 1])) {
+        const dd = +n[i + 1]; const base = new Date(hoje + 'T12:00:00');
+        let ano = base.getFullYear(), mes = base.getMonth() + 1;
+        if (dd >= 1 && dd <= 31) {
+          if (ano + '-' + pad(mes) + '-' + pad(dd) < hoje) { mes++; if (mes > 12) { mes = 1; ano++; } }
+          data = ano + '-' + pad(mes) + '-' + pad(dd); usado[i] = usado[i + 1] = true; continue;
+        }
+      }
+    }
+  }
+  // sobra: tira verbos e palavrinhas soltas
+  const sobra = [];
+  for (let i = 0; i < toks.length; i++) {
+    if (usado[i]) continue;
+    const t = n[i];
+    if (['agendar', 'marcar', 'agenda', 'agende', 'marque', 'para', 'pra'].indexOf(t) >= 0) continue;
+    sobra.push({ orig: toks[i].replace(/[,;!?]+$/g, ''), n: t });
+  }
+  return { data, hora, sobra };
+}
+function acharCliente(sobra) {
+  let melhor = [], melhorScore = 0;
+  clientes.forEach(c => {
+    const ct = norm(c.nome).split(/\s+/);
+    let s = 0;
+    while (s < ct.length && s < sobra.length && sobra[s].n === ct[s]) s++;
+    if (s === 0 && sobra.length && sobra[0].n.length >= 3 && ct[0].indexOf(sobra[0].n) === 0) s = 1; // prefixo do 1º nome
+    if (s > melhorScore) { melhorScore = s; melhor = [c]; } else if (s === melhorScore && s > 0) melhor.push(c);
+  });
+  return { candidatos: melhor, usados: melhorScore };
+}
+function agendaInicio(textoInicial) {
+  ag = { data: null, hora: null, cliente: null, nome: '', motivo: '', novo: false };
+  if (textoInicial) { agendaProcessar(textoInicial); return; }
+  dizer('Quem e quando? Escreva do seu jeito, por exemplo:', 'Jessica amanhã 17h');
+  handler = agendaProcessar;
+  chips([{ label: 'Cancelar', run: () => voltar('Tudo bem.') }]);
+}
+function agendaProcessar(texto) {
+  const r = interpretarAgenda(texto);
+  if (r.data) ag.data = r.data;
+  if (r.hora) ag.hora = r.hora;
+  if (!ag.cliente && !ag.nome) {
+    if (!r.sobra.length) { agendaFaltas(); return; }
+    const { candidatos, usados } = acharCliente(r.sobra);
+    const resto = r.sobra.slice(usados || 0).map(x => x.orig).join(' ');
+    if (candidatos.length === 1) { ag.cliente = candidatos[0]; ag.motivo = resto; }
+    else if (candidatos.length > 1) {
+      ag.motivo = resto;
+      dizer('Qual destes clientes?');
+      chips(candidatos.slice(0, 5).map(c => ({ label: c.nome + (c.telefone ? ' · ' + c.telefone : ''), eco: c.nome, run: () => { ag.cliente = c; agendaFaltas(); } })).concat([{ label: 'Outro', run: () => { ag.cliente = null; ag.nome = ''; agendaPedirNome(); } }]));
+      return;
+    } else {
+      ag.nome = r.sobra.map(x => x.orig).join(' ');
+      dizer('Não achei "' + ag.nome + '" nos seus clientes.');
+      chips([
+        { label: 'Cadastrar novo', eco: 'Cadastrar "' + ag.nome + '"', primary: true, run: () => { ag.novo = true; agendaFaltas(); } },
+        { label: 'Digitar outro nome', run: agendaPedirNome }
+      ]);
+      return;
+    }
+  }
+  agendaFaltas();
+}
+function esperarNome(t) {
+  const { candidatos } = acharCliente(interpretarAgenda(t).sobra);
+  if (candidatos.length === 1) { ag.cliente = candidatos[0]; agendaFaltas(); }
+  else if (candidatos.length > 1) { dizer('Mais de um cliente com esse nome. Escreva o nome completo.'); handler = esperarNome; }
+  else { ag.nome = t.trim(); dizer('"' + ag.nome + '" é novo. Vou cadastrar junto com o agendamento.'); ag.novo = true; agendaFaltas(); }
+}
+function agendaPedirNome() {
+  dizer('Qual o nome do cliente?');
+  handler = esperarNome;
+}
+function esperarDia(t) {
+  const r = interpretarAgenda(t);
+  if (r.data) { ag.data = r.data; if (r.hora) ag.hora = r.hora; agendaFaltas(); }
+  else { dizer('Não entendi o dia. Escreva hoje, amanhã, sexta ou 20/11.'); handler = esperarDia; }
+}
+function esperarHora(t) {
+  const r = interpretarAgenda(t);
+  if (r.hora) { ag.hora = r.hora; agendaFaltas(); }
+  else { dizer('Não entendi a hora. Escreva assim: 17h ou 14:30.'); handler = esperarHora; }
+}
+function agendaFaltas() {
+  if (!ag.cliente && !ag.nome) { agendaPedirNome(); return; }
+  if (!ag.data) {
+    dizer('Para qual dia?');
+    handler = esperarDia;
+    chips([{ label: 'Hoje', run: () => { ag.data = hojeLocal(); agendaFaltas(); } }, { label: 'Amanhã', run: () => { ag.data = addDias(hojeLocal(), 1); agendaFaltas(); } }]);
+    return;
+  }
+  if (ag.data < hojeLocal()) { dizer('Essa data já passou. Qual dia, então?'); ag.data = null; agendaFaltas(); return; }
+  if (!ag.hora) {
+    dizer('Que horas? (ex.: 17h ou 14:30)');
+    handler = esperarHora;
+    chips([{ label: 'Sem horário', run: () => { ag.hora = 'sem'; agendaFaltas(); } }]);
+    return;
+  }
+  agendaResumo();
+}
+function agendaResumo() {
+  const nome = ag.cliente ? ag.cliente.nome : ag.nome;
+  const b = dizer('Confira o agendamento:');
+  const pares = [['Cliente', nome + (ag.novo ? ' (novo)' : '')], ['Dia', dataExtenso(ag.data)], ['Hora', ag.hora === 'sem' ? 'sem horário' : ag.hora]];
+  if (ag.motivo) pares.push(['Motivo', ag.motivo]);
+  b.appendChild(linhas(pares));
+  if (ag.hora !== 'sem') {
+    const conflito = agendamentos.find(a => a.data === ag.data && a.status !== 'Cancelado' && a.status !== 'Concluído' && String(a.hora || '').slice(0, 5) === ag.hora);
+    if (conflito) { const w = document.createElement('p'); w.className = 'warn'; w.textContent = 'Atenção: já tem ' + (conflito.cliente_nome || 'alguém') + ' às ' + ag.hora + '.'; b.appendChild(w); }
+  }
+  chips([
+    { label: '✅ Confirmar', eco: 'Confirmar', primary: true, run: agendaSalvar },
+    { label: 'Corrigir', run: () => agendaInicio() },
+    { label: 'Cancelar', run: () => voltar('Tudo bem.') }
+  ]);
+}
+async function agendaSalvar() {
+  let cliente = ag.cliente;
+  const entradas = [];
+  if (!cliente) {
+    cliente = { id: uuid(), nome: ag.nome, telefone: '' };
+    entradas.push({ tipo: 'cliente', cliente });
+    clientes.push(cliente);
+  }
+  const reg = { id: uuid(), cliente_id: cliente.id, cliente_nome: cliente.nome, data: ag.data, hora: ag.hora === 'sem' ? null : ag.hora + ':00', motivo: ag.motivo || '' };
+  entradas.push({ tipo: 'agenda', agenda: reg });
+  agendamentos.push({ id: reg.id, cliente_id: reg.cliente_id, cliente_nome: reg.cliente_nome, data: reg.data, hora: reg.hora, motivo: reg.motivo, status: 'Agendado' });
+  salvarCache();
+  let r = 'ok';
+  for (const e of entradas) { const x = await lancar(e); if (x !== 'ok') { r = x; if (x !== 'fila') break; } }
+  if (r !== 'ok' && r !== 'fila') {
+    agendamentos = agendamentos.filter(a => a.id !== reg.id); salvarCache();
+    dizer('Não consegui salvar. ' + r.replace('erro: ', '')); voltar(); return;
+  }
+  const b = dizer(r === 'ok' ? 'Agendado ✅ ' + cliente.nome + ', ' + dataExtenso(reg.data) + (reg.hora ? ' às ' + reg.hora.slice(0, 5) : '') + '.' : 'Sem sinal: guardei o agendamento ⏳ Envio quando a internet voltar.');
+  botaoDesfazer(b, async () => {
+    agendamentos = agendamentos.filter(a => a.id !== reg.id); salvarCache();
+    const idx = fila.findIndex(e => e.tipo === 'agenda' && e.agenda.id === reg.id);
+    if (idx >= 0) { fila.splice(idx, 1); salvarFila(); dizer('Agendamento desfeito.'); return true; }
+    const x = await lancar({ tipo: 'desfazer_agenda', id: reg.id });
+    dizer(x === 'ok' ? 'Agendamento desfeito ✅' : x === 'fila' ? 'Desfeito aqui. Aviso o sistema quando o sinal voltar ⏳' : 'Não consegui desfazer: ' + x.replace('erro: ', ''));
+    return x === 'ok' || x === 'fila';
+  });
+  ag = null; voltar('Mais alguma coisa?');
+}
+
+/* ---------- CLIENTE ---------- */
+let novoCli = null;
+function clienteInicio() {
+  novoCli = { nome: '', telefone: '' };
+  dizer('Qual o nome do cliente?');
+  handler = t => {
+    novoCli.nome = t.trim();
+    const igual = clientes.find(c => norm(c.nome) === norm(novoCli.nome));
+    if (igual) {
+      dizer('Já existe um cliente chamado ' + igual.nome + (igual.telefone ? ' (' + igual.telefone + ')' : '') + '.');
+      chips([{ label: 'Cadastrar mesmo assim', run: clienteTelefone }, { label: 'Cancelar', run: () => voltar('Tudo bem.') }]);
+    } else clienteTelefone();
+  };
+  chips([{ label: 'Cancelar', run: () => voltar('Tudo bem.') }]);
+}
+function esperarTelefone(t) {
+  if (t.replace(/\D/g, '').length < 10) { dizer('Faltou o DDD? Escreva algo como (11) 91234-5678.'); handler = esperarTelefone; return; }
+  novoCli.telefone = t.trim(); clienteConfirmar();
+}
+function clienteTelefone() {
+  dizer('Qual o telefone? (com DDD)');
+  handler = esperarTelefone;
+  chips([{ label: 'Pular', run: () => { novoCli.telefone = ''; clienteConfirmar(); } }]);
+}
+function clienteConfirmar() {
+  const b = dizer('Confira o cliente:');
+  b.appendChild(linhas([['Nome', novoCli.nome], ['Telefone', novoCli.telefone || '—']]));
+  chips([{ label: '✅ Salvar cliente', eco: 'Salvar', primary: true, run: clienteSalvar }, { label: 'Cancelar', run: () => voltar('Tudo bem.') }]);
+}
+async function clienteSalvar() {
+  const c = { id: uuid(), nome: novoCli.nome, telefone: novoCli.telefone };
+  clientes.push(c); salvarCache();
+  const r = await lancar({ tipo: 'cliente', cliente: c });
+  if (r !== 'ok' && r !== 'fila') { clientes = clientes.filter(x => x.id !== c.id); salvarCache(); dizer('Não consegui salvar. ' + r.replace('erro: ', '')); voltar(); return; }
+  dizer(r === 'ok' ? 'Cliente cadastrado ✅ ' + c.nome : 'Sem sinal: guardei o cliente ⏳ Envio quando a internet voltar.');
+  novoCli = null; voltar('Mais alguma coisa?');
+}
+
+/* ---------- HOJE ---------- */
+function resumoHoje() {
+  const h = hojeLocal();
+  const dosHoje = vendas.filter(v => v.data === h);
+  const total = dosHoje.reduce((s, v) => s + Number(v.total || 0), 0);
+  const ags = agendamentos.filter(a => a.data === h && a.status !== 'Cancelado' && a.status !== 'Concluído').sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
+  const baixos = produtos.filter(p => p.ativo !== false && p.tipo !== 'Serviço' && Number(p.estoque) <= Number(p.estoque_min != null ? p.estoque_min : 3));
+  const b = dizer('Resumo de hoje (' + dataCurta(h) + '):');
+  b.appendChild(linhas([['Vendas', String(dosHoje.length)], ['Total vendido', brl(total)]]));
+  const t1 = document.createElement('p'); t1.textContent = ags.length ? 'Agenda de hoje:' : 'Nenhum agendamento para hoje.'; b.appendChild(t1);
+  if (ags.length) b.appendChild(linhas(ags.slice(0, 8).map(a => [String(a.hora || '--:--').slice(0, 5), a.cliente_nome || '—'])));
+  if (baixos.length) { const t2 = document.createElement('p'); t2.textContent = 'Estoque baixo:'; b.appendChild(t2); b.appendChild(linhas(baixos.slice(0, 6).map(p => [p.nome, String(p.estoque)]))); }
+  if (fila.length) { const w = document.createElement('p'); w.className = 'warn'; w.textContent = fila.length + ' lançamento(s) ainda não enviado(s).'; b.appendChild(w); }
+  voltar();
+}
+
+/* ---------- texto livre na tela inicial ---------- */
+function livre(texto) {
+  const n = norm(texto);
+  if (/^(venda|vender|vendi|nova venda)\b/.test(n)) {
+    vendaInicio(); const resto = texto.replace(/^\S+\s*/, '').trim(); if (resto) setTimeout(() => buscarProduto(resto), 50); return;
+  }
+  if (/^(agendar|agenda|marcar|agende|marque)\b/.test(n)) { agendaInicio(texto); return; }
+  if (/^(cliente|novo cliente|cadastrar)\b/.test(n)) { clienteInicio(); return; }
+  if (/^(hoje|resumo)\b/.test(n)) { resumoHoje(); return; }
+  if (/^(oi|ola|bom dia|boa tarde|boa noite|ajuda|menu)\b/.test(n)) { inicio('Oi! O que vamos lançar?'); return; }
+  const r = interpretarAgenda(texto);
+  if ((r.hora || r.data) && r.sobra.length) { agendaInicio(texto); return; }
+  const achados = disponiveis().filter(p => norm(p.nome).indexOf(n) >= 0);
+  if (n.length >= 3 && achados.length) { vendaInicio(); setTimeout(() => buscarProduto(texto), 50); return; }
+  dizer('Não entendi, mas posso ajudar assim:', 'Escreva "Jessica amanhã 17h" para agendar, ou toque numa opção.');
+  inicio('O que vamos lançar?');
+}
+
+/* ======================= login / sessão ======================= */
+function hoje_() { return hojeLocal(); }
+function bloqueio(orgDados) {
+  const h = hoje_();
+  const nome = orgDados && orgDados.nome ? orgDados.nome : 'sua empresa';
+  if (orgDados && orgDados.em_teste && orgDados.trial_fim && orgDados.trial_fim < h) return 'O teste grátis da ' + nome + ' terminou. Pague no DAAT para continuar usando.';
+  if (orgDados && !orgDados.em_teste && orgDados.vencimento && orgDados.vencimento < h) return 'A mensalidade da ' + nome + ' venceu. Pague no DAAT para liberar o acesso.';
+  if (orgDados && orgDados.status && orgDados.status !== 'ativo') return 'Há uma pendência na assinatura da ' + nome + '. Regularize no DAAT para liberar o acesso.';
+  return null;
+}
+async function carregarOrg() {
+  let r = await sb.from('organizacoes').select('id, nome, status, em_teste, trial_fim, valor_mensal, vencimento').eq('id', perfil.organizacao_id).single();
+  if (r.error && !isNet(r.error)) r = await sb.from('organizacoes').select('id, nome, status, em_teste, trial_fim, valor_mensal').eq('id', perfil.organizacao_id).single();
+  if (r.error) throw r.error;
+  return r.data;
+}
+async function carregarDados() {
+  const oid = org.id;
+  const desde = addDias(hojeLocal(), -90);
+  const rs = await Promise.all([
+    sb.from('produtos').select('*').eq('organizacao_id', oid).is('deletado_em', null).order('nome'),
+    sb.from('clientes').select('id, nome, telefone').eq('organizacao_id', oid).is('deletado_em', null).order('nome'),
+    sb.from('agendamentos').select('id, cliente_id, cliente_nome, data, hora, motivo, status').eq('organizacao_id', oid).is('deletado_em', null).gte('data', hojeLocal()),
+    sb.from('vendas').select('id, data, total, itens').eq('organizacao_id', oid).is('deletado_em', null).gte('data', desde)
+  ]);
+  rs.forEach(r => { if (r.error) throw r.error; });
+  produtos = rs[0].data || []; clientes = rs[1].data || []; agendamentos = rs[2].data || []; vendas = rs[3].data || [];
+  produtos.forEach(p => { p.tipo = p.tipo || 'Produto'; p.preco = Number(p.preco); p.estoque = Number(p.estoque); });
+  salvarCache();
+}
+function aplicarCache(c) {
+  perfil = c.perfil; org = c.org; produtos = c.produtos || []; clientes = c.clientes || []; agendamentos = c.agendamentos || []; vendas = c.vendas || [];
+}
+
+let saudou = false;
+async function entrarNoChat(offline) {
+  tela('s-chat');
+  $('h-org').textContent = (org && org.nome) || '';
+  atualizarStatus();
+  if (saudou) return;
+  saudou = true;
+  const nome = primeiroNome(perfil && perfil.nome);
+  dizer('Oi' + (nome ? ', ' + nome : '') + '! Eu sou o Detetive Amarelo, seu assistente. Lance vendas, agendamentos e clientes por aqui, sem abrir o sistema.');
+  if (offline) dizer('Estou sem internet agora, mas pode lançar: guardo tudo e envio quando o sinal voltar.');
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
+  if (ios) dizer('Dica: toque em Compartilhar e depois em "Adicionar à Tela de Início" para ter o assistente como aplicativo.');
+  inicio();
+  if (fila.length) sincronizar();
+}
+async function iniciarSessao() {
+  const { data } = await sb.auth.getSession();
+  const user = data && data.session && data.session.user;
+  const cache = LS.get(CACHE_KEY, null);
+  if (!user) {
+    if (!navigator.onLine && cache && cache.perfil) { aplicarCache(cache); await entrarNoChat(true); return; }
+    tela('s-login'); return;
+  }
+  try {
+    const p = await sb.from('perfis').select('organizacao_id, nome, role').eq('id', user.id).single();
+    if (p.error) throw p.error;
+    perfil = p.data; org = await carregarOrg();
+    const b = bloqueio(org);
+    if (b) { $('b-msg').textContent = b; tela('s-bloq'); return; }
+    await carregarDados();
+    await entrarNoChat(false);
+  } catch (err) {
+    if (isNet(err) && cache && cache.perfil && cache.orgId) { aplicarCache(cache); await entrarNoChat(true); return; }
+    $('l-err').textContent = 'Não consegui carregar seus dados. Tente de novo.'; tela('s-login');
+  }
+}
+async function entrar() {
+  const email = $('l-email').value.trim(), senha = $('l-senha').value, err = $('l-err');
+  err.textContent = '';
+  if (!email || !senha) { err.textContent = 'Preencha e-mail e senha.'; return; }
+  $('l-btn').disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+  $('l-btn').disabled = false;
+  if (error) { err.textContent = 'E-mail ou senha incorretos.'; return; }
+  saudou = false; chat.textContent = '';
+  await iniciarSessao();
+}
+async function sair() {
+  if (fila.length && !confirm('Você tem ' + fila.length + ' lançamento(s) ainda não enviado(s). Se sair agora, eles ficam guardados neste aparelho até você entrar de novo. Sair mesmo assim?')) return;
+  await sb.auth.signOut();
+  LS.del(CACHE_KEY);
+  saudou = false; chat.textContent = ''; perfil = org = null; $('l-senha').value = '';
+  tela('s-login');
+}
+
+/* ======================= eventos ======================= */
+$('l-btn').addEventListener('click', entrar);
+$('l-senha').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+$('b-sair').addEventListener('click', sair);
+$('composer').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp = $('c-input'); const t = inp.value.trim(); if (!t) return;
+  inp.value = ''; envelhecer(); eu(t);
+  const h = handler; handler = null;
+  if (h) h(t); else livre(t);
+});
+const menu = $('menu');
+$('h-menu').addEventListener('click', () => menu.classList.add('on'));
+menu.addEventListener('click', e => { if (e.target === menu) menu.classList.remove('on'); });
+$('m-sair').addEventListener('click', () => { menu.classList.remove('on'); sair(); });
+$('m-refresh').addEventListener('click', async () => {
+  menu.classList.remove('on');
+  try { await sincronizar(true); await carregarDados(); dizer('Dados atualizados ✅'); } catch (e) { dizer('Não consegui atualizar agora. Tente com internet.'); }
+});
+$('m-install').addEventListener('click', async () => {
+  menu.classList.remove('on');
+  if (instalarEvt) { instalarEvt.prompt(); instalarEvt = null; return; }
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  dizer(ios ? 'No iPhone: toque em Compartilhar e depois em "Adicionar à Tela de Início".' : 'No Android: abra o menu do navegador (três pontinhos) e toque em "Instalar aplicativo" ou "Adicionar à tela inicial".');
+});
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instalarEvt = e; });
+window.addEventListener('online', () => { atualizarStatus(); sincronizar(); });
+window.addEventListener('offline', atualizarStatus);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && fila.length && org) sincronizar(); });
+setInterval(() => { if (fila.length && navigator.onLine && org) sincronizar(); }, 30000);
+
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {})); }
+iniciarSessao();
+
+// expõe para testes
+window.__asst = { interpretarAgenda, numero };
+})();
+</script>
+</body>
+</html>
